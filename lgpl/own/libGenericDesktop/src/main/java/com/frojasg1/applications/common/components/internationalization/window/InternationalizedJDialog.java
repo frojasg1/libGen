@@ -1,0 +1,1425 @@
+/* 
+ * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You may obtain a copy of the License at
+ *
+ *      http://www.gnu.org/licenses/lgpl-3.0.txt
+ *
+ */
+package com.frojasg1.applications.common.components.internationalization.window;
+
+import com.frojasg1.applications.common.components.internationalization.InternException;
+import com.frojasg1.applications.common.components.internationalization.JFrameInternationalization;
+import com.frojasg1.applications.common.components.internationalization.window.exceptions.ValidationException;
+import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
+import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
+import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
+import com.frojasg1.applications.common.configuration.application.ChangeLanguageClientInterface;
+import com.frojasg1.applications.common.configuration.application.ChangeLanguageServerInterface;
+import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
+import com.frojasg1.general.ExecutionFunctions;
+import com.frojasg1.general.context.ApplicationContext;
+import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
+import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
+import com.frojasg1.general.exceptions.ConfigurationException;
+import com.frojasg1.general.desktop.mouse.CursorFunctions;
+import com.frojasg1.general.desktop.mouse.MouseFunctions;
+import com.frojasg1.general.desktop.screen.ScreenFunctions;
+import com.frojasg1.general.desktop.view.ComponentFunctions;
+import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
+import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
+import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
+import com.frojasg1.general.view.ViewComponent;
+import com.frojasg1.generic.GenericFunctions;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowStateListener;
+import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.JButton;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
+import javax.swing.text.JTextComponent;
+import com.frojasg1.general.ExecutionFunctions.UnsafeMethod;
+import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseWheelListener;
+import com.frojasg1.general.desktop.view.zoom.mapper.ComposedComponent;
+import com.frojasg1.general.number.IntegerFunctions;
+import com.frojasg1.general.threads.ThreadFunctions;
+import com.frojasg1.general.zoom.ZoomParam;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.function.Consumer;
+import javax.swing.JScrollPane;
+
+/**
+ *
+ * @author Usuario
+ */
+public abstract class InternationalizedJDialog< CC extends ApplicationContext > extends javax.swing.JDialog
+										implements InternationalizedWindow<CC>,
+													ChangeLanguageClientInterface,
+													ChangeLanguageServerInterface,
+													ComponentListener,
+													FocusListener,
+													WindowStateListener,
+													InternallyMappedComponent,
+													ComponentMapper
+{
+
+	protected static final String CONF_VALIDATION_ERROR = "VALIDATION_ERROR";
+
+	protected JFrameInternationalization a_intern = null;
+
+	protected BaseApplicationConfigurationInterface _appliConf = null;
+
+//	protected boolean _previousValueOfHightlightFocus = false;
+	protected boolean _alwaysHighlightFocus = false;
+
+	protected Component _lastFocusedComponentDrawn = null;
+	
+	protected Component _highlightFocusComponent = null;
+
+	protected LinkedList< Map<Component, Cursor> > _rollbackWaitCursorMapList = new LinkedList<>();
+
+	protected Object _synchronizedLockForPaint = new Object();
+
+	protected BufferedImage _overlappedImage = null;
+	protected Point _overlappedImageLocation = null;
+
+	protected Component _componentToHighLight = null;
+
+	protected boolean _hasToClearMarkedComponent = false;
+
+	protected ChangeZoomFactorServerInterface _zoomFactorServer = null;
+
+	protected double _newZoomFactor = 1.0D;
+	protected double _previousZoomFactor = 1.0D;
+
+	protected CC _applicationContext = null;
+
+	protected ComponentMapper _compMapper = null;
+
+	protected volatile boolean _alreadyInitialized = false;
+
+	protected boolean _hasBeenSuccessfullyValidated = false;
+
+	protected Consumer<InternationalizationInitializationEndCallback> _initializationEndCallBack = null;
+
+	protected int _hundredPerCentMinimumWidth = -1;
+
+	/**
+	 * Creates new form InternationalizedJDialog
+	 */
+	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration )
+	{
+		this(parent, modal, applicationConfiguration, null);
+	}
+
+	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext, null);
+	}
+
+	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext, initializationEndCallBack, true );
+	}
+
+	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
+									boolean doInitComponents )
+	{
+		super(parent, modal);
+
+		if( doInitComponents )
+			initComponents();
+
+		setAppliConf( applicationConfiguration );
+
+		_previousZoomFactor = applicationConfiguration.getZoomFactor();
+		_applicationContext = applicationContext;
+
+		_initializationEndCallBack = initializationEndCallBack;
+	}
+
+	/**
+	 * Creates new form InternationalizedJDialog
+	 */
+	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration )
+	{
+		this(parent, modal, applicationConfiguration, null);
+	}
+
+	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext, null);
+	}
+
+	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext, initializationEndCallBack, true);
+	}
+
+	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
+									boolean doInitComponents )
+	{
+		super(parent, modal);
+
+		if( doInitComponents )
+			initComponents();
+
+		setAppliConf( applicationConfiguration );
+
+		_previousZoomFactor = applicationConfiguration.getZoomFactor();
+		_applicationContext = applicationContext;
+
+		_initializationEndCallBack = initializationEndCallBack;
+	}
+
+	@Override
+	public final void setAppliConf( BaseApplicationConfigurationInterface applicationConfiguration )
+	{
+		unregisterFromChangeLanguageAsObserver();
+
+		_appliConf = applicationConfiguration;
+
+		if( getAppliConf() != null )
+		{
+			getAppliConf().registerChangeLanguageObserver( this );
+			registerToChangeZoomFactorAsObserver( getAppliConf() );
+
+			String resourceForIcon = getAppliConf().getResourceNameForApplicationIcon();
+			if( resourceForIcon != null )
+				setIcons( resourceForIcon );
+		}
+	}
+
+	protected void addListenersRoot()
+	{
+		addComponentListener(this);
+		addWindowStateListener(this);
+
+		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) -> { comp.addFocusListener(this); return( null ); } );
+	}
+
+	protected void removeListenersRoot()
+	{
+		removeComponentListener(this);
+		removeWindowStateListener(this);
+
+		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) -> { comp.removeFocusListener(this); return( null ); } );
+	}
+
+
+	protected void createInternationalization(	String mainFolder,
+												String applicationName,
+												String group,
+												String paquetePropertiesIdiomas,
+												String configurationBaseFileName,
+												Component parentFrame,
+												Component parentParentFrame,
+												Vector<JPopupMenu> vPUMenus,
+												boolean hasToPutWindowPosition,
+												MapResizeRelocateComponentItem mapRRCI
+											)
+	{
+		boolean adjustSizeOfFrameToContents = true;
+		boolean adjustMinSizeOfFrameToContents = true;
+		double zoomFactor = getAppliConf().getZoomFactor();
+		boolean activateUndoRedoForTextComponents = true;
+		boolean enableTextPopupMenu = true;
+		boolean switchToZoomComponents = true;
+		boolean internationalizeFont = true;
+		Integer delayToInvokeCallback = null;
+
+		createInternationalization( mainFolder, applicationName, group,
+									paquetePropertiesIdiomas, configurationBaseFileName,
+									parentFrame, parentParentFrame,
+									vPUMenus, hasToPutWindowPosition,
+									mapRRCI,
+									adjustSizeOfFrameToContents,
+									adjustMinSizeOfFrameToContents,
+									zoomFactor,
+									activateUndoRedoForTextComponents,
+									enableTextPopupMenu,
+									switchToZoomComponents,
+									internationalizeFont,
+									delayToInvokeCallback);
+	}
+
+	protected void createInternationalization(	String mainFolder,
+												String applicationName,
+												String group,
+												String paquetePropertiesIdiomas,
+												String configurationBaseFileName,
+												Component parentFrame,
+												Component parentParentFrame,
+												Vector<JPopupMenu> vPUMenus,
+												boolean hasToPutWindowPosition,
+												MapResizeRelocateComponentItem mapRRCI,
+												boolean adjustSizeOfFrameToContents,
+												boolean adjustMinSizeOfFrameToContents,
+												double zoomFactor,
+												boolean activateUndoRedoForTextComponents,
+												boolean enableTextPopupMenu,
+												boolean switchToZoomComponents,
+												boolean internationalizeFont,
+												Integer delayToInvokeCallback
+											)
+	{
+/*
+		MapResizeRelocateComponentItem mapRRCI = new MapResizeRelocateComponentItem();
+		try
+		{
+			mapRRCI.putResizeRelocateComponentItem( jPanel1, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jSPmainSplit, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jPanelNavigatorContainer1, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jSPnavigatorSplit, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jPanel4, ResizeRelocateItem.RESIZE_TO_RIGHT );
+			mapRRCI.putResizeRelocateComponentItem( jPanel3, ResizeRelocateItem.RESIZE_TO_RIGHT );
+			mapRRCI.putResizeRelocateComponentItem( _navigatorPanel, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+
+			mapRRCI.putResizeRelocateComponentItem( jScrollPane2, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jTextPane1, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jScrollPane1, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( jTListOfGames, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+
+			mapRRCI.putResizeRelocateComponentItem( jPanelChessBoardContainer, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+			mapRRCI.putResizeRelocateComponentItem( _chessBoardPanel, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
+		}
+		catch( Throwable th )
+		{
+			th.printStackTrace();
+		}
+*/
+/*
+		a_intern = new JFrameInternationalization(	ApplicationConfiguration.sa_MAIN_FOLDER,
+													ApplicationConfiguration.sa_APPLICATION_NAME,
+													ApplicationConfiguration.sa_CONFIGURATION_GROUP,
+													ApplicationConfiguration.sa_PATH_PROPERTIES_IN_JAR,
+													a_configurationBaseFileName,
+													this,
+													parent,
+													a_vectorJpopupMenus,
+													false,
+													mapRRCI );
+*/
+		a_intern = new JFrameInternationalization( getAppliConf() );
+
+		a_intern.setInitializationEndCallBack(_initializationEndCallBack);
+		if( delayToInvokeCallback != null )
+			a_intern.setDelayToInvokeCallback( delayToInvokeCallback );
+
+		a_intern.initialize(	mainFolder,
+								applicationName,
+								group,
+								paquetePropertiesIdiomas,
+								configurationBaseFileName,
+								parentFrame,
+								parentParentFrame,
+								vPUMenus,
+								hasToPutWindowPosition,
+								mapRRCI,
+								adjustSizeOfFrameToContents,
+								adjustMinSizeOfFrameToContents,
+								zoomFactor,
+								activateUndoRedoForTextComponents,
+								enableTextPopupMenu,
+								switchToZoomComponents,
+								internationalizeFont );
+
+		a_intern.registerInternationalString( CONF_VALIDATION_ERROR, "VALIDATION ERROR" );
+
+/*
+		try
+		{
+			changeFontSize( getAppliConf().getFontSizeFactor() );
+		}
+		catch( Throwable th )
+		{
+			th.printStackTrace();
+		}
+*/
+	}
+
+	@Override
+	public JFrameInternationalization getInternationalization()
+	{
+		return( a_intern );
+	}
+
+	@Override
+	public Object getSynchronizedLockForPaint()
+	{
+		return( _synchronizedLockForPaint );
+	}
+
+	@Override
+	public boolean getAlreadyInitializedCallback()
+	{
+		return( _alreadyInitialized );
+	}
+
+	@Override
+	public void setAlreadyInitializedAfterCallback()
+	{
+		_alreadyInitialized = true;
+	}
+
+	protected void setIcons( String resourceToImage )
+	{
+//		BufferedImage image = DesktopResourceFunctions.instance().loadResourceImage(resourceToImage);
+//		if( image != null ) setIconImage( image );
+
+		List<BufferedImage> list = ImageFunctions.instance().getListOfIcons(resourceToImage);
+		setIconImages( list );
+	}
+
+	/**
+	 * This method is called from within the constructor to initialize the form.
+	 * WARNING: Do NOT modify this code. The content of this method is always
+	 * regenerated by the Form Editor.
+	 */
+	@SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
+        getContentPane().setLayout(null);
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        // TODO add your handling code here:
+
+		if( a_intern != null )
+		{
+			try
+			{
+//				a_intern.saveGeneralConfiguration();
+				a_intern.prepareResizeOrRelocateToZoom();
+			}
+			catch( Throwable th )
+			{
+				th.printStackTrace();
+			}
+		}
+
+    }//GEN-LAST:event_formComponentResized
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        // TODO add your handling code here:
+
+		formWindowClosingEvent( );
+    }//GEN-LAST:event_formWindowClosing
+
+	/**
+	 * @param args the command line arguments
+	 */
+	public static void main(String args[]) {
+		/* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+		 * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+		 */
+		try {
+			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					javax.swing.UIManager.setLookAndFeel(info.getClassName());
+					break;
+				}
+			}
+		} catch (ClassNotFoundException ex) {
+			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+		} catch (InstantiationException ex) {
+			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+		} catch (IllegalAccessException ex) {
+			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
+			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+		}
+        //</editor-fold>
+
+		/* Create and display the dialog */
+		java.awt.EventQueue.invokeLater(new Runnable() {
+			public void run() {
+/*				InternationalizedJDialog dialog = new InternationalizedJDialog(new javax.swing.JFrame(), true);
+				dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+					@Override
+					public void windowClosing(java.awt.event.WindowEvent e) {
+						System.exit(0);
+					}
+				});
+				dialog.setVisible(true); */
+			}
+		});
+	}
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // End of variables declaration//GEN-END:variables
+
+	@Override
+	public void unregisterFromChangeLanguageAsObserver()
+	{
+		if( getAppliConf() != null )
+			getAppliConf().unregisterChangeLanguageObserver(this);
+	}
+	
+	@Override
+	public void releaseResources()
+	{
+		unregisterFromChangeLanguageAsObserver();
+		unregisterFromChangeZoomFactorAsObserver();
+
+		ComponentFunctions.instance().browseComponentHierarchy( this.getContentPane(), comp -> { ComponentFunctions.instance().releaseResources(comp); return( null ); } );
+
+		if( a_intern != null )
+			a_intern.releaseResources();
+
+		a_intern=null;	// for the garbage collector to free the memory of the internationallization object and after the memory of this form
+	}
+
+	@Override
+	public void changeLanguage( String language ) throws ConfigurationException, InternException
+	{
+		if( a_intern != null )
+		{
+//			a_intern.saveLanguageConfiguration();
+			a_intern.changeLanguage( language );
+		}
+
+		repaint();
+	}
+
+	@Override
+	public String getLanguage()
+	{
+		String result = ( (a_intern!=null) ? a_intern.M_getLanguage() : null );
+		return( result );
+	}
+/*
+	@Override
+	public void changeFontSize( float factor )
+	{
+		if( a_intern != null )
+		{
+			a_intern.M_changeFontSize(factor);
+		}
+	}
+*/
+	@Override
+	public void applyConfiguration() throws ConfigurationException, InternException
+	{
+		try
+		{
+			if( getAppliConf() != null )
+				changeLanguage( getAppliConf().getLanguage() );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+		}
+	}
+
+/*
+	protected void setConfigurationChanges()
+	{
+		
+	}
+*/
+
+	@Override
+	public void formWindowClosing( boolean closeWindow )
+	{
+/*
+		setConfigurationChanges();
+
+		if( _appliConf != null )
+		{
+			try
+			{
+				_appliConf.M_saveConfiguration();
+			}
+			catch( Throwable th )
+			{
+				th.printStackTrace();
+			}
+		}
+
+		if( _stringsConf != null )
+		{
+			try
+			{
+				_stringsConf.M_saveConfiguration();
+			}
+			catch( Throwable th )
+			{
+				th.printStackTrace();
+			}
+		}
+*/
+		if( ( a_intern != null ) && a_intern.isInitialized() )
+		{
+			try
+			{
+				a_intern.saveConfiguration();
+			}
+			catch( Throwable th )
+			{
+				th.printStackTrace();
+			}
+		}
+
+		if( closeWindow )
+		{
+			removeListenersRoot();
+
+			setVisible(false);
+			dispose();
+			releaseResources();
+		}
+	}
+
+	@Override
+	public BaseApplicationConfigurationInterface getAppliConf()
+	{
+		return( _appliConf );
+	}
+	
+	@Override
+	public void setSize( int width, int height )
+	{
+		if( a_intern != null )
+			a_intern.prepareResizeOrRelocateToZoom();
+
+		super.setSize( width, height );
+	}
+
+	@Override
+	public void setSize( Dimension dim )
+	{
+		if( a_intern != null )
+			a_intern.prepareResizeOrRelocateToZoom();
+
+		super.setSize( dim );
+	}
+
+	@Override
+	public void setBounds( int xx, int yy, int width, int height )
+	{
+		if( a_intern != null )
+			a_intern.prepareResizeOrRelocateToZoom();
+
+		super.setBounds( xx, yy, width, height );
+	}
+
+	@Override
+	public void setBounds( Rectangle rect )
+	{
+		if( a_intern != null )
+			a_intern.prepareResizeOrRelocateToZoom();
+
+		super.setBounds( rect );
+	}
+
+	@Override
+	public boolean getAlwaysHighlightFocus()
+	{
+		return( _alwaysHighlightFocus );
+	}
+
+	@Override
+	public void focusAndHighlightComponent( ViewComponent vc )
+	{
+		if( vc instanceof DesktopViewComponent )
+		{
+			DesktopViewComponent dvc = (DesktopViewComponent) vc;
+			Component comp = dvc.getComponent();
+
+			if( ComponentFunctions.instance().getAncestor( comp ) == this )
+			{
+				_highlightFocusComponent = comp;
+				SwingUtilities.invokeLater( () -> _highlightFocusComponent.requestFocus() );
+			}
+
+			repaint();
+		}
+	}
+
+	@Override
+	public void highlightComponent( ViewComponent vc )
+	{
+		if( vc instanceof DesktopViewComponent )
+		{
+			DesktopViewComponent dvc = (DesktopViewComponent) vc;
+			_componentToHighLight = dvc.getComponent();
+
+			repaint();
+		}
+	}
+
+	@Override
+	public void setAlwaysHighlightFocus(boolean value)
+	{
+//		_previousValueOfHightlightFocus = _alwaysHighlightFocus;
+
+//		_highlightFocusComponent = JFrameInternationalization.getFocusedComponent();
+		_alwaysHighlightFocus = value;
+
+		repaint();
+	}
+
+	protected boolean markComponent_internal( Graphics gc, Component comp )
+	{
+		boolean result = false;
+
+		if( ( comp != null ) &&
+			getRootPane().isAncestorOf(comp) )
+		{
+			int thick = 3;
+			int gap = 2;
+
+			Dimension size = comp.getSize();
+
+			int width = (int) size.getWidth() + gap * 2;
+			int height = (int) size.getHeight() + gap * 2;
+
+			Point leftUpperCorner = comp.getLocationOnScreen();
+			Point windowLeftUpperCorner = getLocationOnScreen();
+
+			int xx = (int) ( leftUpperCorner.getX() - windowLeftUpperCorner.getX() - gap );
+			int yy = (int) ( leftUpperCorner.getY() - windowLeftUpperCorner.getY() - gap );
+
+			ImageFunctions.instance().drawRect( gc, xx, yy, width, height, Color.RED, thick );
+
+			result = true;
+		}
+		return( result );
+	}
+
+	protected boolean markComponent( Graphics gc, Component component )
+	{
+		boolean result = false;
+
+		if( !(component instanceof JButton) )
+			result = markComponent_internal( gc, component );
+
+		return( result );
+	}
+
+	protected boolean markFocusedComponent( Graphics gc )
+	{
+		boolean result = false;
+
+		Component focusedComponent = ComponentFunctions.instance().getFocusedComponent();
+		result = markComponent( gc, focusedComponent );
+
+		_lastFocusedComponentDrawn = focusedComponent;
+
+		return( result );
+	}
+
+	@Override
+	public Component getLastFocusedComponentDrawn()
+	{
+		return( _lastFocusedComponentDrawn );
+	}
+
+	protected boolean doHighlightFocus( Graphics gc )
+	{
+		boolean result = false;
+
+//		if( _alwaysHighlightFocus )
+		{
+//			Component focusedComponent = JFrameInternationalization.getFocusedComponent();
+			if( _highlightFocusComponent != null )
+			{
+				markComponent( gc, _highlightFocusComponent );
+//				_highlightFocusComponent = null;
+//				_alwaysHighlightFocus = _previousValueOfHightlightFocus;
+			}
+
+			if( _alwaysHighlightFocus )
+				result = markFocusedComponent( gc );
+		}
+
+		return( result );
+	}
+
+	@Override
+	public void paint( Graphics gc )
+	{
+		synchronized( _synchronizedLockForPaint )
+		{
+			super.paint( gc );
+
+//		System.out.println( "Painting window : " + ++_debugCounter );
+
+			boolean componentHasBeenMarked = false;
+			
+			if( _componentToHighLight != null )
+			{
+				componentHasBeenMarked = markComponent_internal( gc, _componentToHighLight );
+				_componentToHighLight = null;
+			}
+
+			if( ! componentHasBeenMarked )
+				componentHasBeenMarked = doHighlightFocus( gc );
+
+			_hasToClearMarkedComponent = componentHasBeenMarked;
+
+			if( isThereOverlappedImage() )
+			{
+				ImageFunctions.instance().paintClippedImage( this, gc, _overlappedImage, _overlappedImageLocation );
+			}
+		}
+	}
+
+	@Override
+	public Rectangle getOverlappingImageBounds()
+	{
+		Rectangle result = null;
+
+		Point tl = getLocationOnScreen_forOverlappingImage();
+		Point point = _overlappedImageLocation;
+		BufferedImage bi = _overlappedImage;
+		if( ( tl != null ) && ( bi != null ) && ( point != null ) )
+		{
+			result = new Rectangle( tl.x + point.x,
+									tl.y + point.y,
+									_overlappedImage.getWidth(),
+									_overlappedImage.getHeight() );
+		}
+
+		return( result );
+	}
+
+	@Override
+	public boolean isThereOverlappedImage()
+	{
+		return( ( _overlappedImage != null ) && (_overlappedImageLocation != null ) );
+	}
+
+	@Override
+	public void changeToWaitCursor()
+	{
+		if( a_intern != null )
+			_rollbackWaitCursorMapList.addLast( a_intern.M_changeCursor(CursorFunctions._waitCursor ) );
+	}
+
+	@Override
+	public void revertChangeToWaitCursor()
+	{
+		if( ( a_intern != null ) &&  !_rollbackWaitCursorMapList.isEmpty() )
+		{
+			a_intern.M_rollbackChangeCursor( _rollbackWaitCursorMapList.removeLast() );
+		}
+	}
+
+	@Override
+	public void setOverlappedImage( BufferedImage image, Point position )
+	{
+		synchronized( _synchronizedLockForPaint )
+		{
+			_overlappedImage = image;
+			_overlappedImageLocation = position;
+			repaint();
+		}
+	}
+
+	@Override
+	public Dimension getDimensionOfOverlappingImage()
+	{
+		Dimension result = null;
+
+		BufferedImage bi = _overlappedImage;
+		if( bi != null )
+			result = new Dimension( _overlappedImage.getWidth(), _overlappedImage.getHeight() );
+
+		return( result );
+	}
+
+	@Override
+	public int getWidth_forOverlappingImage()
+	{
+		return( getWidth() );
+	}
+
+	@Override
+	public int getHeight_forOverlappingImage()
+	{
+		return( getHeight() );
+	}
+	
+	@Override
+	public Point getLocationOnScreen_forOverlappingImage()
+	{
+		return( getLocationOnScreen() );
+	}
+
+	@Override
+	public void registerToChangeLanguageAsObserver(ChangeLanguageServerInterface conf)
+	{
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	public void registerInternationalString( String label, String value )
+	{
+		a_intern.registerInternationalString(label, value);
+	}
+
+	public String getInternationalString( String label )
+	{
+		String result = null;
+
+		if( a_intern != null )
+			result = a_intern.getInternationalString(label);
+
+		return( result );
+	}
+
+	@Override
+	public void setLanguage(String language)
+	{
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public void registerChangeLanguageObserver(ChangeLanguageClientInterface requestor)
+	{
+		if( a_intern != null )
+		{
+			a_intern.getLanguageConfiguration().registerChangeLanguageObserver( requestor );
+		}
+	}
+
+	@Override
+	public void unregisterChangeLanguageObserver(ChangeLanguageClientInterface requestor)
+	{
+		if( a_intern != null )
+		{
+			a_intern.getLanguageConfiguration().unregisterChangeLanguageObserver( requestor );
+		}
+	}
+
+	@Override
+	public void activateChangeLanguageNotifications(boolean value)
+	{
+		if( a_intern != null )
+		{
+			a_intern.getLanguageConfiguration().activateChangeLanguageNotifications( value );
+		}
+	}
+
+	@Override
+	public boolean areChangeLanguageNotificationsActivated()
+	{
+		boolean result = false;
+
+		if( a_intern != null )
+		{
+			result = a_intern.getLanguageConfiguration().areChangeLanguageNotificationsActivated();
+		}
+
+		return( result );
+	}
+
+	@Override
+	public void formWindowClosingEvent( )
+	{
+		formWindowClosing( true );
+	}
+
+	@Override
+	public Component getComponent()
+	{
+		return( this );
+	}
+
+	@Override
+	public boolean hasToClearMarkedComponent()
+	{
+		return( _hasToClearMarkedComponent );
+	}
+/*
+	protected void deiconify_nonEDT()
+	{
+		SwingUtilities.invokeLater( new Runnable(){
+					@Override
+					public void run()
+					{
+						deiconify();
+					}
+		});
+	}
+*/
+	@Override
+	public void deiconify()
+	{
+/*		if( !SwingUtilities.isEventDispatchThread() )
+		{
+			deiconify_nonEDT();
+			return;
+		}
+
+		if( getState() == Frame.ICONIFIED )
+			setState( Frame.NORMAL );
+*/
+	}
+
+	@Override
+	public double getZoomFactor()
+	{
+		return( getAppliConf().getZoomFactor() );
+	}
+
+	@Override
+	public void changeZoomFactor(double zoomFactor)
+	{
+		_newZoomFactor = zoomFactor;
+
+		Point center = null;
+		a_intern.changeZoomFactor( zoomFactor, center );
+
+		_previousZoomFactor = zoomFactor;
+	}
+
+	@Override
+	public void changeZoomFactor_centerMousePointer(double zoomFactor )
+	{
+		Point mouseLocation = MouseFunctions.getMouseLocation();
+		Point center = null;
+		if( ScreenFunctions.isInsideComponent( this, mouseLocation ) )
+		{
+			center = mouseLocation;
+		}
+
+		if( a_intern != null )
+			a_intern.changeZoomFactor( zoomFactor, center );
+	}
+
+	@Override
+	public void unregisterFromChangeZoomFactorAsObserver()
+	{
+		if( _zoomFactorServer != null )
+		{
+			_zoomFactorServer.unregisterZoomFactorObserver(this);
+			_zoomFactorServer = null;
+		}
+	}
+
+	@Override
+	public void registerToChangeZoomFactorAsObserver(ChangeZoomFactorServerInterface conf)
+	{
+		unregisterFromChangeZoomFactorAsObserver();
+
+		_zoomFactorServer = conf;
+		if( _zoomFactorServer != null )
+			_zoomFactorServer.registerZoomFactorObserver(this);
+	}
+
+	@Override
+	public boolean isIconified()
+	{
+		return( false );
+	}
+
+	@Override
+	public void iconify()
+	{}
+
+	@Override
+	public Locale getOutputLocale()
+	{
+		Locale outputLocale = GenericFunctions.instance().getObtainAvailableLanguages().getLocaleOfLanguage( getLanguage() );
+
+		return( outputLocale );
+	}
+
+	@Override
+	public void fireChangeLanguageEvent() throws Exception
+	{
+	}
+
+	protected void changeLanguage()
+	{
+		ExecutionFunctions.instance().safeMethodExecution( () -> changeLanguage( getAppliConf().getLanguage() ) );
+	}
+
+	@Override
+	public void internationalizationInitializationEndCallback()
+	{
+		addListenersRoot();
+
+		SwingUtilities.invokeLater( () -> changeLanguage() );
+
+		registerToChangeZoomFactorAsObserver( getAppliConf() );
+
+		_hundredPerCentMinimumWidth = IntegerFunctions.zoomValueRound( getMinimumSize().width, 1 / getZoomFactor() );
+	}
+
+	@Override
+	public DesktopViewComponent getParentViewComponent()
+	{
+		return( DesktopGenericFunctions.instance().getViewFacilities().getParentViewComponent(this) );
+	}
+
+	@Override
+	public String createCustomInternationalString( String label, Object ... args )
+	{
+		String result = null;
+
+		if( a_intern != null )
+			result = a_intern.createCustomInternationalString(label, args);
+
+		return( result );
+	}
+
+	protected void switchOffUndoRedoManager( JTextComponent jtc )
+	{
+		TextUndoRedoInterface urm = a_intern.getTextUndoRedoManager(jtc);
+		if( urm != null )
+			urm.stopManaging();
+	}
+
+	@Override
+	public CC getApplicationContext()
+	{
+		return( _applicationContext );
+	}
+
+	protected void onWindowResized()
+	{
+	}
+
+	protected void onWindowMoved()
+	{
+		
+	}
+
+	protected void onWindowShown()
+	{
+		
+	}
+
+	protected void onWindowHidden()
+	{
+		
+	}
+
+	protected void onWindowMinimized()
+	{
+		
+	}
+
+	protected void onWindowMaximized()
+	{
+		
+	}
+
+	protected void onWindowHorizMaximized()
+	{
+		
+	}
+
+	protected void onWindowVertMaximized()
+	{
+		
+	}
+
+	protected void onWindowNormalAgain()
+	{
+		
+	}
+
+	@Override
+	public void componentResized(ComponentEvent arg0)
+	{
+		onWindowResized();
+
+		SwingUtilities.invokeLater( () -> repaint() );
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent arg0)
+	{
+		onWindowMoved();
+	}
+
+	@Override
+	public void componentShown(ComponentEvent arg0)
+	{
+		onWindowShown();
+	}
+
+	@Override
+	public void componentHidden(ComponentEvent arg0)
+	{
+		onWindowHidden();
+	}
+
+	@Override
+	public void windowStateChanged(WindowEvent evt)
+	{
+		if ((evt.getNewState() & Frame.ICONIFIED) == Frame.ICONIFIED)
+		{
+			onWindowMinimized();
+		}
+		else if ((evt.getNewState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH )
+		{
+			onWindowMaximized();
+		}
+		else if ((evt.getNewState() & Frame.MAXIMIZED_HORIZ) == Frame.MAXIMIZED_HORIZ )
+		{
+			onWindowHorizMaximized();
+		}
+		else if ((evt.getNewState() & Frame.MAXIMIZED_VERT) == Frame.MAXIMIZED_VERT )
+		{
+			onWindowVertMaximized();
+		}
+		else if ((evt.getNewState() & Frame.NORMAL) == Frame.NORMAL )
+		{
+			onWindowNormalAgain();
+		}
+	}
+
+	@Override
+	public void focusGained(FocusEvent e)
+	{
+	}
+
+	@Override
+	public void focusLost(FocusEvent e)
+	{
+		if( ( e != null ) &&
+			( ( _highlightFocusComponent == e.getComponent() ) ||
+			ComponentFunctions.instance().isAnyParent( _highlightFocusComponent, e.getComponent() ) ) &&
+			! ComponentFunctions.instance().isAnyParent( _highlightFocusComponent, e.getOppositeComponent() ) )
+		{
+			_highlightFocusComponent = null;
+			repaint();
+		}
+	}
+
+	protected abstract void translateMappedComponents( ComponentMapper compMapper );
+
+	@Override
+	public void setComponentMapper( ComponentMapper compMapper )
+	{
+		_compMapper = compMapper;
+
+		translateMappedComponents( _compMapper );
+	}
+
+	@Override
+	public <CC> CC mapComponent( CC originalComp )
+	{
+		CC result = originalComp;
+		if( _compMapper != null )
+			result = _compMapper.mapComponent(result);
+
+		return( result );
+	}
+
+	public boolean wasSuccessful()
+	{
+		return( _hasBeenSuccessfullyValidated );
+	}
+
+	// to be overriden by children
+	protected void validateFormChild() throws ValidationException
+	{
+		
+	}
+
+	protected String validateForm()
+	{
+		return( validateForm( () -> validateFormChild() ) );
+	}
+
+	protected String validateForm( UnsafeMethod function )
+	{
+		String errorMessage = InternationalizedWindowFunctions.instance().validate( this, function );
+
+		_hasBeenSuccessfullyValidated = ( errorMessage == null );
+
+		return( errorMessage );
+	}
+
+	protected void setWasSuccessful( boolean value )
+	{
+		_hasBeenSuccessfullyValidated = value;
+	}
+
+	protected void doInternationalizationTasksOnTheFly( Component comp )
+	{
+		a_intern.doInternationalizationTasksOnTheFly(comp);
+	}
+
+	public boolean alreadyInitialized( Component linePanel )
+	{
+		return( a_intern.getResizeRelocateComponentItem(linePanel) != null );
+	}
+
+	protected JPopupMenu getNonInheritedPopupMenu( Component comp )
+	{
+		JPopupMenu result = null;
+		if( comp instanceof JTextComponent )
+		{
+			result = a_intern.getNonInheritedPopupMenu( (JTextComponent) comp );
+		}
+		return( result );
+	}
+
+	protected Component processComponentOnTheFlyForDefaultResizeRelocateItem( MapResizeRelocateComponentItem mapRrci,
+										Component comp )
+	{
+		a_intern.createAndStoreResizeRelocateItemIntoMap( comp, mapRrci );
+		Component result = getNonInheritedPopupMenu( comp );
+
+		return( result );
+	}
+
+	public MapResizeRelocateComponentItem zoomComponentOnTheFly( Component comp, ResizeRelocateItem rri )
+	{
+		MapResizeRelocateComponentItem mapRrci = new MapResizeRelocateComponentItem();
+		if( ! alreadyInitialized( comp ) )
+		{
+			if( rri != null )
+				mapRrci.put( comp, rri );
+
+			if( comp instanceof ComposedComponent )
+				mapRrci.putAll( ( (ComposedComponent) comp).getResizeRelocateInfo() );
+			a_intern.switchToZoomComponents( comp, mapRrci );
+
+			doInternationalizationTasksOnTheFly( comp );
+
+			ComponentFunctions.instance().browseComponentHierarchy(comp, (co) -> processComponentOnTheFlyForDefaultResizeRelocateItem( mapRrci, co ) );
+		}
+
+		return( mapRrci );
+	}
+
+	public <CC extends Component> void initResizeRelocateItemsOComponentOnTheFly( Collection<CC> listOfRootComponents,
+																				MapResizeRelocateComponentItem mapRrci,
+																				boolean setMinSize )
+	{
+		ThreadFunctions.instance().delayedInvoke( () -> SwingUtilities.invokeLater( () -> {
+			ZoomParam zp1 = new ZoomParam( 1.0D );
+			ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
+			a_intern.addMapResizeRelocateComponents(mapRrci);
+			for( Component rootComp: listOfRootComponents )
+			{
+				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+					(comp) -> {
+						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
+						if( rri != null )
+							rri.newExpectedZoomParam(zp);
+
+						Component result = getNonInheritedPopupMenu( comp );
+
+						return( result );
+					});
+				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+					(comp) -> {
+						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
+						if( rri != null )
+							rri.execute(zp);
+
+						Component result = getNonInheritedPopupMenu( comp );
+
+						return( result );
+					});
+			}
+
+			resizeFrameToContents(setMinSize);
+
+			SwingUtilities.invokeLater( () -> {
+				setMaximumSize( getSize() );
+				repaint();
+				});
+		} ),
+		250);
+	}
+
+	protected void resizeFrameToContents()
+	{
+		resizeFrameToContents( true );
+	}
+
+	protected void resizeFrameToContents( boolean setMinSize )
+	{
+		SwingUtilities.invokeLater( () -> {
+			a_intern.resizeFrameToContents();
+
+			if( isMinimumSizeSet() && setMinSize )
+			{
+				Dimension minSize = getMinimumSize();
+				minSize.width = IntegerFunctions.zoomValueRound( _hundredPerCentMinimumWidth, getZoomFactor() );
+				setMinimumSize( minSize );
+			}
+		});
+	}
+
+	protected ScrollPaneMouseWheelListener createMouseWheelListener( JScrollPane sp )
+	{
+		return( new ScrollPaneMouseWheelListener( sp ) );
+	}
+
+	public void applyConfigurationChanges()
+	{
+	}
+}
