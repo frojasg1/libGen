@@ -33,6 +33,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  *
@@ -51,8 +52,8 @@ public class MasterComboBoxJPanel
 
 	protected ActionListener _actionListener = null;
 
-	protected ControllerInvoker _addInvoker = ( cont, result ) -> cont.added( this, result);
-	protected ControllerInvoker _removeInvoker = ( cont, result ) -> cont.removed( this, result);
+	protected ControllerInvoker _addInvoker = ( cont, result ) -> cont.added( this, result, null);
+	protected ControllerInvoker _removeInvoker = ( cont, result ) -> cont.removed( this, result, null);
 	protected ControllerInvoker _modifyInvoker = ( cont, result ) -> cont.modify( this, result);
 
 //	protected AddRemoveModifyItemNewSelectionController<DD> _controller = null;
@@ -412,13 +413,15 @@ public class MasterComboBoxJPanel
 	}
 
 	@Override
-	public String added(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData) {
-		return( null );
+	public void added(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+		Consumer<String> callback) {
+		// intentionally left blank
 	}
 
 	@Override
-	public String removed(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData) {
-		return( null );
+	public void removed(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+		Consumer<String> callback) {
+		// intentionally left blank
 	}
 
 	@Override

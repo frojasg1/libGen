@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general.desktop.image;
 
+import com.frojasg1.general.desktop.image.pixel.impl.PixelComponents;
 import com.frojasg1.desktop.liblens.graphics.Coordinate2D;
 import com.frojasg1.desktop.liblens.graphics.filters.blur.BlurFilterForImage;
 import com.frojasg1.general.CollectionFunctions;

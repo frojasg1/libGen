@@ -248,8 +248,8 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
 		try
 		{
 			mapRRCI.putResizeRelocateComponentItem( jPanel1, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
-			mapRRCI.putResizeRelocateComponentItem( _rtfDocJPanel, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.RESIZE_TO_BOTTOM );
-//			mapRRCI.putAll( _rtfDocJPanel.getMapResizeRelocateComponentItem() );
+			mapRRCI.putResizeRelocateComponentItem( _rtfDocJPanel, ResizeRelocateItem.FILL_WHOLE_PARENT );
+			mapRRCI.putAll( _rtfDocJPanel.getMapResizeRelocateComponentItem() );
 
 			mapRRCI.putResizeRelocateComponentItem( jPanel2, ResizeRelocateItem.RESIZE_TO_RIGHT + ResizeRelocateItem.MOVE_TO_BOTTOM );
 		}

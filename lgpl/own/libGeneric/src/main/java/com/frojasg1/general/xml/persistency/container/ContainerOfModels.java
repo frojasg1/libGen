@@ -53,8 +53,11 @@ public abstract class ContainerOfModels<KK, MM extends KeyModel<KK>>
 	public void init( ContainerOfModels<KK, MM> that )
 	{
 		_itemsConf = _copier.copy( that._itemsConf );
-
+//		if( _itemsConf == null )
+//			_itemsConf = createListOfModelNamesConfiguration();
+//		_copier.copy( _itemsConf, that._itemsConf );
 		_cbContent = _copier.copy( that._cbContent );
+//		_copier.copy( getComboBoxContent(), that._cbContent );
 	}
 
 	public BaseApplicationConfigurationInterface getAppliConf()

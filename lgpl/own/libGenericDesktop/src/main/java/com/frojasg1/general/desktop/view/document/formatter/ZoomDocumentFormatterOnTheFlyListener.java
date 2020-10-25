@@ -27,6 +27,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Arrays;
 import javax.swing.JTextPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -59,7 +60,7 @@ public class ZoomDocumentFormatterOnTheFlyListener 	implements FormatterListener
 	@Override
 	public void focusGained(java.awt.event.FocusEvent focusEvent)
 	{
-		formatDocument();
+//		formatDocument();
 	}
 
 	@Override
@@ -83,10 +84,11 @@ public class ZoomDocumentFormatterOnTheFlyListener 	implements FormatterListener
 
 	protected void addListeners()
 	{
-		if( _pane != null )
+		if( ( _pane != null ) &&
+			! Arrays.stream( _pane.getKeyListeners() ).anyMatch( (listener) -> listener == this ) )
 		{
 			_pane.getDocument().addDocumentListener( this );
-			_pane.addKeyListener(this);
+//			_pane.addKeyListener(this);
 			_pane.addMouseListener(this);
 			_pane.addFocusListener(this);
 			_pane.addCaretListener( this );

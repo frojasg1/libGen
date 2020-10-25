@@ -21,6 +21,7 @@ package com.frojasg1.general.desktop.view.combobox;
 import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxGroupManager;
 import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxSelectionChangedListener;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
+import java.util.function.Consumer;
 
 /**
  *
@@ -29,7 +30,9 @@ import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 public interface AddRemoveModifyItemNewSelectionController extends ComboBoxSelectionChangedListener,
 																	InternallyMappedComponent {
 
-	public String added( ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData );
-	public String removed( ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData );
+	public void added( ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+		Consumer<String> callback);
+	public void removed( ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+		Consumer<String> callback);
 	public void modify( ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData );
 }

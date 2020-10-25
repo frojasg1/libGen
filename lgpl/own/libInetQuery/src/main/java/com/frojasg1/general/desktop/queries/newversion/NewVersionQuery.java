@@ -18,13 +18,14 @@
  */
 package com.frojasg1.general.desktop.queries.newversion;
 
+import com.frojasg1.general.desktop.queries.InetQuery;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface NewVersionQuery
+public interface NewVersionQuery extends InetQuery<NewVersionQueryResult>
 {
 	public NewVersionQueryResult query( String downloadFile, boolean isApplicationStart,
 										String applicationLanguage,

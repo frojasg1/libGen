@@ -124,6 +124,13 @@ public class OrderedArrayMap< KK extends Comparable<KK>, VV, SS >
 		return( getValue(me) );
 	}
 
+	public VV getFirstValueFromSimplifiedKey( SS objectToLookFor )
+	{
+		GenericMapElement< KK, VV > me = _array.getFirstElementFromSimplifiedKey(objectToLookFor);
+
+		return( getValue(me) );
+	}
+
 	public VV[] getRangeFromSimplifiedKey( SS initialSK, SS finalSK )
 	{
 		VV[] result = null;

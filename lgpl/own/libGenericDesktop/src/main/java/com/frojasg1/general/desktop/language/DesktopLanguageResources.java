@@ -21,8 +21,12 @@ package com.frojasg1.general.desktop.language;
 import com.frojasg1.applications.common.components.internationalization.JFrameInternationalization;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizedWindowFunctions;
 import com.frojasg1.general.desktop.GenericDesktopConstants;
-import com.frojasg1.general.desktop.dialogs.highlevel.HighLevelDialogs;
+import com.frojasg1.general.desktop.copypastepopup.ConfForTextPopupMenu;
+import com.frojasg1.general.desktop.files.DesktopBinaryFile;
 import com.frojasg1.general.desktop.view.newversion.NewVersionFoundJDialog;
+import com.frojasg1.general.desktop.view.search.DesktopSearchAndReplaceWindow;
+import com.frojasg1.general.desktop.view.text.CustomizedJPasswordField;
+import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
 import com.frojasg1.general.language.LanguageResources;
 
 /**
@@ -46,14 +50,14 @@ public class DesktopLanguageResources extends LanguageResources
 	@Override
 	public void copyOwnLanguageConfigurationFilesFromJar( String newFolder )
 	{
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", "CopyPastePopupMenu.properties" );
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", "CustomizedJPasswordField.properties" );
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", "DesktopBinaryFile.properties" );
+		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", ConfForTextPopupMenu.CONF_FILE_NAME );
+		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", CustomizedJPasswordField.sa_configurationBaseFileName );
+		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", DesktopBinaryFile.GLOBAL_CONF_FILE_NAME );
 		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", JFrameInternationalization.GLOBAL_CONF_FILE_NAME );
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", "searchAndReplaceJFrame_LAN.properties" );
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", NewVersionFoundJDialog.sa_configurationBaseFileName + "_LAN.properties" );
+		copyFormLanguageConfigurationFileFromJarToFolder( newFolder, "EN", DesktopSearchAndReplaceWindow.sa_configurationBaseFileName );
+		copyFormLanguageConfigurationFileFromJarToFolder( newFolder, "EN", NewVersionFoundJDialog.sa_configurationBaseFileName );
 		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", InternationalizedWindowFunctions.GLOBAL_CONF_FILE_NAME );
-		copyLanguageConfigurationFileFromJarToFolder( newFolder, "EN", HighLevelDialogs.GLOBAL_CONF_FILE_NAME );
+		copyFormLanguageConfigurationFileFromJarToFolder( newFolder, "EN", WhatIsNewJDialogBase._configurationBaseFileName );
 	}
 
 	protected String getPropertiesPathInJar()

@@ -73,4 +73,6 @@ public interface InternationalizedWindow<CC extends ApplicationContext >
 //	public void releaseResources();
 
 	public void setAppliConf( BaseApplicationConfigurationInterface applicationConfiguration );
+
+	public void setInitialized();
 }

@@ -22,6 +22,11 @@ import com.frojasg1.general.view.ViewComponent;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseListener;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Function;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
@@ -231,6 +236,56 @@ public class ComponentFunctions
 	public Component getFocusedComponent()
 	{
 		return( KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() );
+	}
+
+	public boolean isComponentListenerAdded( Component comp, ComponentListener listener )
+	{
+		return( isGenListenerAdded( comp, listener, (com) -> com.getComponentListeners() ) );
+	}
+
+	public boolean isMouseListenerAdded( Component comp, MouseListener listener )
+	{
+		return( isGenListenerAdded( comp, listener, (com) -> com.getMouseListeners() ) );
+	}
+
+	public <CC, LL> boolean isGenListenerAdded( CC comp, LL listener, Function<CC, LL[]> getter )
+	{
+		boolean result = false;
+		if( ( comp != null ) && ( getter != null ) )
+		{
+			LL[] arr = getter.apply(comp);
+			result = Arrays.stream( arr ).anyMatch( (lsnr) -> listener==lsnr );
+		}
+
+		return( result );
+	}
+
+	protected String getComponentName( Component comp )
+	{
+		String result = ViewFunctions.instance().instance().getComponentName(comp);
+
+		return( result );
+	}
+
+	public boolean selectJTabbedPaneIndex( JTabbedPane tp, String panelName )
+	{
+		boolean result = false;
+
+		if( tp != null )
+		{
+			for( int ii=0; ii<tp.getTabCount(); ii++ )
+			{
+				Component tab = tp.getComponentAt( ii );
+				String name = getComponentName( tab );
+				if( Objects.equals( name, panelName ) )
+				{
+					result = true;
+					tp.setSelectedComponent(tab);
+				}
+			}
+		}
+
+		return( result );
 	}
 
 	public interface ExecuteToComponent

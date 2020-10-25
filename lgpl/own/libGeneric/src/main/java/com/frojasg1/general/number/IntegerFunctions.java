@@ -351,31 +351,25 @@ public class IntegerFunctions
 		return( result );
 	}
 
-	public static int zoomValueCeil( int value, double zoomFactor )
+	public static int zoomValueCeil( double value, double zoomFactor )
 	{
-		double result = Math.ceil( zoomFactor * value );
-		if( result > Integer.MAX_VALUE )
-			result = Integer.MAX_VALUE;
+		Double result = Math.ceil( zoomFactor * value );
 
-		return( (int) result );
+		return( result.intValue() );
 	}
 
-	public static int zoomValueFloor( int value, double zoomFactor )
+	public static int zoomValueFloor( double value, double zoomFactor )
 	{
-		double result = Math.floor( zoomFactor * value );
-		if( result > Integer.MAX_VALUE )
-			result = Integer.MAX_VALUE;
+		Double result = Math.floor( zoomFactor * value );
 
-		return( (int) result );
+		return( result.intValue() );
 	}
 
-	public static int zoomValueInt( int value, double zoomFactor )
+	public static int zoomValueInt( double value, double zoomFactor )
 	{
-		double result = zoomFactor * value;
-		if( result > Integer.MAX_VALUE )
-			result = Integer.MAX_VALUE;
+		Double result = zoomFactor * value;
 
-		return( (int) result );
+		return( result.intValue() );
 	}
 
 	public static int zoomValueRound( int value, double zoomFactor )

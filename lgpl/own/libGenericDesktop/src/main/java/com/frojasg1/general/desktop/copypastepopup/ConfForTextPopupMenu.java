@@ -32,7 +32,7 @@ public class ConfForTextPopupMenu extends ConfigurationFromClassPath
 {
 	protected static ConfForTextPopupMenu _instance = null;
 
-	protected static final String CONF_FILE_NAME = "CopyPastePopupMenu.properties";
+	public static final String CONF_FILE_NAME = "CopyPastePopupMenu.properties";
 	protected static final String sa_PROPERTIES_PATH_IN_JAR=GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR;
 
 	public static final String CONF_REMOVE = "REMOVE";

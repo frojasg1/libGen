@@ -5,10 +5,7 @@
  */
 package com.frojasg1.general.xml.persistency.loader;
 
-import com.frojasg1.general.CollectionFunctions;
 import com.frojasg1.general.xml.XmlElement;
-import com.frojasg1.general.xml.XmlFunctions;
-import java.util.List;
 
 /**
  *

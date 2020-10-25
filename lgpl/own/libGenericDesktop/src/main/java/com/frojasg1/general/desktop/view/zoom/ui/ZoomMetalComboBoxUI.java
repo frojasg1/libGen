@@ -18,6 +18,10 @@
  */
 package com.frojasg1.general.desktop.view.zoom.ui;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.plaf.metal.MetalComboBoxUI;
 
 /**
@@ -25,5 +29,39 @@ import javax.swing.plaf.metal.MetalComboBoxUI;
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
 public class ZoomMetalComboBoxUI extends MetalComboBoxUI {
-	
+
+    protected ComboPopup createPopup() {
+        return new BasicComboPopup( comboBox ) {
+			
+			@Override
+			public void setSize( int width, int height )
+			{
+				super.setSize( width, height );
+			}
+
+			@Override
+			public void setSize( Dimension newSize )
+			{
+				super.setSize( newSize );
+			}
+
+			@Override
+			public void setBounds( Rectangle newBounds )
+			{
+				super.setBounds( newBounds );
+			}
+
+			@Override
+			public void setBounds( int xx, int yy, int width, int height )
+			{
+				super.setBounds( xx, yy, width, height );
+			}
+
+			@Override
+			public void setPreferredSize( Dimension dimen )
+			{
+				super.setPreferredSize( dimen );
+			}
+		};
+    }
 }

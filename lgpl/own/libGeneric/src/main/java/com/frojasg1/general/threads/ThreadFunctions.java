@@ -20,6 +20,7 @@ package com.frojasg1.general.threads;
 
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.ExecutionFunctions.UnsafeMethod;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -42,19 +43,36 @@ public class ThreadFunctions
 		return( _instance );
 	}
 
-	public void delayedInvoke( UnsafeMethod run, int millisecondsToDelay )
+	public void invokeWithDelay( Runnable run, int millisecondsToDelay )
 	{
-		Thread th = new Thread() {
-			@Override
-			public void run()
-			{
-				ThreadFunctions.this.sleep( millisecondsToDelay );
+		ThreadFunctions.this.sleep( millisecondsToDelay );
 
-				ExecutionFunctions.instance().safeMethodExecution( run );
-			}
-		};
-		
+		run.run();
+	}
+
+	public void delayedInvoke( Runnable run, int millisecondsToDelay )
+	{
+		Thread th = new Thread( () -> invokeWithDelay( run, millisecondsToDelay ) );
+
 		th.start();
+	}
+
+	public void delayedSafeInvoke( UnsafeMethod run, int millisecondsToDelay )
+	{
+		delayedInvoke( () -> ExecutionFunctions.instance().safeMethodExecution( run ),
+						millisecondsToDelay );
+	}
+
+	public void delayedSafeInvokeEventDispatchThread( UnsafeMethod run, int millisecondsToDelay )
+	{
+		delayedSafeInvoke( () -> SwingUtilities.invokeLater(
+									() -> ExecutionFunctions.instance().safeMethodExecution( run ) ),
+					millisecondsToDelay );
+	}
+
+	public void delayedInvokeEventDispatchThread( Runnable run, int millisecondsToDelay )
+	{
+		delayedInvoke( () -> SwingUtilities.invokeLater( run ), millisecondsToDelay );
 	}
 
 	public void sleep( long milliseconds )

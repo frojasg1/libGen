@@ -28,7 +28,7 @@ import javax.swing.JFrame;
  */
 public class WhatIsNewJDialogBase extends GenericLicenseJDialog
 {
-	protected static final String _configurationBaseFileName = "WhatIsNewJDialog";
+	public static final String _configurationBaseFileName = "WhatIsNewJDialog";
 	public static final String BASE_RTF_FILE_NAME = "What.is.new.rtf";
 
 	public WhatIsNewJDialogBase( BaseApplicationConfigurationInterface appConf )
@@ -47,5 +47,11 @@ public class WhatIsNewJDialogBase extends GenericLicenseJDialog
 	{
 		super( parent, appConf, singleRtfFileName, false, baseConfigurationFileName, true );
 		setTitle("");
+	}
+
+	@Override
+	public void formWindowClosingEvent( )
+	{
+		closeAndReleaseWindow();
 	}
 }

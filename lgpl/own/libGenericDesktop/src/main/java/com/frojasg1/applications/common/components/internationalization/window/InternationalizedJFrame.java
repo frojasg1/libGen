@@ -18,12 +18,14 @@
  */
 package com.frojasg1.applications.common.components.internationalization.window;
 
+import com.frojasg1.applications.common.components.internationalization.ExtendedZoomSemaphore;
 import com.frojasg1.applications.common.components.internationalization.InternException;
 import com.frojasg1.applications.common.components.internationalization.JFrameInternationalization;
 import com.frojasg1.applications.common.components.internationalization.radiobuttonmenu.ChangeRadioButtonMenuItemListResult;
 import com.frojasg1.applications.common.components.internationalization.radiobuttonmenu.LanguageRadioButtonManagerInstance;
 import com.frojasg1.applications.common.components.internationalization.radiobuttonmenu.RadioButtonManager;
 import com.frojasg1.applications.common.components.internationalization.radiobuttonmenu.ZoomFactorRadioButtonManagerInstance;
+import com.frojasg1.applications.common.components.internationalization.window.result.ZoomComponentOnTheFlyResult;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
@@ -42,11 +44,12 @@ import com.frojasg1.general.desktop.mouse.CursorFunctions;
 import com.frojasg1.general.desktop.mouse.MouseFunctions;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
-import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseWheelListener;
+import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseListener;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComposedComponent;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
+import com.frojasg1.general.executor.worker.PullOfExecutorWorkers;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.threads.ThreadFunctions;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
@@ -55,6 +58,7 @@ import com.frojasg1.general.zoom.ZoomParam;
 import com.frojasg1.generic.GenericFunctions;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -68,6 +72,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,6 +103,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 														ComponentMapper//,
 	//													ItemListener
 {
+	protected static final int DEFAULT_NUMBER_OF_WORKERS_FOR_PULL = 1;
 
 	protected JFrameInternationalization a_intern = null;
 
@@ -150,6 +156,17 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 	protected int _hundredPerCentMinimumWidth = -1;
 
+	protected volatile boolean _preventFromRepainting = true;
+	protected Object _initializedLock = new Object();
+	protected volatile boolean _isVisible = false;
+	protected volatile boolean _isInitialized = false;
+
+	protected PullOfExecutorWorkers _pullOfWorkers;
+
+	protected List<ExtendedZoomSemaphore> _listOfZoomSemaphoresOnTheFly = new ArrayList<>();
+
+	protected BufferedImage _lastWindowImage = null;
+
 	/**
 	 * Creates new form IntenationalizationJFrame
 	 */
@@ -157,6 +174,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 //		initComponents();
 
 		addComponentListener(this);
+
+		_pullOfWorkers = createPullOfWorkers();
 	}
 
 	/**
@@ -168,6 +187,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		setVisible( visible );
 
 		addComponentListener(this);
+
+		_pullOfWorkers = createPullOfWorkers();
 	}
 
 	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration )
@@ -203,7 +224,23 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 		addComponentListener(this);
 
-		_initializationEndCallBack = initializationEndCallBack;
+		setInternationalizationEndCallBack( initializationEndCallBack );
+
+		_pullOfWorkers = createPullOfWorkers();
+	}
+
+	protected int getNumberOfWorkersForPull()
+	{
+		return DEFAULT_NUMBER_OF_WORKERS_FOR_PULL;
+	}
+
+	protected PullOfExecutorWorkers createPullOfWorkers()
+	{
+		PullOfExecutorWorkers result = new PullOfExecutorWorkers();
+		result.init(getNumberOfWorkersForPull());
+		result.start();
+
+		return( result );
 	}
 
 	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
@@ -219,6 +256,11 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		this( applicationConfiguration, null, initializationEndCallBack );
 		
 		setVisible( visible );
+	}
+
+	public void setInternationalizationEndCallBack( Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+	{
+		_initializationEndCallBack = initializationEndCallBack;
 	}
 
 	@Override
@@ -407,11 +449,13 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	{
 		addListenersRoot();
 
-		SwingUtilities.invokeLater( () -> changeLanguage() );
+//		SwingUtilities.invokeLater( () -> changeLanguage() );
+		changeLanguage();
 
 		registerToChangeZoomFactorAsObserver( getAppliConf() );
 
-		_hundredPerCentMinimumWidth = IntegerFunctions.zoomValueRound( getMinimumSize().width, 1 / getZoomFactor() );
+		if( isMinimumSizeSet() )
+			_hundredPerCentMinimumWidth = IntegerFunctions.zoomValueRound( getMinimumSize().width, 1 / getZoomFactor() );
 	}
 
 	@Override
@@ -721,7 +765,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		if( ( comp != null ) &&
 			getRootPane().isAncestorOf(comp) )
 		{
-			int thick = 3;
+			int thick = IntegerFunctions.zoomValueCeil( 2.01, getZoomFactor() );
 			int gap = 2;
 
 			Dimension size = comp.getSize();
@@ -791,12 +835,28 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( result );
 	}
 
+	protected void paintEmpty( Graphics gc )
+	{
+		gc.setColor( Color.GRAY.brighter().brighter() );
+		gc.fillRect(0, 0, getWidth(), getHeight());
+	}
+
 	@Override
 	public void paint( Graphics gc )
 	{
 		synchronized( _synchronizedLockForPaint )
 		{
-			super.paint( gc );
+			if( getPreventFromRepainting() )
+			{
+//				paintEmpty(gc);
+				paintLast(gc);
+				return;
+			}
+
+			_lastWindowImage = new BufferedImage( getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB );
+			Graphics grp2 = _lastWindowImage.createGraphics();
+
+			super.paint( grp2 );
 
 //		System.out.println( "Painting window : " + ++_debugCounter );
 
@@ -804,20 +864,46 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			
 			if( _componentToHighLight != null )
 			{
-				componentHasBeenMarked = markComponent_internal( gc, _componentToHighLight );
+				componentHasBeenMarked = markComponent_internal( grp2, _componentToHighLight );
 				_componentToHighLight = null;
 			}
 
 			if( ! componentHasBeenMarked )
-				componentHasBeenMarked = doHighlightFocus( gc );
+				componentHasBeenMarked = doHighlightFocus( grp2 );
 
 			_hasToClearMarkedComponent = componentHasBeenMarked;
 			
 			if( isThereOverlappedImage() )
 			{
-				ImageFunctions.instance().paintClippedImage( this, gc, _overlappedImage, _overlappedImageLocation );
+				ImageFunctions.instance().paintClippedImage( this, grp2, _overlappedImage, _overlappedImageLocation );
 			}
+
+			grp2.dispose();
+			paintLast(gc);
 		}
+	}
+
+	public void setIgnoreRepaintRecursive( Component comp, boolean ignoreRepainting )
+	{
+		ComponentFunctions.instance().browseComponentHierarchy(comp, (com) -> {
+			if( com != InternationalizedJFrame.this )
+			{
+				com.setIgnoreRepaint(ignoreRepainting);
+
+				if( ignoreRepainting )
+					com.removeNotify();
+				else
+					com.addNotify();
+			}
+
+			return( null );
+		});
+	}
+
+	protected void paintLast(Graphics gc)
+	{
+		if( _lastWindowImage != null )
+			gc.drawImage( _lastWindowImage, 0, 0, null );
 	}
 
 	@Override
@@ -1372,9 +1458,37 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 		Point center = null;
 		_radioButtonManager.updateSelectionInMenu( _zoomFactorRadiobuttonGroup );
-		a_intern.changeZoomFactor( zoomFactor, center );
+		changeZoomFactorPreventingToPaint( zoomFactor, center );
 
 		_previousZoomFactor = zoomFactor;
+	}
+
+	protected void changeZoomFactorPreventingToPaint(double zoomFactor, Point center)
+	{
+		ExtendedZoomSemaphore ezs = null;
+		
+		try
+		{
+			ezs = newExtendedZoomSemaphoreToAll();
+			this.setPreventFromRepainting(true);
+			a_intern.changeZoomFactor( zoomFactor, center );
+		}
+		finally
+		{
+			unblockComponentsAfterHavingZoomed( ezs );
+		}
+	}
+
+	protected void unblockComponentsAfterHavingZoomed( ExtendedZoomSemaphore ezs )
+	{
+		unblockComponentsAfterHavingZoomed( ezs, null );
+	}
+
+	protected void unblockComponentsAfterHavingZoomed( ExtendedZoomSemaphore ezs,
+													Runnable executeAfterZooming )
+	{
+		unsetPreventFromRepaintingWithSemaphore( ezs, 1350, executeAfterZooming );
+		repaint();
 	}
 
 	public void updateRadioButtonMenus()
@@ -1393,7 +1507,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		}
 
 		if( a_intern != null )
-			a_intern.changeZoomFactor( zoomFactor, center );
+			changeZoomFactorPreventingToPaint( zoomFactor, center );
 	}
 
 	@Override
@@ -1617,7 +1731,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		NewVersionQueryExecution executor = new NewVersionQueryExecution( parentJFrame,
 																			getAppliConf(),
 																			isStart,
-																			onlyShowResultWhenThereIsANewDownloadableVersion );
+																			onlyShowResultWhenThereIsANewDownloadableVersion,
+																			null );
 
 		executor.run();
 	}
@@ -1646,19 +1761,25 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		a_intern.doInternationalizationTasksOnTheFly(comp);
 	}
 
-	public boolean alreadyInitialized( Component linePanel )
+	public boolean alreadyInitialized( Component comp )
 	{
-		return( a_intern.getResizeRelocateComponentItem(linePanel) != null );
+		return( a_intern.getResizeRelocateComponentItem(comp) != null );
 	}
 
-	protected JPopupMenu getNonInheritedPopupMenu( Component comp )
+	protected JPopupMenu getNonInheritedPopupMenu( JFrameInternationalization inter,
+													Component comp )
 	{
 		JPopupMenu result = null;
 		if( comp instanceof JTextComponent )
 		{
-			result = a_intern.getNonInheritedPopupMenu( (JTextComponent) comp );
+			result = inter.getNonInheritedPopupMenu( (JTextComponent) comp );
 		}
 		return( result );
+	}
+
+	protected JPopupMenu getNonInheritedPopupMenu( Component comp )
+	{
+		return( getNonInheritedPopupMenu( a_intern, comp ) );
 	}
 
 	protected Component processComponentOnTheFlyForDefaultResizeRelocateItem( MapResizeRelocateComponentItem mapRrci,
@@ -1670,8 +1791,12 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( result );
 	}
 
-	public MapResizeRelocateComponentItem zoomComponentOnTheFly( Component comp, ResizeRelocateItem rri )
+	public ZoomComponentOnTheFlyResult zoomComponentOnTheFly( Component comp, ResizeRelocateItem rri )
 	{
+		ZoomComponentOnTheFlyResult result = new ZoomComponentOnTheFlyResult();
+
+		ExtendedZoomSemaphore ezs = createExtendedZoomSemaphore();
+
 		MapResizeRelocateComponentItem mapRrci = new MapResizeRelocateComponentItem();
 		if( ! alreadyInitialized( comp ) )
 		{
@@ -1680,6 +1805,14 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 			if( comp instanceof ComposedComponent )
 				mapRrci.putAll( ( (ComposedComponent) comp).getResizeRelocateInfo() );
+
+			for( ResizeRelocateItem rri2: mapRrci.values() )
+			{
+				rri2.registerListeners();
+				rri.setExtendedZoomSemaphore(ezs);
+				ezs.increaseCount();
+			}
+
 			a_intern.switchToZoomComponents( comp, mapRrci );
 
 			doInternationalizationTasksOnTheFly( comp );
@@ -1687,49 +1820,150 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			ComponentFunctions.instance().browseComponentHierarchy(comp, (co) -> processComponentOnTheFlyForDefaultResizeRelocateItem( mapRrci, co ) );
 		}
 
-		return( mapRrci );
+		result.setMapResizeRelocateComponentItem(mapRrci);
+		result.setExtendedZoomSemaphore( ezs );
+		_listOfZoomSemaphoresOnTheFly.add( ezs );
+
+		return( result );
+	}
+
+	protected ExtendedZoomSemaphore createExtendedZoomSemaphore()
+	{
+		ExtendedZoomSemaphore result = new ExtendedZoomSemaphore();
+		result.init();
+
+		return( result );
+	}
+
+	protected void setExtendedZoomSemaphoreToAll( ExtendedZoomSemaphore ezs )
+	{
+		for( ResizeRelocateItem rri: a_intern.getListOfResizeRelocateItems() )
+		{
+			rri.setExtendedZoomSemaphore(ezs);
+			ezs.increaseCount();
+		}
+	}
+
+	protected void waitForExtendedZoomSemaphoresOnTheFly( int ms )
+	{
+		long start = System.currentTimeMillis();
+		
+		while(!_listOfZoomSemaphoresOnTheFly.isEmpty() )
+		{
+			ExtendedZoomSemaphore ezs = _listOfZoomSemaphoresOnTheFly.remove(0);
+			int millisToWaitForCurrent = (int) Math.max( 0, ms - System.currentTimeMillis() + start );
+			ezs.tryAcquire( millisToWaitForCurrent );
+		}
+	}
+
+	protected ExtendedZoomSemaphore newExtendedZoomSemaphoreToAll()
+	{
+		ExtendedZoomSemaphore result = createExtendedZoomSemaphore();
+		setExtendedZoomSemaphoreToAll(result);
+
+		return( result );
+	}
+
+	protected void unsetPreventFromRepaintingWithSemaphore( ExtendedZoomSemaphore ezs, int ms,
+															Runnable executeAfterZooming )
+	{
+		if( ezs != null )
+			executeTask(
+				() -> {
+					ezs.tryAcquire(ms);
+					if( ezs.getSemaphore().getQueueLength() > 0 )
+						System.out.println( "Semaphore queue length: " + ezs.getSemaphore().getQueueLength() );
+
+					SwingUtilities.invokeLater( () -> {
+						setPreventFromRepainting( false ); repaint();
+						if( executeAfterZooming != null )
+							executeAfterZooming.run();
+					});
+				});
 	}
 
 	public <CC extends Component> void initResizeRelocateItemsOComponentOnTheFly( Collection<CC> listOfRootComponents,
 																				MapResizeRelocateComponentItem mapRrci,
-																				boolean setMinSize )
+																				boolean setMinSize,
+																				Runnable executeAfterZooming )
 	{
-		ThreadFunctions.instance().delayedInvoke( () -> SwingUtilities.invokeLater( () -> {
-			ZoomParam zp1 = new ZoomParam( 1.0D );
-			ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
-			a_intern.addMapResizeRelocateComponents(mapRrci);
-			for( Component rootComp: listOfRootComponents )
-			{
-				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
-					(comp) -> {
-						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
-						if( rri != null )
-							rri.newExpectedZoomParam(zp);
+		JFrameInternationalization inter = a_intern;
 
-						Component result = getNonInheritedPopupMenu( comp );
+		if( inter != null )
+		{
+			executeTask(() -> {
+				waitForExtendedZoomSemaphoresOnTheFly( 350 );
+				SwingUtilities.invokeLater(() -> {
+					ExtendedZoomSemaphore ezs = newExtendedZoomSemaphoreToAll();
 
-						return( result );
-					});
-				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
-					(comp) -> {
-						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
-						if( rri != null )
-							rri.execute(zp);
+					try
+					{
+						setPreventFromRepainting( true );
 
-						Component result = getNonInheritedPopupMenu( comp );
+						ZoomParam zp1 = new ZoomParam( 1.0D );
+						ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
+						inter.addMapResizeRelocateComponents(mapRrci);
+						for( Component rootComp: listOfRootComponents )
+						{
+							ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+								(comp) -> {
+									ResizeRelocateItem rri = inter.getResizeRelocateComponentItem(comp);
+									if( rri != null )
+									{
+										if( !rri.isInitialized() )
+										{
+											ExecutionFunctions.instance().safeMethodExecution( () -> rri.initialize() );
+										}
 
-						return( result );
-					});
-			}
+										rri.newExpectedZoomParam(zp);
+									}
 
-			resizeFrameToContents(setMinSize);
+									Component result = getNonInheritedPopupMenu( inter, comp );
 
-			SwingUtilities.invokeLater( () -> {
-				setMaximumSize( getSize() );
-				repaint();
-				});
-		} ),
-		250);
+									return( result );
+								});
+
+							ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+								(comp) -> {
+									ResizeRelocateItem rri = inter.getResizeRelocateComponentItem(comp);
+									if( rri != null )
+										rri.execute(zp);
+
+									Component result = getNonInheritedPopupMenu( inter, comp );
+
+									return( result );
+								});
+						}
+
+						ezs.setActivated(true);
+						resizeFrameToContents(setMinSize);
+					}
+					finally
+					{
+						adjustMaximumSizeToContents();
+
+						unsetPreventFromRepaintingWithSemaphore( ezs, 350, executeAfterZooming );
+					}
+				} );
+			} );
+		}
+	}
+
+	public void executeTask( Runnable runnable )
+	{
+		_pullOfWorkers.addPendingNonStopableExecutor( runnable );
+	}
+
+	public void executeDelayedTask( Runnable runnable, int delayMs )
+	{
+		_pullOfWorkers.addPendingNonStopableExecutor( () -> ThreadFunctions.instance().invokeWithDelay(runnable, delayMs) );
+	}
+
+	protected void adjustMaximumSizeToContents()
+	{
+		SwingUtilities.invokeLater( () -> {
+			setMaximumSize( getSize() );
+			});
 	}
 
 	protected void resizeFrameToContents()
@@ -1751,13 +1985,101 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		});
 	}
 
-	protected ScrollPaneMouseWheelListener createMouseWheelListener( JScrollPane sp )
+	protected ScrollPaneMouseListener createMouseWheelListener( JScrollPane sp )
 	{
-		return( new ScrollPaneMouseWheelListener( sp ) );
+		return( new ScrollPaneMouseListener( sp ) );
 	}
 
 	public void applyConfigurationChanges()
 	{
 		updateRadioButtonMenus();
+	}
+
+	protected Object getInitializedLock()
+	{
+		return( _initializedLock );
+	}
+
+	public void setPreventFromRepainting( boolean value )
+	{
+		synchronized( _initializedLock )
+		{
+			if( !_preventFromRepainting && value )
+			{
+				if( !isInitialized() )
+					SwingUtilities.invokeLater( () -> super.setVisible( false ) );
+				else
+					SwingUtilities.invokeLater( () -> setIgnoreRepaintRecursive(true) );
+			}
+
+			boolean hasToUnblock = _preventFromRepainting && !value;
+			_preventFromRepainting = value;
+			if( hasToUnblock )
+			{
+				if( _isVisible && !isVisible() )
+					SwingUtilities.invokeLater( () -> setVisible( _isVisible ) );
+				else
+					SwingUtilities.invokeLater( () -> { setIgnoreRepaintRecursive(false); repaint(); } );
+				
+				revalidateEverything();
+			}
+		}
+	}
+
+	protected void revalidateEverything()
+	{
+		SwingUtilities.invokeLater( () -> {
+			ComponentFunctions.instance().browseComponentHierarchy( this,
+				(comp) -> {
+					if( comp instanceof Container )
+						( (Container) comp ).revalidate();
+					return null;
+				});
+		});
+	}
+
+	protected void setIgnoreRepaintRecursive( boolean value )
+	{
+		setIgnoreRepaintRecursive( this, value );
+	}
+
+	protected boolean getPreventFromRepainting()
+	{
+		return( _preventFromRepainting );
+	}
+
+	@Override
+	public void setVisible( boolean value )
+	{
+		synchronized( _initializedLock )
+		{
+			_isVisible = value;
+
+			if( !getPreventFromRepainting() ) {
+				if( SwingUtilities.isEventDispatchThread() )
+					super.setVisible( value );
+				else
+					SwingUtilities.invokeLater( () -> super.setVisible( value ) );
+			}
+		}
+	}
+
+	protected boolean isInitialized()
+	{
+		synchronized( _initializedLock )
+		{
+			return( _isInitialized );
+		}
+	}
+
+	@Override
+	public void setInitialized()
+	{
+		synchronized( _initializedLock )
+		{
+			_isInitialized = true;
+			setPreventFromRepainting(false);
+			SwingUtilities.invokeLater( () -> repaint() );
+		}
 	}
 }

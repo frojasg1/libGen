@@ -43,6 +43,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.Vector;
 import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicProgressBarUI;
 
 /**
@@ -79,6 +80,8 @@ public abstract class GenericBasicSplash extends InternationalizedJFrame impleme
 	{
 		super();
 //		setImage( image );
+
+//		setPreventFromRepainting(false);
 
 		setUndecorated( true );
 
@@ -147,7 +150,10 @@ public abstract class GenericBasicSplash extends InternationalizedJFrame impleme
 		this.registerInternationalString(CONF_LOOKING_FOR_A_NEW_VERSION, "Looking for a new version ..." );
 		this.registerInternationalString(CONF_SHOWING_WHAT_IS_NEW, "Showing what is new ..." );
 
-		zoomImage();
+		SwingUtilities.invokeLater( () -> {
+			zoomImage();
+//			repaint();
+		} );
 	}
 
 	/**

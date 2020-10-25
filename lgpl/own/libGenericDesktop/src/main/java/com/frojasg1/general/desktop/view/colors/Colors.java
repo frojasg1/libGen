@@ -36,4 +36,8 @@ public class Colors {
 	public static final Color APPLE_GREEN = new Color( 228, 255, 201 );
 
 	public static final Color BUTAN = new Color( 254, 169, 0);
+
+	public static final Color PURPLE = new Color( 204, 102, 255 );
+
+	
 }

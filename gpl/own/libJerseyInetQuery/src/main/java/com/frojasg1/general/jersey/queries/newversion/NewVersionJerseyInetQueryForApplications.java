@@ -33,6 +33,12 @@ import com.frojasg1.generic.GenericFunctions;
 public class NewVersionJerseyInetQueryForApplications extends NewVersionJerseyInetQuery
 {
 	@Override
+	public void init( String url )
+	{
+		super.init( url );
+	}
+
+	@Override
 	public NewVersionQueryResult queryForApplication( boolean isApplicationStart ) throws InetQueryException
 	{
 		NewVersionQueryResult result = null;

@@ -29,6 +29,7 @@ import com.frojasg1.applications.common.configuration.application.BaseApplicatio
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.libpdf.api.PDFownerInterface;
 import com.frojasg1.libpdf.threads.LoadPdfControllerInterface;
 import com.frojasg1.libpdf.api.PdfDocumentWrapper;
@@ -54,8 +55,14 @@ import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Vector;
+import javax.swing.JComboBox;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
@@ -94,6 +101,10 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	protected ImageWrapper _hoverImage = null;
 	protected GlyphWrapper _hoverGlyph = null;
+
+	protected PdfDocumentWrapper _initialDocument = null;
+
+	protected KeyListener _keyListener = null;
 
 	/**
 	 * Creates new form MainWindow
@@ -167,16 +178,59 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		return( _pdfContentPanel.getNumPages() );
 	}
 
-	public void setNewPDF( PdfDocumentWrapper document )
+	protected PdfDocumentWrapper getInitialDocument()
+	{
+		synchronized( getInitializedLock() )
+		{
+			return( _initialDocument );
+		}
+	}
+
+	protected void setWaitingInitialDocument( PdfDocumentWrapper initialDocument )
+	{
+		synchronized( getInitializedLock() )
+		{
+			_initialDocument = initialDocument;
+		}
+	}
+
+	public synchronized boolean setNewPDF( PdfDocumentWrapper document )
 	{
 //		_pageSegmentator = null;
+		boolean documentWasSet = false;
+		synchronized( getInitializedLock() )
+		{
+			if( !isInitialized() )
+			{
+				setWaitingInitialDocument( document );
+				return( documentWasSet );
+			}
+		}
 
 		_pdfContentPanel.setNewPDF( document );
 		setTitle( getPdfFileName() );
 		setDocument( document );
 
+		documentWasSet = true;
+		return( documentWasSet );
 //		setNumberOfPages( getNumPages() );
 //		setRenderSegmentsOfPages( hasToShowSegments() );
+	}
+
+	@Override
+	public void setInitialized()
+	{
+		PdfDocumentWrapper initialDocument = null;
+		synchronized( getInitializedLock() )
+		{
+			super.setInitialized();
+
+			initialDocument = getInitialDocument();
+			setWaitingInitialDocument( null );
+		}
+
+		if( initialDocument != null )
+			setNewPDF( initialDocument );
 	}
 
 	protected void setDocument( PdfDocumentWrapper document )
@@ -261,6 +315,16 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		return( result );
 	}
 */
+
+	protected KeyListener getKeyListener()
+	{
+		return( _keyListener );
+	}
+
+	protected void setKeyListener( KeyListener listener )
+	{
+		_keyListener = listener;
+	}
 
 	protected PdfContentPanel createPdfContentPanel()
 	{
@@ -377,7 +441,7 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		}
 	}
 
-	protected void setWindowConfiguration( )
+	protected MapResizeRelocateComponentItem getMapResizeRelocateComponentItem()
 	{
 		MapResizeRelocateComponentItem mapRRCI = new MapResizeRelocateComponentItem();
 		try
@@ -394,6 +458,19 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 			th.printStackTrace();
 		}
 
+		return( mapRRCI );
+	}
+
+	protected Vector<JPopupMenu> getJPopupMenuVector()
+	{
+		return( null );
+	}
+
+	protected void setWindowConfiguration( )
+	{
+		MapResizeRelocateComponentItem mapRRCI = getMapResizeRelocateComponentItem();
+		Vector<JPopupMenu> popupMenuVector = getJPopupMenuVector();
+
 		createInternationalization(	getAppliConf().getConfigurationMainFolder(),
 									getAppliConf().getApplicationNameFolder(),
 									getAppliConf().getApplicationGroup(),
@@ -401,11 +478,10 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 									_configurationBaseFileName,
 									this,
 									null,
-									null,
+									popupMenuVector,
 									true,
 									mapRRCI );
 	}
-
 
 	@Override
 	public void internationalizationInitializationEndCallback()
@@ -700,12 +776,52 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		_pdfObjectsControllerListener = createPdfObjectsControllerListener();
 		_componentListener = createComponentListener();
 		addComponentListener( _componentListener );
+
+		setKeyListener( createKeyListener() );
+		addKeyListenerRecursive( getKeyListener() );
 	}
 
 	protected void removeListeners()
 	{
 		_pdfObjectsControllerListener.releaseResources();
 		removeComponentListener( _componentListener );
+		removeKeyListenerRecursive( getKeyListener() );
+	}
+
+	protected void addKeyListenerRecursive( KeyListener listener )
+	{
+		ComponentFunctions.instance().browseComponentHierarchy( this,
+			(comp) -> {
+				comp.addKeyListener(listener);
+				return( null );
+		});
+	}
+
+	protected void removeKeyListenerRecursive( KeyListener listener )
+	{
+		ComponentFunctions.instance().browseComponentHierarchy( this,
+			(comp) -> {
+				comp.removeKeyListener(listener);
+				return( null );
+		});
+	}
+
+	protected KeyListener createKeyListener()
+	{
+		KeyListener result = new KeyAdapter() {
+			@Override
+			public void keyPressed( KeyEvent evt ) {
+				if( ! ( evt.getSource() instanceof JComboBox ) )
+				{
+					if( evt.getKeyCode() == KeyEvent.VK_PAGE_DOWN )
+						nextPage();
+					else if( evt.getKeyCode() == KeyEvent.VK_PAGE_UP )
+						previousPage();
+				}
+			}
+		};
+
+		return( result );
 	}
 
 	public PdfObjectsControllerListenerBase createPdfObjectsControllerListener()

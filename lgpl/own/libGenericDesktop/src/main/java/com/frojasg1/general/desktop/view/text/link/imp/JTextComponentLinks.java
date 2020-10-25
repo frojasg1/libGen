@@ -85,7 +85,7 @@ public class JTextComponentLinks<KK extends Comparable<KK>, VV>
 
 	public VV getLink( int pos )
 	{
-		VV result = _linkMap.getValueFromSimplifiedKey(pos);
+		VV result = _linkMap.getFirstValueFromSimplifiedKey(pos);
 
 		return( result );
 	}

@@ -52,7 +52,7 @@ public class CustomizedJPasswordField extends JPasswordField
 													FocusListener,
 													KeyListener
 {
-	protected static final String sa_configurationBaseFileName = "CustomizedJPasswordField.properties";
+	public static final String sa_configurationBaseFileName = "CustomizedJPasswordField.properties";
 	protected static final String sa_PROPERTIES_PATH_IN_JAR = GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR;
 
 	HintForComponent _hintForComponent = null;

@@ -50,7 +50,6 @@ import com.frojasg1.applications.common.components.hints.HintConfiguration;
 import com.frojasg1.applications.common.components.hints.HintForComponent;
 import com.frojasg1.applications.common.components.internationalization.radiobuttonmenu.ChangeRadioButtonMenuItemListResult;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
-import com.frojasg1.applications.common.components.internationalization.window.InternationalizedJDialog;
 import com.frojasg1.applications.common.components.internationalization.window.MouseListenerForRepaint;
 import com.frojasg1.applications.common.components.zoom.SwitchToZoomComponents;
 import com.frojasg1.general.desktop.view.FontFunctions;
@@ -111,9 +110,9 @@ import com.frojasg1.general.desktop.GenericDesktopConstants;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.threads.ThreadFunctions;
 import java.util.HashMap;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
 
 /**
  *
@@ -202,7 +201,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 	protected boolean _isInitialized = false;
 
-	protected ZoomParam _previousZoomParam = new ZoomParam( 1.0D );
+//	protected ZoomParam _previousZoomParam = new ZoomParam( 1.0D );
+	protected double _previousZoomFactor = 1.0D;
 	protected ZoomParam _newZoomParam = new ZoomParam( 1.0D );
 
 	protected boolean _adjustMinSizeOFFrameToContents = false;
@@ -556,19 +556,34 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 	protected void delayedInvokeCallback()
 	{
-		ThreadFunctions.instance().delayedInvoke( () -> SwingUtilities.invokeLater( () -> invokeCallback() ), _delayToInvokeCallback );
+		ThreadFunctions.instance().delayedSafeInvoke( () -> SwingUtilities.invokeLater( () -> invokeCallback() ), _delayToInvokeCallback );
 	}
 
 	protected void invokeCallback()
 	{
+//		prepareResizeOrRelocateToZoom(); // just in case any JTextPane free resizable was not updated its _previousZoomFactorWhenPickingData
+
+		InternationalizationInitializationEndCallback iiec = null;
 		if( a_parentFrame instanceof InternationalizationInitializationEndCallback )
 		{
-			InternationalizationInitializationEndCallback iiec = (InternationalizationInitializationEndCallback) a_parentFrame;
+			iiec = (InternationalizationInitializationEndCallback) a_parentFrame;
 			iiec.internationalizationInitializationEndCallback();
-			iiec.setAlreadyInitializedAfterCallback();
+		}
 
-			if( _initializationEndCallBack != null )
-				_initializationEndCallBack.accept(iiec);
+		if( a_parentFrame instanceof InternationalizedWindow )
+		{
+			InternationalizedWindow iw = (InternationalizedWindow) a_parentFrame;
+			InternationalizationInitializationEndCallback iiecFinal = iiec;
+			ThreadFunctions.instance().delayedSafeInvokeEventDispatchThread( () -> {
+
+				iw.setInitialized();
+				
+				if( ( _initializationEndCallBack != null ) && ( iiecFinal != null ) )
+				{
+					_initializationEndCallBack.accept(iiecFinal);
+					iiecFinal.setAlreadyInitializedAfterCallback();
+				}
+			}, 500 );
 		}
 	}
 
@@ -669,6 +684,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		_differenceOfFrameResize = new Dimension( (int) ( newPreferredSize.getWidth() - preferredWidth ),
 													(int) (newPreferredSize.getHeight() - preferredHeight ));
 
+//		if( !a_parentFrame.isMinimumSizeSet() && setMinSize )
 		if( setMinSize )
 			a_parentFrame.setMinimumSize(newSize);
 
@@ -678,9 +694,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		autoResizeFrameDesdendantPanels( a_parentFrame, _differenceOfFrameResize );
 	}
 
-	protected void doSetsPriorToFrameResizing( double zoomFactor )
+	protected void doTasksPriorToFrameResizing( double relativeFactor )// double zoomFactor )
 	{
-		ZoomParam zp = createZoomParam( zoomFactor );
+//		ZoomParam zp = createZoomParam( zoomFactor );
+		ZoomParam zp = _newZoomParam;
+		double zoomFactor = zp.getZoomFactor();
 		if( a_parentFrame instanceof JFrame )
 			pickPreviousDataOrResizeOrChangeZoomFactor(RESIZE_OR_RELOCATE_PROCEDURE,
 														( (JFrame) a_parentFrame ).getJMenuBar(),
@@ -705,27 +723,38 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 										)
 				);
 
-		if( a_parentFrame.isMinimumSizeSet() )
-		{
-			Dimension previousMinimumSize = a_parentFrame.getMinimumSize();
-			Dimension newMinimumSize = ViewFunctions.instance().getNewDimension(previousMinimumSize, _frameBorder, zoomFactor/_previousZoomParam.getZoomFactor() );
-			a_parentFrame.setMinimumSize( newMinimumSize );
-		}
+		zoomMinimumSizeIf( ( relativeFactor < 1.0D ), relativeFactor );
 
 		Dimension previousMaximumSize = a_parentFrame.getMaximumSize();
-		Dimension newMaximumSize = ViewFunctions.instance().getNewDimension(previousMaximumSize, _frameBorder, zoomFactor/_previousZoomParam.getZoomFactor() );
+		Dimension newMaximumSize = ViewFunctions.instance().getNewDimension(previousMaximumSize, _frameBorder, zoomFactor/_previousZoomFactor );//_previousZoomParam.getZoomFactor() );
 		a_parentFrame.setMaximumSize( newMaximumSize );
 
 //		Dimension newMinimumSize = ViewFunctions.instance().getNewDimension( rri.getComponentOriginalDimensions().getOriginalMinimumSize(), _frameBorder, zoomFactor );
 //		Dimension newMaximumSize = ViewFunctions.instance().getNewDimension( rri.getComponentOriginalDimensions().getOriginalMaximumSize(), _frameBorder, zoomFactor );
 	}
 
+	protected void doTasksAfterToFrameResizing( double relativeFactor )// double zoomFactor )
+	{
+		zoomMinimumSizeIf( ( relativeFactor > 1.0D ), relativeFactor );
+	}
+
+	protected void zoomMinimumSizeIf( boolean hasToZoom, double relativeFactor )
+	{
+		if( a_parentFrame.isMinimumSizeSet() && hasToZoom )
+		{
+			Dimension previousMinimumSize = a_parentFrame.getMinimumSize();
+			Dimension newMinimumSize = ViewFunctions.instance().getNewDimension(previousMinimumSize, _frameBorder, relativeFactor );//zoomFactor/_previousZoomFactor );//_previousZoomParam.getZoomFactor() );
+			a_parentFrame.setMinimumSize( newMinimumSize );
+		}
+	}
+
 	public void changeZoomFactorCenteredForFrame( double zoomFactor, Point center )
 	{
-		_newZoomParam = createZoomParam( zoomFactor );
-		double originalFactor = _previousZoomParam.getZoomFactor();
-//		double newFactor = originalFactor * zoomFactor;
-		double factorOfFactors = zoomFactor/originalFactor;
+//		_newZoomParam = createZoomParam( zoomFactor );
+		_newZoomParam.setZoomFactor( zoomFactor );
+		double originalFactor = _previousZoomFactor;//_previousZoomParam.getZoomFactor();
+//		double relativeFactor = originalFactor * zoomFactor;
+		double relativeFactor = zoomFactor/originalFactor;
 
 		Rectangle previousBounds = a_parentFrame.getBounds();
 		if( center == null )
@@ -740,19 +769,21 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		{
 //			a_parentFrame.setBounds( newBounds );
 
-			_previousZoomParam = createZoomParam( zoomFactor );
+//			_previousZoomParam = createZoomParam( zoomFactor );
+			_previousZoomFactor = zoomFactor;
 
 			prepareResizeOrRelocateToZoom( );
 
-			SwingUtilities.invokeLater( () -> {
-				a_parentFrame.setSize( ViewFunctions.instance().getNewDimension(a_parentFrame.getSize(), factorOfFactors) );
+			SwingUtilities.invokeLater(() -> {
+				a_parentFrame.setSize(ViewFunctions.instance().getNewDimension(a_parentFrame.getSize(), relativeFactor) );
 			});
 		}
 		else
 		{
-			doSetsPriorToFrameResizing( zoomFactor );
+//			prepareResizeOrRelocateToZoom( );
+			doTasksPriorToFrameResizing(relativeFactor);// zoomFactor );
 
-			Rectangle newBounds = ViewFunctions.instance().calculateNewBoundsOnScreen( previousBounds, _frameBorder, center, factorOfFactors );
+			Rectangle newBounds = ViewFunctions.instance().calculateNewBoundsOnScreen(previousBounds, _frameBorder, center, relativeFactor );
 			a_parentFrame.setPreferredSize( new Dimension( (int) newBounds.getWidth(),
 														(int) newBounds.getHeight() ) );
 
@@ -774,13 +805,15 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 //				blockResizeRelocateItemsResizeListeners();
 //				a_parentFrame.setBounds( xxCordinate, yyCoordinate, newBounds.width, newBounds.height );
 				a_parentFrame.setBounds( newBounds.x, newBounds.y, newBounds.width, newBounds.height );
+				doTasksAfterToFrameResizing(relativeFactor);// zoomFactor );
 			}
 			finally
 			{
 //				delayedInvocationToUnblockResizeRelocateItemsResizeListeners();
 			}
 
-			_previousZoomParam = createZoomParam( zoomFactor );
+//			_previousZoomParam = createZoomParam( zoomFactor );
+			_previousZoomFactor = zoomFactor;
 		}
 
 		recreateAllUIs();
@@ -980,6 +1013,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	{
 		try
 		{
+			double relativeFactor = 1.0D;
 			if( ! a_formGeneralConfiguration.M_isFirstTime() && isResizable(a_parentFrame) )
 			{
 				Dimension dimen = new Dimension( (int) a_formGeneralConfiguration.M_getIntParamConfiguration(FormGeneralConfiguration.CONF_ANCHO_VENTANA),
@@ -987,9 +1021,9 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 												);
 
 				double originalFactor = a_formGeneralConfiguration.M_getDoubleParamConfiguration(FormGeneralConfiguration.CONF_ZOOM_FACTOR);
-				double newFactor = zoomFactor / originalFactor;
+				relativeFactor = zoomFactor / originalFactor;
 
-				Dimension resizedDim = ViewFunctions.instance().getNewDimension( dimen, _frameBorder, newFactor );
+				Dimension resizedDim = ViewFunctions.instance().getNewDimension(dimen, _frameBorder, relativeFactor );
 
 				Rectangle storedBounds = new Rectangle( (int) a_formGeneralConfiguration.M_getIntParamConfiguration( FormGeneralConfiguration.CONF_POSICION_X),
 												(int) a_formGeneralConfiguration.M_getIntParamConfiguration(FormGeneralConfiguration.CONF_POSICION_Y),
@@ -998,11 +1032,12 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 														);
 
 				Point center = ViewFunctions.instance().getCenter( storedBounds );
-				doSetsPriorToFrameResizing( zoomFactor );
+				double relativeFactor2 = 1.0D;	// zoomFactor is 1.0D, with original size
+				doTasksPriorToFrameResizing(relativeFactor2);// zoomFactor );
 
 				if( hasToPutWindowPosition )
 				{
-					Rectangle newBounds = ViewFunctions.instance().calculateNewBoundsOnScreen( storedBounds, _frameBorder, center, newFactor );
+					Rectangle newBounds = ViewFunctions.instance().calculateNewBoundsOnScreen(storedBounds, _frameBorder, center, relativeFactor );
 //					a_parentFrame.setBounds( newBounds );
 					try
 					{
@@ -1030,14 +1065,16 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 					SwingUtilities.invokeLater( () ->
 						a_parentFrame.setSize( resizedDim ) );
 				}
+				doTasksAfterToFrameResizing(relativeFactor);// zoomFactor );
 			}
 			else
 			{
+				relativeFactor = zoomFactor;
 				Dimension dimen = a_parentFrame.getSize();
 
 				Dimension resizedDim = ViewFunctions.instance().getNewDimension( dimen, _frameBorder, zoomFactor );
 
-				doSetsPriorToFrameResizing( zoomFactor );
+				doTasksPriorToFrameResizing(relativeFactor);// zoomFactor );
 
 				SwingUtilities.invokeLater( () ->
 						a_parentFrame.setSize( resizedDim ) );
@@ -1051,6 +1088,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				{
 					a_parentFrame.setLocation(StaticDesktopDialogsWrapper.getCenteredLocationForComponent_static( a_parentFrame ) );
 				}
+
+				doTasksAfterToFrameResizing(relativeFactor);// zoomFactor );
 			}
 		}
 		catch( Throwable th )
@@ -1845,7 +1884,17 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 //		String name = contnr.getName();
 		String name = getComponentName(contnr);
 
-		if( ( name != null ) && ( !name.equals("") ) )
+		if( contnr instanceof JFrame )
+		{
+			JFrame jfr = (JFrame) contnr;
+			convertPropertiesIntoJFrameTexts( jfr, name, onlyText );
+		}
+		else if( contnr instanceof JDialog )
+		{
+			JDialog jdial = (JDialog) contnr;
+			convertPropertiesIntoJDialogTexts( jdial, name, onlyText );
+		}
+		else if( ( name != null ) && ( !name.equals("") ) )
 		{
 			if( contnr instanceof JComponent )
 			{
@@ -1892,16 +1941,6 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			{
 				JPopupMenu jpumnu = (JPopupMenu) contnr;
 				convertPropertiesIntoJPopUpMenuTexts( jpumnu, name, onlyText );
-			}
-			else if( contnr instanceof JFrame )
-			{
-				JFrame jfr = (JFrame) contnr;
-				convertPropertiesIntoJFrameTexts( jfr, name, onlyText );
-			}
-			else if( contnr instanceof JDialog )
-			{
-				JDialog jdial = (JDialog) contnr;
-				convertPropertiesIntoJDialogTexts( jdial, name, onlyText );
 			}
 			else if( contnr instanceof JInternalFrame )
 			{
@@ -2002,16 +2041,16 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 												boolean onlyText ) throws InternException
 	{
 //		String name = jfr.getName();
-		if( ( name != null ) && ( !name.equals("") ) )
-		{
-			String value = a_languageProperties.getProperty( name + "." + TXT_TITLE );
+		String value = a_languageProperties.getProperty( FormLanguageConfiguration.CONF_WINDOW_TITLE );
 
-			if( value != null )
-				jfr.setTitle( value );
-			else
-			{
-//				throw new InternException( "Error cargando propiedades de idioma de " + name + " en " + a_frameParent.getName() );
-			}
+		if( ( value == null ) && ( name != null ) && ( !name.equals("") ) )
+			value = a_languageProperties.getProperty( name + "." + TXT_TITLE );
+
+		if( value != null )
+			jfr.setTitle( value );
+		else
+		{
+//			throw new InternException( "Error cargando propiedades de idioma de " + name + " en " + a_frameParent.getName() );
 		}
 	}
 
@@ -2019,16 +2058,16 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 												boolean onlyText ) throws InternException
 	{
 //		String name = jdial.getName();
-		if( ( name != null ) && ( !name.equals("") ) )
-		{
-			String value = a_languageProperties.getProperty( name + "." + TXT_TITLE );
+		String value = a_languageProperties.getProperty( FormLanguageConfiguration.CONF_WINDOW_TITLE );
 
-			if( value != null )
-				jdial.setTitle( value );
-			else
-			{
-//				throw new InternException( "Error cargando propiedades de idioma de " + name + " en " + a_frameParent.getName() );
-			}
+		if( ( value == null ) && ( name != null ) && ( !name.equals("") ) )
+			value = a_languageProperties.getProperty( name + "." + TXT_TITLE );
+
+		if( value != null )
+			jdial.setTitle( value );
+		else
+		{
+//			throw new InternException( "Error cargando propiedades de idioma de " + name + " en " + a_frameParent.getName() );
 		}
 	}
 
@@ -2126,7 +2165,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				}
 			}
 			else if( ( rri != null ) && ! onlyText )
+			{
 				rri.execute( zp );
+				rri.newExpectedZoomParam(_newZoomParam);
+				rri.registerListeners();
+			}
 		}
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2225,7 +2268,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 		if( level == 1 )
 		{
-			_previousZoomParam = zp;
+//			_previousZoomParam = zp;
+			_previousZoomFactor = zp.getZoomFactor();
 		}
 	}
 
@@ -2326,7 +2370,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	{
 		if( factor > 0 )
 		{
-//			float newFactor = factor / a_lastFactor;
+//			float relativeFactor = factor / a_lastFactor;
 			
 			if( (a_parentFrame != null) && (a_parentFrame instanceof Container ) )
 			{
@@ -2745,7 +2789,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			_newZoomParam = zp;
 		}
 
-		if( comp instanceof JTextPane )
+		if( comp instanceof JTabbedPane )
 		{
 			int ii=0;
 		}
@@ -2851,7 +2895,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 		if( comp == a_parentFrame )
 		{
-			_previousZoomParam = zp;
+//			_previousZoomParam = zp;
+			_previousZoomFactor = zp.getZoomFactor();
 		}
 	}
 /*
@@ -3438,6 +3483,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			rri.setForceExecution( forceExecution );
 			rri.execute( getZoomParam() );
 		}
+	}
+
+	public List<ResizeRelocateItem> getListOfResizeRelocateItems()
+	{
+		return( _mapOfComponents.getListOfResizeRelocateItems() );
 	}
 
 	protected class SetComponentListenerThread extends Thread

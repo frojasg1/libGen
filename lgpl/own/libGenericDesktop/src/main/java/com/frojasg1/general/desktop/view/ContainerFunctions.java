@@ -57,7 +57,7 @@ public class ContainerFunctions
 	{
 		if( ( parent != null ) && ( comp != null ) )
 		{
-			parent.setLayout( null );
+//			parent.setLayout( null );
 			parent.add(comp);
 			comp.setBounds( 0, 0, parent.getWidth(), parent.getHeight() );
 		}

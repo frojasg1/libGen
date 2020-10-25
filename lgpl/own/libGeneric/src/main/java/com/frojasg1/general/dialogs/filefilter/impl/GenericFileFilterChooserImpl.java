@@ -34,7 +34,7 @@ public class GenericFileFilterChooserImpl implements GenericFileFilterChooser,
 
 	public void init()
 	{
-		ThreadFunctions.instance().delayedInvoke( () -> {
+		ThreadFunctions.instance().delayedSafeInvoke( () -> {
 		_internationalizedStringConf = new InternationalizedStringConfImp( GLOBAL_CONF_FILE_NAME,
 								GenericConstants.sa_PROPERTIES_PATH_IN_JAR );
 		registerInternationalizedStrings();
@@ -107,7 +107,6 @@ public class GenericFileFilterChooserImpl implements GenericFileFilterChooser,
 
 	protected void registerInternationalizedStrings()
 	{
-		// TODO: translate
 		this.registerInternationalString(CONF_GENERIC_FILE_FILTER_FOR_EXECUTABLE_BY_ATTRIBUTES_DESCRIPTION, "File filter for executable attributes" );
 	}
 }

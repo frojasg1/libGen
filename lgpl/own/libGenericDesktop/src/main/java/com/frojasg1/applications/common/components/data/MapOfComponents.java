@@ -28,7 +28,9 @@ import java.awt.Component;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 
 /**
@@ -67,7 +69,15 @@ public class MapOfComponents
 		}
 		return( result );
 	}
-	
+
+	public List<ResizeRelocateItem> getListOfResizeRelocateItems()
+	{
+		return( _map.values().stream()
+					.map( cd -> cd.getResizeRelocateItem() )
+					.filter( rri -> ( rri != null ) )
+					.collect( Collectors.toList() ) );
+	}
+
 	public ResizeRelocateItem getResizeRelocateItem( Component comp )
 	{
 		ResizeRelocateItem result = null;

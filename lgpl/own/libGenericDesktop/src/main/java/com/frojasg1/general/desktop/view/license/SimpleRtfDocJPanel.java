@@ -22,6 +22,7 @@ import com.frojasg1.general.desktop.view.text.link.imp.ScrollableJTextComponentU
 import com.frojasg1.general.desktop.files.DesktopResourceFunctions;
 import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
+import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.general.desktop.DesktopStreamFunctions;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
@@ -38,7 +39,7 @@ import javax.swing.text.Document;
  */
 public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedComponent
 {
-	protected MapResizeRelocateComponentItem _mapRRCI = null;
+	protected MapResizeRelocateComponentItem _resizeRelocateInfo = null;
 	protected JEditorPane _rtfEditorPane = null;
 	protected ScrollableJTextComponentUrlLauncher _urlLauncher = new ScrollableJTextComponentUrlLauncher();
 
@@ -52,11 +53,26 @@ public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedCompon
 		initComponents();
 
 //		setPanelConfiguration();
+		setWindowConfiguration();
 	}
 
 	public MapResizeRelocateComponentItem getMapResizeRelocateComponentItem()
 	{
-		return( _mapRRCI );
+		return( _resizeRelocateInfo );
+	}
+
+	protected void setWindowConfiguration( )
+	{
+		_resizeRelocateInfo = new MapResizeRelocateComponentItem();
+		MapResizeRelocateComponentItem mapRRCI = _resizeRelocateInfo;
+		try
+		{
+			mapRRCI.putResizeRelocateComponentItem( jScrollPane1, ResizeRelocateItem.FILL_WHOLE_PARENT );
+		}
+		catch( Throwable th )
+		{
+			th.printStackTrace();
+		}
 	}
 
 	public void setRtfDocument( Document doc )

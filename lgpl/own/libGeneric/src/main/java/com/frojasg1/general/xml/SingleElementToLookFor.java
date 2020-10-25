@@ -79,8 +79,8 @@ public class SingleElementToLookFor
 			}
 		}
 
-		if( _tagName == null )
-			_tagName = composedLocation;
+//		if( _tagName == null )
+//			_tagName = composedLocation;
 
 		return( result );
 	}
@@ -112,6 +112,9 @@ public class SingleElementToLookFor
 		{
 			_index = 1;
 		}
+
+		if( _tagName == null )
+			_tagName = composedLocation;
 	}
 
 	protected void fillAttValPairMap( )

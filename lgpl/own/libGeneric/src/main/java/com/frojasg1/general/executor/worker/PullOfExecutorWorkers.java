@@ -169,6 +169,21 @@ public class PullOfExecutorWorkers implements ExecutorPullInterface
 	}
 
 	@Override
+	public void addPendingNonStopableExecutor( Runnable executor )
+	{
+		addPendingExecutor( new ExecutorInterface() {
+			@Override
+			public void hasToStop() {}
+			
+			@Override
+			public void execute()
+			{
+				executor.run();
+			}
+		});
+	}
+
+	@Override
 	public void addPendingExecutor( ExecutorInterface executor )
 	{
 		if( !isActivated() )

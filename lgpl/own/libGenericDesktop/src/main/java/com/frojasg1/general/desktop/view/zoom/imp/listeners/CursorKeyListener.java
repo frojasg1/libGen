@@ -52,8 +52,8 @@ public class CursorKeyListener {
 
 	protected void createActions()
 	{
-		_listener.addKey(LEFT_ARROW, new KeyImp( KeyEvent.VK_LEFT, 0 ), () -> addCaretPosition( -1 ) );
-		_listener.addKey(RIGHT_ARROW, new KeyImp( KeyEvent.VK_RIGHT, 0 ), () -> addCaretPosition( 1 ) );
+//		_listener.addKey(LEFT_ARROW, new KeyImp( KeyEvent.VK_LEFT, 0 ), () -> addCaretPosition( -1 ) );
+//		_listener.addKey(RIGHT_ARROW, new KeyImp( KeyEvent.VK_RIGHT, 0 ), () -> addCaretPosition( 1 ) );
 	}
 
 	protected void addCaretPosition( int delta )

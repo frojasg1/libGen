@@ -19,6 +19,7 @@
 package com.frojasg1.general.desktop.view;
 
 import com.frojasg1.applications.common.components.name.ComponentNameComponents;
+import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
@@ -139,23 +140,46 @@ public class ViewFunctions
 		return( result );
 	}
 
-	public void addImageToButtonFast( AbstractButton button, String resourceName, Insets insets )
+	public BufferedImage addImageToButtonFast( AbstractButton button, String resourceName, Insets insets )
 	{
-		addImageToButtonGeneric( button, resourceName, insets,
-				(b,i,xMargin,yMargin) ->
-					ImageFunctions.instance().resizeImage( i, b.getWidth()-xMargin, b.getHeight()-yMargin, null, null, null ) );
+		return( addImageToButtonGeneric( button, resourceName, insets,
+					(b,i,xMargin,yMargin) ->
+						ImageFunctions.instance().resizeImage( i, b.getWidth()-xMargin, b.getHeight()-yMargin, null, null, null ) )
+			);
 	}
 
-	public void addImageToButtonAccurate( AbstractButton button, String resourceName, Insets insets )
+	public BufferedImage addImageToButtonAccurate( AbstractButton button, String resourceName, Insets insets )
 	{
-		addImageToButtonGeneric( button, resourceName, insets,
-				(b,i,xMargin,yMargin) ->
-					ImageFunctions.instance().resizeImageAccurately(i, b.getWidth()-xMargin, b.getHeight()-yMargin ) );		
+		return( addImageToButtonGeneric( button, resourceName, insets,
+					(b,i,xMargin,yMargin) ->
+						ImageFunctions.instance().resizeImageAccurately(i, b.getWidth()-xMargin, b.getHeight()-yMargin ) )
+			);
 	}
 
-	public void addImageToButtonGeneric( AbstractButton button, String resourceName, Insets insets,
+	public BufferedImage addImageToButtonAccurate( AbstractButton button, BufferedImage origImg, Insets insets )
+	{
+		return( addImageToButtonGeneric( button, origImg, insets,
+				(b,i,xMargin,yMargin) ->
+					ImageFunctions.instance().resizeImageAccurately(i, b.getWidth()-xMargin, b.getHeight()-yMargin ) )
+			);
+	}
+
+	public BufferedImage addImageToButtonGeneric( AbstractButton button, String resourceName, Insets insets,
 										CreateImageForButton imageCreatorForButton )
 	{
+		BufferedImage result = null;
+		if( resourceName != null )
+		{
+			BufferedImage origImg = ExecutionFunctions.instance().safeSilentFunctionExecution( () -> ImageFunctions.instance().loadImageFromJar(resourceName) );
+			result = addImageToButtonGeneric( button, origImg, insets, imageCreatorForButton );
+		}
+		return( result );
+	}
+
+	public BufferedImage addImageToButtonGeneric( AbstractButton button, BufferedImage origImg, Insets insets,
+										CreateImageForButton imageCreatorForButton )
+	{
+		BufferedImage result = null;
 		if( ( button.getWidth() > 0 ) &&
 			( button.getHeight() > 0 ) )
 		{
@@ -175,15 +199,13 @@ public class ViewFunctions
 					button.setMargin( insets );
 				}
 
-				if( resourceName != null )
+				if( origImg != null )
 				{
-					BufferedImage img = ImageFunctions.instance().loadImageFromJar(resourceName);
-					if( img != null )
-					{
-						Image resizedImage = imageCreatorForButton.createImage(button, img, xMargin, yMargin );
+					BufferedImage resizedImage = imageCreatorForButton.createImage(button, origImg, xMargin, yMargin );
 
-						button.setIcon(new ImageIcon(resizedImage));
-					}
+					button.setIcon(new ImageIcon(resizedImage));
+					
+					result = resizedImage;
 				}
 			}
 			catch (Throwable ex)
@@ -191,6 +213,8 @@ public class ViewFunctions
 				ex.printStackTrace();
 			}
 		}
+
+		return( result );
 	}
 
 	public Component getRootAncestor( Component comp )

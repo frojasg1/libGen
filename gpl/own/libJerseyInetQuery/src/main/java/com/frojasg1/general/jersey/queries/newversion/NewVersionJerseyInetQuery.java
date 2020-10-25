@@ -36,7 +36,7 @@ import org.json.JSONObject;
 public abstract class NewVersionJerseyInetQuery extends InetQueryBase<NewVersionQueryResult>
 								implements NewVersionQuery
 {
-	protected static final String URL = "http://www.frojasg1.com:8080/downloads_web";
+//	protected static final String URL = "https://frojasg1.com:8080/downloads_web";
 	protected static final String PATH = "/restful/versionQueryQueryInput";
 
 	protected static final String VERSION_OF_SERVICE_PARAM = "versionOfService";
@@ -47,9 +47,10 @@ public abstract class NewVersionJerseyInetQuery extends InetQueryBase<NewVersion
 	protected static final String APPLICATION_LANGUAGE_PARAM = "applicationLanguage";
 	protected static final String WEB_LANGUAGE_PARAM = "webLanguage";
 
-	public NewVersionJerseyInetQuery()
+	@Override
+	public void init( String url )
 	{
-		super( URL, PATH );
+		super.init( url, PATH );
 	}
 
 	@Override
@@ -117,7 +118,7 @@ public abstract class NewVersionJerseyInetQuery extends InetQueryBase<NewVersion
 										String applicationLanguage,
 										String webLanguage ) throws InetQueryException
 	{
-		return( query( VERSION_OF_SERVICE_PARAM, VERSION_OF_SERVICE_VALUE,
+		return( queryGen( VERSION_OF_SERVICE_PARAM, VERSION_OF_SERVICE_VALUE,
 						DOWNLOAD_FILE_PARAM, downloadFile,
 						IS_APPLICATION_START_PARAM, BooleanFunctions.instance().booleanToString(isApplicationStart),
 						APPLICATION_LANGUAGE_PARAM, applicationLanguage,

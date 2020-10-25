@@ -246,11 +246,12 @@ public class MyPDFRenderer extends PDFRenderer
         public void fillPath(int windingRule) throws IOException
         {
             // bbox in user units
-            Shape bbox = getLinePath().getBounds2D();
+//            Shape bbox = getLinePath().getBounds2D();
             
             // draw path (note that getLinePath() is now reset)
             super.fillPath(windingRule);
-            
+
+/*
             // save
             Graphics2D graphics = getGraphics();
             Color color = graphics.getColor();
@@ -267,7 +268,8 @@ public class MyPDFRenderer extends PDFRenderer
             graphics.setStroke(stroke);
             graphics.setColor(color);
             graphics.setClip(clip);
-        }
+*/
+		}
 
         /**
          * Custom annotation rendering.

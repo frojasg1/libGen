@@ -48,6 +48,8 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public static final String CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES = "WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES";
 	public static final String CONF_DOWNLOAD_FILE_TO_IGNORE = "DOWNLOAD_FILE_TO_IGNORE";
 
+	public static final String CONF_URL_FOR_NEW_VERSION_QUERY = "URL_FOR_NEW_VERSION_QUERY";
+
 	public static final String ES_LANGUAGE = "ES";	 // Spanish language
 	public static final String EN_LANGUAGE = "EN";	 // English language
 
@@ -84,6 +86,8 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 
 		result.setProperty(CONF_ZOOM_FACTOR, "1.0" );
 		result.setProperty(CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES, "" );
+
+		result.setProperty(CONF_URL_FOR_NEW_VERSION_QUERY, "https://frojasg1.com:8443/downloads_web" );
 
 		return( result );
 	}
@@ -180,6 +184,18 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public String getLastDirectory()
 	{
 		return( M_getStrParamConfiguration( CONF_LAST_DIRECTORY ) );
+	}
+
+	@Override
+	public String getUrlForNewVersionQuery()
+	{
+		return( M_getStrParamConfiguration( CONF_URL_FOR_NEW_VERSION_QUERY ) );
+	}
+
+	@Override
+	public void setUrlForNewVersionQuery( String value )
+	{
+		M_setStrParamConfiguration( CONF_URL_FOR_NEW_VERSION_QUERY, value );
 	}
 
 	@Override

@@ -6,6 +6,7 @@
 package com.frojasg1.general.xml.persistency.loader.impl;
 
 import com.frojasg1.general.CollectionFunctions;
+import com.frojasg1.general.DoubleFunctions;
 import com.frojasg1.general.xml.XmlElement;
 import com.frojasg1.general.xml.XmlFunctions;
 import com.frojasg1.general.xml.persistency.loader.ModelToXml;
@@ -63,4 +64,8 @@ public abstract class ModelToXmlBase<CC> implements ModelToXml<CC>
 		return( result );
 	}
 
+	protected String format( double value )
+	{
+		return( DoubleFunctions.instance().format( value ) );
+	}
 }

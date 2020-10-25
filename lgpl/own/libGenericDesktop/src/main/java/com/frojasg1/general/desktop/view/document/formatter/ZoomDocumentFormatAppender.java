@@ -20,8 +20,6 @@ package com.frojasg1.general.desktop.view.document.formatter;
 
 import com.frojasg1.general.document.formatted.FormatForText;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
-import com.frojasg1.general.desktop.view.FontFunctions;
-import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.desktop.view.text.link.imp.JTextComponentGenLinkListener;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkListener;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkServer;
@@ -32,12 +30,10 @@ import com.frojasg1.general.document.formatted.text.imp.FormattedTextList;
 import com.frojasg1.general.document.formatted.text.imp.FormattedTextListElem;
 import com.frojasg1.general.document.formatted.text.imp.FormattedTextParagraph;
 import com.frojasg1.general.document.formatter.FormatterUtils;
-import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.number.IntegerReference;
 import com.frojasg1.general.string.StringFunctions;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JTextPane;
@@ -68,6 +64,7 @@ public abstract class ZoomDocumentFormatAppender<MM> extends ZoomDocumentFormatt
 
 		_mClass = mClass;
 		_linkListener = createLinkListener();
+		_linkListener.setJTextComponent(pane);
 	}
 
 	@Override

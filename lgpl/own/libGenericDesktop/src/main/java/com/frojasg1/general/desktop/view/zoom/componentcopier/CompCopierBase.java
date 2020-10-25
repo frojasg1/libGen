@@ -44,6 +44,16 @@ public abstract class CompCopierBase<CC extends Component> implements CompCopier
 		_list.add( copier );
 	}
 
+	protected boolean isInnerClass( Object obj )
+	{
+		boolean result = false;
+
+		if( obj != null )
+			result = obj.getClass().getName().contains( "$" );
+
+		return( result );
+	}
+
 	protected boolean isClassOfJdk( Object obj )
 	{
 		boolean result = false;

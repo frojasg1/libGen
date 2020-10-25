@@ -260,6 +260,22 @@ public class ComponentCopier extends CompCopierBase<Component>
 
 	protected void copyKeyListenerList( Component originalComponent, Component newComponent )
 	{
+/*
+		if( ( orig != null ) && ( output != null ) )
+		{
+			KeyListener[] listeners = orig.getKeyListeners();
+			if( listeners != null )
+			{
+				for( KeyListener listener: listeners )
+				{
+					orig.removeKeyListener(listener);
+
+//					if( !isClassOfJdk( listener ) )
+//						output.addKeyListener(listener);
+				}
+			}
+		}
+*/
 		copyListeners( originalComponent, newComponent,
 						KeyListener.class,
 						(c) -> c.getKeyListeners(),

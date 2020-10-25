@@ -37,4 +37,9 @@ public class ZoomParam implements ParamInterface
 	{
 		return( _zoomFactor );
 	}
+
+	public void setZoomFactor( double zoomFactor )
+	{
+		_zoomFactor = zoomFactor;
+	}
 }

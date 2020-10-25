@@ -59,22 +59,19 @@ public class NewVersionFoundJDialog extends InternationalizedJDialog {
 
 	protected ApplicationVersion _applicationVersion = null;
 
-	public NewVersionFoundJDialog(java.awt.Frame parent, boolean modal,
-									BaseApplicationConfigurationInterface applicationConfiguration,
-									NewVersionQueryResult newVersionQueryResult )
-	{
-		this( parent, modal, applicationConfiguration, newVersionQueryResult, ApplicationVersion.instance() );
-	}
 	/**
 	 * Creates new form NewVersionFoundJDialog
 	 */
 	public NewVersionFoundJDialog(java.awt.Frame parent, boolean modal,
-									BaseApplicationConfigurationInterface applicationConfiguration,
-									NewVersionQueryResult newVersionQueryResult,
-									ApplicationVersion applicationVersion ) {
+									BaseApplicationConfigurationInterface applicationConfiguration ) {
 		super(parent, modal, applicationConfiguration);
+	}
 
-		_applicationVersion = applicationVersion;
+	public void init( NewVersionQueryResult newVersionQueryResult )
+	{
+		if( _applicationVersion == null )
+			_applicationVersion = getDefaultApplicationVersion();
+
 		_newVersionQueryResult = newVersionQueryResult;
 
 		initComponents();
@@ -82,6 +79,16 @@ public class NewVersionFoundJDialog extends InternationalizedJDialog {
 		setNewVersionQueryResult( _newVersionQueryResult );
 
 		setWindowConfiguration();
+	}
+
+	protected ApplicationVersion getDefaultApplicationVersion()
+	{
+		return( ApplicationVersion.instance() );
+	}
+
+	public void setApplicationVersion( ApplicationVersion applicationVersion )
+	{
+		_applicationVersion = applicationVersion;
 	}
 
 	protected void setWindowConfiguration( )

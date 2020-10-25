@@ -42,11 +42,14 @@ public abstract class InetQueryBase<CC extends InetQueryResult > implements Inet
 	protected String _uri = null;
 	protected String _path = null;
 
-	public InetQueryBase( String uri, String path )
+	@Override
+	public void init( String uri, String path )
 	{
 		_uri = uri;
 		_path = path;
 	}
+
+	public abstract void init( String uri );
 
 	protected JSONObject getJsonObject( String jsonString )
 	{
@@ -71,12 +74,12 @@ public abstract class InetQueryBase<CC extends InetQueryResult > implements Inet
 	}
 
 	@Override
-	public CC query( String ... params ) throws InetQueryException
+	public CC queryGen( String ... params ) throws InetQueryException
 	{
-		return( query( createMultimap( params ) ) );
+		return( queryGen( createMultimap( params ) ) );
 	}
 
-	public CC query( MultivaluedMap<String, String> params ) throws InetQueryException
+	public CC queryGen( MultivaluedMap<String, String> params ) throws InetQueryException
 	{
 		CC result = null;
 

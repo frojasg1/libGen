@@ -28,6 +28,9 @@ public interface ViewTextComponent< LL > extends ViewComponent
 
 	public String getText();
 	public void setText( String text );
+
+	public void setEmptyText();
+
 	public void replaceText( int pos, int length, String strToReplaceTo );
 	public void replaceText( int pos, String strToReplaceFrom, String strToReplaceTo );
 

@@ -22,6 +22,7 @@ import com.frojasg1.applications.common.configuration.ConfigurationParent;
 import com.frojasg1.general.ResourceFunctions;
 import com.frojasg1.general.desktop.GenericDesktopConstants;
 import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.icons.ZoomIconBuilder;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -115,29 +116,9 @@ public class LanguageFlagIcons
 		return( result );
 	}
 
-	protected double calculateFactor( double size, double target )
-	{
-		double result = 1;
-
-		if( size != 0 )
-			result = target / size;
-
-		return( result );
-	}
-
 	protected Double calculateAdditionalFactor( Icon icon, Dimension dimen )
 	{
-		Double result = null;
-
-		if( ( icon != null ) && ( dimen != null ) )
-		{
-			double xFactor = calculateFactor( icon.getIconWidth(), dimen.width );
-			double yFactor = calculateFactor( icon.getIconHeight(), dimen.height );
-
-			result = ( xFactor > yFactor ) ? yFactor : xFactor;
-		}
-
-		return( result );
+		return( ZoomIconBuilder.instance().calculateAdditionalFactor( icon, dimen ) );
 	}
 
 	protected ZoomIconImp lookForFlagIcon( String language, Dimension dimen )
@@ -156,6 +137,11 @@ public class LanguageFlagIcons
 		return( result );
 	}
 
+	protected Icon createOriginalIcon( BufferedImage image )
+	{
+		return ZoomIconBuilder.instance().createOriginalIcon(image);
+	}
+
 	protected Icon createOriginalIcon( String language )
 	{
 		Icon result = null;
@@ -165,7 +151,7 @@ public class LanguageFlagIcons
 			String resourceFileName = GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR + "/" + language + "/" + FLAG_FILE_NAME;
 			BufferedImage bi = ImageFunctions.instance().loadImageFromJar( resourceFileName );
 
-			result = new ImageIcon( bi );
+			result = createOriginalIcon( bi );
 		}
 		catch( Exception ex )
 		{}
@@ -208,7 +194,7 @@ public class LanguageFlagIcons
 			Double factor = calculateAdditionalFactor( originalIcon, dimen );
 			if( factor != null )
 			{
-				result = createZoomIcon( originalIcon, factor );
+				result = ZoomIconBuilder.instance().createZoomIcon( originalIcon, factor );
 
 				languageMap.put(factor, result);
 			}

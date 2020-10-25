@@ -188,14 +188,18 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		try
 		{
 			mapRRCI.putResizeRelocateComponentItem( jPanel1, 0 );
+//			mapRRCI.putResizeRelocateComponentItem(jScrollPane1, ResizeRelocateItem.SKIP_CHANGE_BOUNDS_AND_REPOSITION );
 //			mapRRCI.putResizeRelocateComponentItem( jTP_completion, ResizeRelocateItem.RESIZE_SCROLLABLE_HORIZONTAL_FREE );
 			_rriForCompletionTextPane = mapRRCI.createResizeRelocateItem( jTP_completion,
-														ResizeRelocateItem.RESIZE_SCROLLABLE_HORIZONTAL_FREE );
+														ResizeRelocateItem.RESIZE_SCROLLABLE_HORIZONTAL_FREE +
+														ResizeRelocateItem.DO_NOT_ZOOM_FONT );
 			mapRRCI.putResizeRelocateComponentItem( _rriForCompletionTextPane );
 
 			mapRRCI.putResizeRelocateComponentItem( jPanel2, 0 );
+//			mapRRCI.putResizeRelocateComponentItem(jScrollPane2, ResizeRelocateItem.SKIP_CHANGE_BOUNDS_AND_REPOSITION );
 			_rriForCurrentParamTextPane = mapRRCI.createResizeRelocateItem( jTP_currentParam,
-														ResizeRelocateItem.RESIZE_SCROLLABLE_HORIZONTAL_FREE );
+														ResizeRelocateItem.RESIZE_SCROLLABLE_HORIZONTAL_FREE +
+														ResizeRelocateItem.DO_NOT_ZOOM_FONT );
 			mapRRCI.putResizeRelocateComponentItem( _rriForCurrentParamTextPane );
 		}
 		catch( Throwable th )
@@ -491,6 +495,8 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 			pageUp();
 		else if( event.getWheelRotation() > 0 )
 			pageDown();
+		
+		event.consume();
 	}
 
 	@Override
@@ -606,7 +612,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 
 	protected void addFocusListenersForMainWindow( Component mainWindow )
 	{
-		ComponentFunctions.instance().browseComponentHierarchy( mainWindow, (comp) -> { comp.addFocusListener(_exitFocusListener); return( null ); } );
+		ComponentFunctions.instance().browseComponentHierarchy( mainWindow, (comp) -> { if( comp.getParent() != null ) comp.addFocusListener(_exitFocusListener); return( null ); } );
 	}
 
 	protected void removeFocusListenersForMainWindow( Component mainWindow )

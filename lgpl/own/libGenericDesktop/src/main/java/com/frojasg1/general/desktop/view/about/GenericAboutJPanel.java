@@ -356,9 +356,9 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
         jL_homeWebPage.setFont(new java.awt.Font("Tahoma", 1, 13)); // NOI18N
         jL_homeWebPage.setForeground(new java.awt.Color(39, 155, 0));
         jL_homeWebPage.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        jL_homeWebPage.setText("http://www.frojasg1.com");
+        jL_homeWebPage.setText("https://frojasg1.com");
         jL_homeWebPage.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jL_homeWebPage.setName("name=jL_homeWebPage,url=http://www.frojasg1.com"); // NOI18N
+        jL_homeWebPage.setName("name=jL_homeWebPage,url=https://frojasg1.com"); // NOI18N
         add(jL_homeWebPage);
         jL_homeWebPage.setBounds(440, 10, 200, 16);
 

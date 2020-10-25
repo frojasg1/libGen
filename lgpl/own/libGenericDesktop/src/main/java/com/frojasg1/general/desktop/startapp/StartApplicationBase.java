@@ -28,14 +28,11 @@ import com.frojasg1.general.desktop.execution.whatisnew.WhatIsNewExecution;
 import com.frojasg1.general.desktop.view.license.GenericLicenseJDialog;
 import com.frojasg1.general.desktop.view.splash.GenericBasicSplash;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
-import com.frojasg1.general.desktop.workers.GenericSwingWorker;
 import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.exceptions.ConfigurationException;
-import com.frojasg1.generic.workers.GenericWorkerResult;
 import java.awt.Component;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import javax.swing.JFrame;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
@@ -46,6 +43,8 @@ import javax.swing.SwingUtilities;
  */
 public abstract class StartApplicationBase
 {
+	protected static final int DEFAULT_MINIMUM_NUMBER_OF_STEPS = 4;
+
 	protected static final int WATING_FOR_IMPORT_CONFIGURATION = 1;
 	protected static final int WATING_FOR_CHECK_LICENSES = 2;
 	protected static final int WATING_FOR_ACCEPT_LICENSES = 3;
@@ -67,6 +66,8 @@ public abstract class StartApplicationBase
 
 	protected Component _mainWindow = null;
 
+	protected Boolean _wasANewVersion = null;
+
 	public StartApplicationBase()
 	{
 	}
@@ -85,9 +86,26 @@ public abstract class StartApplicationBase
 
 	public void startApplication( )
 	{
+		setDefaultExceptionHandler();
 		setLookAndFeel();
 
 		openConfigurationAndShowSplash();
+	}
+
+	protected void setDefaultExceptionHandler()
+	{
+		Thread.setDefaultUncaughtExceptionHandler( createUncaughtExceptionHandler() );
+	}
+
+	protected UncaughtExceptionHandler createUncaughtExceptionHandler()
+	{
+		return( new UncaughtExceptionHandler() {
+			@Override
+			public void uncaughtException(Thread t, Throwable e) {
+				System.out.println( "Uncaught" );
+				e.printStackTrace();
+			}
+		});
 	}
 
 	protected abstract GenericBasicSplash createSplash();
@@ -96,7 +114,7 @@ public abstract class StartApplicationBase
 	protected void setCurrentActivityFromLabel( String label )
 	{
 		if( _splash != null )
-			_splash.setCurrentActivityFromLabel( label );
+			SwingUtilities.invokeLater( () -> _splash.setCurrentActivityFromLabel( label ) );
 	}
 
 	public OpenConfigurationBase getOpenConfiguration()
@@ -138,7 +156,7 @@ public abstract class StartApplicationBase
 			GenericWaitWorker gww = new GenericWaitWorker( 500, WATING_FOR_IMPORT_CONFIGURATION );
 			gww.execute();
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -152,6 +170,11 @@ public abstract class StartApplicationBase
 	protected abstract void initializeAfterImportingConfiguration() throws ConfigurationException;
 
 	protected void importConfiguration()
+	{
+		new Thread( () -> importConfiguration_internal() ).start();
+	}
+
+	protected void importConfiguration_internal()
 	{
 		if( _exceptionThrown )
 			System.exit(1);
@@ -168,9 +191,27 @@ public abstract class StartApplicationBase
 			initializeAfterImportingConfiguration();
 
 			GenericWaitWorker gww = new GenericWaitWorker( 150, WATING_FOR_CHECK_LICENSES );
+			SwingUtilities.invokeLater( () -> invoke( gww ) );
+		}
+		catch( Exception th )
+		{
+			th.printStackTrace();
+			showProblemLaunchingApplicationMessage();
+
+			System.exit(1);
+		}
+	}
+
+	protected void invoke(GenericWaitWorker gww)
+	{
+		if( _exceptionThrown )
+			System.exit(1);
+
+		try
+		{
 			gww.execute();
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -186,6 +227,8 @@ public abstract class StartApplicationBase
 
 		try
 		{
+			incrementStepsCompleted();
+
 			if( !_licensesHaveBeenAccepted )
 			{
 				setCurrentActivityFromLabel( GenericBasicSplash.CONF_SHOWING_LICENSES );
@@ -201,7 +244,7 @@ public abstract class StartApplicationBase
 				gww.execute();
 			}
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -240,7 +283,7 @@ public abstract class StartApplicationBase
 			GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_NEW_VERSION_QUERY );
 			gww.execute();
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -248,7 +291,6 @@ public abstract class StartApplicationBase
 			System.exit(1);
 		}
 	}
-
 
 	protected void newVersionQuery()
 	{
@@ -263,10 +305,27 @@ public abstract class StartApplicationBase
 			NewVersionQueryExecution executor = new NewVersionQueryExecution( parentJFrame,
 																				getAppliConf(),
 																				isStart,
-																				onlyShowResultWhenThereIsANewDownloadableVersion );
+																				onlyShowResultWhenThereIsANewDownloadableVersion,
+																				this::processNewVersionQuery);
 
-			executor.run();
+			new Thread( executor ).start();
+		}
+		catch( Exception th )
+		{
+			th.printStackTrace();
+			showProblemLaunchingApplicationMessage();
 
+			System.exit(1);
+		}
+	}
+
+	protected void processNewVersionQuery( NewVersionQueryExecution executor )
+	{
+		if( _exceptionThrown )
+			System.exit(1);
+
+		try
+		{
 			if( executor.wasUrlClicked() )
 				System.exit(0);
 
@@ -277,7 +336,7 @@ public abstract class StartApplicationBase
 			GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_WHAT_IS_NEW );
 			gww.execute();
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -326,7 +385,7 @@ public abstract class StartApplicationBase
 			GenericWaitWorker gww = new GenericWaitWorker( 100, WATING_FOR_CREATE_MAIN_WINDOW );
 			gww.execute();
 		}
-		catch( Throwable th )
+		catch( Exception th )
 		{
 			th.printStackTrace();
 			showProblemLaunchingApplicationMessage();
@@ -421,12 +480,15 @@ public abstract class StartApplicationBase
 						"ERROR", DialogsWrapper.ERROR_MESSAGE );
 	}
 
-	protected abstract int getMinimumNumberOfSteps();
-
+	protected int getMinimumNumberOfSteps()
+	{
+		return( DEFAULT_MINIMUM_NUMBER_OF_STEPS );
+	}
 
 	protected boolean hasToShowWhatIsNew()
 	{
 		boolean result = false;
+
 		try
 		{
 			String currentDownloadFile = ApplicationVersion.instance().getDownloadFile();
@@ -438,7 +500,15 @@ public abstract class StartApplicationBase
 			ex.printStackTrace();
 		}
 
+		if( _wasANewVersion == null )
+			_wasANewVersion = result;
+
 		return( result );
+	}
+
+	protected Boolean wasANewVersion()
+	{
+		return( _wasANewVersion );
 	}
 
 	protected int calculateTotalNumberOfStepsToAdd()
@@ -473,9 +543,11 @@ public abstract class StartApplicationBase
 	protected void incrementStepsCompleted()
 	{
 		if( _splash != null )
-			_splash.setProgress( getProgress( ++_numberOfStepsCompleted ) );		
+		{
+			SwingUtilities.invokeLater( () -> _splash.setProgress( getProgress( ++_numberOfStepsCompleted ) ) );
+		}
 	}
-
+/*
 	protected abstract class StartAppBaseWorker extends GenericSwingWorker implements PropertyChangeListener
 	{
 		public static final String NEW_ACTION_LABEL_PROPERTY_NAME = "newactionlabel";
@@ -519,36 +591,34 @@ public abstract class StartApplicationBase
 			firePropertyChange(NEW_ACTION_STRING_PROPERTY_NAME, null, currentActivityString);
 		}
 	}
-
-	protected class GenericWaitWorker extends StartAppBaseWorker
+*/
+	protected class GenericWaitWorker
 	{
 		int _millisecondsToWait = -1;
 		int _nextStep = -1;
 		
 		protected GenericWaitWorker( int millisecondsToWait, int nextStep )
 		{
-			super( null );
-
 			_millisecondsToWait = millisecondsToWait;
 			_nextStep = nextStep;
 		}
 
-		@Override
-		protected GenericWorkerResult doInBackground() throws Exception
+		protected void execute() throws Exception
 		{
-			try
+			new Thread( () ->
 			{
-				Thread.sleep( _millisecondsToWait );
-			}
-			catch( Throwable th )
-			{
-				th.printStackTrace();
-			}
-
-			return( null );
+				try
+				{
+					Thread.sleep( _millisecondsToWait );
+					SwingUtilities.invokeLater( () -> done() );
+				}
+				catch( Throwable th )
+				{
+					th.printStackTrace();
+				}
+			} ).start();
 		}
 
-		@Override
 		protected void done()
 		{
 			switch( _nextStep )

@@ -21,6 +21,7 @@ package com.frojasg1.general.desktop.completion.base;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
 import com.frojasg1.general.ArrayFunctions;
+import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.view.colors.Colors;
 import com.frojasg1.general.desktop.view.document.formatter.ZoomDocumentFormatAppender;
 import com.frojasg1.general.document.formatted.FormatForText;
@@ -28,6 +29,8 @@ import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.string.StringFunctions;
 import com.frojasg1.general.view.ViewTextComponent;
 import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -202,12 +205,35 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 
 	public void pageUp()
 	{
-		addIndexToSelected( -5 );
+		addIndexToSelected( -1 * getPageScrollSize() );
 	}
 
 	public void pageDown()
 	{
-		addIndexToSelected( 5 );
+		addIndexToSelected( getPageScrollSize() );
+	}
+
+	protected JScrollPane getJScrollPane()
+	{
+		JScrollPane result = null;
+		Component comp = ExecutionFunctions.instance().safeFunctionExecution( () -> getJTextPane().getParent().getParent() );
+		if( comp instanceof JScrollPane )
+			result = (JScrollPane) comp;
+
+		return( result );
+	}
+
+	protected int getPageScrollSize()
+	{
+		int result = 2;
+
+		JScrollPane jsp = this.getJScrollPane();
+		if( ( _lastPrototypes != null ) && ( jsp != null ) )
+			result = IntegerFunctions.max( 2,
+					( _lastPrototypes.length * jsp.getVerticalScrollBar().getVisibleAmount() )
+						/ ( 4 * getJTextPane().getPreferredSize().height ) );
+
+		return( result );
 	}
 
 	protected void addIndexToSelected( int amountToAddToSelectedIndex )

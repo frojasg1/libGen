@@ -18,10 +18,12 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
+import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.completion.api.InputTextCompletionManager;
 import com.frojasg1.general.desktop.completion.api.CompletionWindow;
 import com.frojasg1.general.string.StringFunctions;
 import com.frojasg1.general.view.ViewTextComponent;
+import java.awt.Rectangle;
 import javax.swing.text.LabelView;
 
 /**
@@ -79,8 +81,9 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 	@Override
 	public void processTypedInputText( String inputText, int caretPos, LL locationControl )
 	{
-		if( ( _caretPos != caretPos ) ||
-			!StringFunctions.instance().stringsEquals( inputText, _inputText ) )
+		if( (locationControl != null ) &&
+			( ( _caretPos != caretPos ) ||
+				!StringFunctions.instance().stringsEquals( inputText, _inputText ) ) )
 		{
 			_inputText = inputText;
 			_caretPos = caretPos;
@@ -454,7 +457,9 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 	@Override
 	public void relocateCompletionWindow()
 	{
-		_completionWindow.locateWindow( _inputTextComponent.getCharacterBounds( _inputTextComponent.getCaretPosition() ) );
+		LL charBounds = ExecutionFunctions.instance().safeSilentFunctionExecution( () -> _inputTextComponent.getCharacterBounds( _inputTextComponent.getCaretPosition() ));
+		if( charBounds != null )
+			_completionWindow.locateWindow( charBounds );
 	}
 
 	@Override

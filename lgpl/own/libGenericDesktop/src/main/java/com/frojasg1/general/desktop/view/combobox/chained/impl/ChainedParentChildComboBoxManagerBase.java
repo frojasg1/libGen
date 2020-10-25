@@ -44,6 +44,7 @@ import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxGroupManager;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.swing.SwingUtilities;
 
 /**
@@ -468,37 +469,48 @@ public class ChainedParentChildComboBoxManagerBase
 	}
 
 	@Override
-	public String added(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData)
+	public void added(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+						Consumer<String> callback)
 	{
 		String result = null;
 		if( _controller != null )
 		{
 			SwingUtilities.invokeLater( () -> {
-				String result2 = _controller.added( this, eventData );
-
-				if( result2 != null )
-					addItem( result2 );
+				_controller.added( this, eventData, (str) -> itemAdded(str, callback) );
 			} );
 		}
+	}
 
-		return( result );
+	protected void itemAdded( String addedItem, Consumer<String> callback )
+	{
+		if( addedItem != null )
+			addItem( addedItem );
+
+		if( callback != null )
+			callback.accept(addedItem);
 	}
 
 	@Override
-	public String removed(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData)
+	public void removed(ComboBoxGroupManager sender, AddRemoveModifyItemResult eventData,
+							Consumer<String> callback)
 	{
 		String result = null;
 		if( _controller != null )
 		{
 			SwingUtilities.invokeLater( () -> {
-				String result2 = _controller.removed( this, eventData );
-
-				if( result2 != null )
-					removeItem( result2 );
+				_controller.removed( this, eventData,
+									(str) -> itemRemoved( str, callback ) );
 			} );
 		}
+	}
 
-		return( result );
+	protected void itemRemoved( String addedItem, Consumer<String> callback )
+	{
+		if( addedItem != null )
+			removeItem( addedItem );
+
+		if( callback != null )
+			callback.accept(addedItem);
 	}
 
 	@Override

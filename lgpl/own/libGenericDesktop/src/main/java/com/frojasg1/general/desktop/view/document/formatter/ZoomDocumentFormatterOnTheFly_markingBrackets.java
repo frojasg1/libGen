@@ -198,7 +198,7 @@ public class ZoomDocumentFormatterOnTheFly_markingBrackets extends ZoomDocumentF
 		return( result );
 	}
 
-	protected class CharacterAnalyserException extends Exception
+	public class CharacterAnalyserException extends Exception
 	{
 		public CharacterAnalyserException( String message )
 		{

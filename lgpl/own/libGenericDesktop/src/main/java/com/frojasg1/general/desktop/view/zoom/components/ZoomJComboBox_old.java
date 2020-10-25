@@ -18,15 +18,14 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
+import com.frojasg1.general.desktop.view.zoom.ui.ZoomMetalComboBoxUI;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import javax.swing.JComboBox;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.plaf.ComboBoxUI;
-import javax.swing.plaf.metal.MetalComboBoxUI;
 
 /**
  *
@@ -41,7 +40,7 @@ public class ZoomJComboBox_old<E> extends JComboBox<E>
 
 	protected void updateComboBoxUI()
 	{
-		updateComboBoxUI( new MetalComboBoxUI() );
+		updateComboBoxUI( new ZoomMetalComboBoxUI() );
 	}
 
 	protected void updateComboBoxUI( ComboBoxUI ui )

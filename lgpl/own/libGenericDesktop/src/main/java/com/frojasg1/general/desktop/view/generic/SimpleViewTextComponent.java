@@ -79,6 +79,24 @@ public class SimpleViewTextComponent implements DesktopViewTextComponent
 	}
 
 	@Override
+	public void setEmptyText()
+	{
+		Document doc = _textComp.getDocument();
+		if( doc != null )
+		{
+			try
+			{
+				doc.remove( 0, doc.getLength() );
+			}
+			catch( Throwable th )
+			{
+				th.printStackTrace();
+			}
+		}
+	}
+
+
+	@Override
 	public void setText(String text)
 	{
 		_textComp.setText( text );

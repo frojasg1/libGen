@@ -22,6 +22,7 @@ import com.frojasg1.general.document.formatted.FormatForText;
 import com.frojasg1.general.document.formatter.ExternalTextFormatter;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
+import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.FontFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
@@ -37,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
@@ -132,7 +134,33 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 			if( _changeZoomFactorServer != null )
 				changeZoomFactor( _changeZoomFactorServer.getZoomFactor() );
 
-			reformat();
+			resetText();
+//			reformat();
+		}
+	}
+
+	protected void resetText()
+	{
+		String text = _viewTextComponent.getText();
+		_viewTextComponent.setEmptyText();
+		_viewTextComponent.setText( text );
+	}
+
+	protected JScrollPane getScrollPane()
+	{
+		return( ComponentFunctions.instance().getScrollPane(getJTextPane()) );
+	}
+
+	protected void shrinkTextJPane()
+	{
+		JScrollPane jsp = getScrollPane();
+		if( jsp != null )
+		{
+			Dimension dimen = jsp.getSize();
+			int delta = 3 * ( ( dimen.width % 2 ) * 2 - 1 );
+			dimen.width = Math.max( 0, dimen.width + delta );
+
+			jsp.setSize( dimen );
 		}
 	}
 
@@ -413,14 +441,21 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		return( _pane.getStyledDocument().getText(0, _pane.getStyledDocument().getLength() ) );
 	}
 
+	protected Collection< FormatForText > formatTextWithExternalFormatter( String text )
+	{
+		Collection< FormatForText > result = null;
+		if( ( _textFormatter != null ) && ( text != null ) )
+			result = _textFormatter.formatText( text );
+
+		return( result );
+	}
+
 	protected void invokeExternalFormatterToFormatText( String text ) throws BadLocationException
 	{
-		if( _textFormatter != null )
-		{
-			Collection< FormatForText > collecTextFormat = _textFormatter.formatText( text );
+		Collection< FormatForText > formatForTextCollection = formatTextWithExternalFormatter(text);
 
-			formatText( collecTextFormat );
-		}
+		if( formatForTextCollection != null )
+			formatText( formatForTextCollection );
 	}
 
 	protected boolean isFormatting()

@@ -18,6 +18,8 @@
  */
 package com.frojasg1.general;
 
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
@@ -146,6 +148,14 @@ public class ExecutionFunctions
 		}
 
 		return( result );
+	}
+
+	public void invokeLaterIfNecessary( Runnable runnable )
+	{
+		if( SwingUtilities.isEventDispatchThread() )
+			runnable.run();
+		else
+			SwingUtilities.invokeLater( runnable );
 	}
 
 	public interface UnsafeMethod

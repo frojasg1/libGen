@@ -185,7 +185,7 @@ public class JComboBoxCopier extends CompCopierBase<JComboBox>
 	protected void copyModel( JComboBox originalComponent, JComboBox newComponent )
 	{
 		ComboBoxModel value = originalComponent.getModel();
-		if( !isClassOfJdk( value ) )
+		if( !isInnerClass( value ) )
 			newComponent.setModel( value );
 	}
 

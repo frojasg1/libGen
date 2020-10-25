@@ -38,7 +38,7 @@ You may obtain a copy of the License at
 	<url>https://github.com/frojasg1/libGeneric</url>
 
 	<organization>
-		<url>http://www.frojasg1.com</url>
+		<url>https://frojasg1.com</url>
 		<name>frojasg1</name>
 	</organization>
 	<inceptionYear>2020</inceptionYear>
@@ -57,7 +57,7 @@ You may obtain a copy of the License at
 			<name>Francisco Javier Rojas Garrido</name>
 			<email>frojasg1@hotmail.com</email>
 			<organization>frojasg1</organization>
-			<organizationUrl>http://www.frojasg1.com</organizationUrl>
+			<organizationUrl>https://frojasg1.com</organizationUrl>
 			<timezone>UTC+01</timezone>
 		</developer>
 	</developers>

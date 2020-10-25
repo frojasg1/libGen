@@ -25,5 +25,8 @@ package com.frojasg1.general.desktop.queries;
  */
 public interface InetQuery<CC extends InetQueryResult>
 {
-	public CC query( String ... parameters ) throws InetQueryException;
+	public void init( String url );
+	public void init( String uri, String path );
+
+	public CC queryGen( String ... parameters ) throws InetQueryException;
 }

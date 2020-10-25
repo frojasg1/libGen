@@ -51,8 +51,14 @@ public class ComponentData
 
 	public void setResizeRelocateItem( ResizeRelocateItem rri )
 	{
-		if( _resizeRelocateItem != null )
+		if( ( _resizeRelocateItem != null ) && ( _resizeRelocateItem != rri ) )
+		{
+			boolean parentListenerWasAdded = _resizeRelocateItem.isParentComponentListenerAdded();
 			_resizeRelocateItem.dispose();
+
+			if( ( rri != null ) && parentListenerWasAdded )
+				rri.registerListeners();
+		}
 
 		_resizeRelocateItem = rri;
 	}

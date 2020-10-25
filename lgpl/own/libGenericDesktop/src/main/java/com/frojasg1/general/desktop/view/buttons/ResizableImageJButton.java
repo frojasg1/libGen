@@ -21,6 +21,7 @@ package com.frojasg1.general.desktop.view.buttons;
 import com.frojasg1.applications.common.components.name.ComponentNameComponents;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import java.awt.Insets;
+import java.awt.image.BufferedImage;
 import javax.swing.JButton;
 
 /**
@@ -35,6 +36,8 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 	protected String _jarResourceName = null;
 	protected Insets _insets = null;
 
+	protected BufferedImage _image = null;
+
 	public ResizableImageJButton( String jarResourceName, Insets insets )
 	{
 		_jarResourceName = jarResourceName;
@@ -44,9 +47,22 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 //		addActionListener(this);
 	}
 
+	public final void setImage_final( String jarResourceNameForImage )
+	{
+		_image = ViewFunctions.instance().addImageToButtonAccurate( this, _jarResourceName, _insets );
+	}
+
 	protected final void setImage_final()
 	{
-		ViewFunctions.instance().addImageToButtonAccurate( this, _jarResourceName, _insets );
+		if( _image != null )
+			setImage_final( _image );
+		else
+			setImage_final( _jarResourceName );
+	}
+
+	public final void setImage_final( BufferedImage image )
+	{
+		_image = ViewFunctions.instance().addImageToButtonAccurate( this, image, _insets );
 	}
 
 	public void resizeImage()

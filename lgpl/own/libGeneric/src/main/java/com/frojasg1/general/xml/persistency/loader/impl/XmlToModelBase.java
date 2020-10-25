@@ -96,7 +96,6 @@ public abstract class XmlToModelBase<CC> implements XmlToModel<CC>, Internationa
 
 	protected void registerInternationalizedStrings()
 	{
-		// TODO: translate
 		this.registerInternationalString(CONF_CHILD_NOT_PRESENT_ERROR_MESSAGE, "$1 without $2 in xml" );
 		this.registerInternationalString(CONF_DID_NOT_HAVE_A_VALID_LONG, "$1 -> $2 did not have a valid Long." );
 		this.registerInternationalString(CONF_XML_ELEMENT_HAD_NOT_EXPECTED_NAME, "Name of xml element: <$1> but was expected <$2>" );

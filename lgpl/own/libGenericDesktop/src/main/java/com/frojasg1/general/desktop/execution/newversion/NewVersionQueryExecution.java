@@ -18,13 +18,17 @@
  */
 package com.frojasg1.general.desktop.execution.newversion;
 
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
+import com.frojasg1.general.application.version.ApplicationVersion;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQuery;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryFactory;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryResult;
 import com.frojasg1.general.desktop.view.newversion.NewVersionFoundJDialog;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -40,11 +44,15 @@ public class NewVersionQueryExecution implements Runnable
 
 	protected boolean _urlClicked = false;
 
+	protected Consumer<NewVersionQueryExecution> _callback = null;
+
 	public NewVersionQueryExecution( JFrame parentJFrame,
 									BaseApplicationConfigurationInterface applicationConfiguration,
 									boolean isStartQuery,
-									boolean onlyShowResultWhenThereIsANewDownloadableVersion )
+									boolean onlyShowResultWhenThereIsANewDownloadableVersion,
+									Consumer<NewVersionQueryExecution> callback )
 	{
+		_callback = callback;
 		_parentJFrame = parentJFrame;
 
 		_applicationConfiguration = applicationConfiguration;
@@ -54,12 +62,26 @@ public class NewVersionQueryExecution implements Runnable
 
 	protected NewVersionQuery createNewVersionInetQueryForApplications()
 	{
-		return( NewVersionQueryFactory.instance().createNewVersionQuery() );
+		NewVersionQuery result = NewVersionQueryFactory.instance().createNewVersionQuery();
+		result.init( getAppliConf().getUrlForNewVersionQuery() );
+
+		return( result );
 	}
 
-	protected NewVersionFoundJDialog createNewVersionFoundJDialog( NewVersionQueryResult result )
+	protected BaseApplicationConfigurationInterface getAppliConf()
 	{
-		return( new NewVersionFoundJDialog( _parentJFrame, true, _applicationConfiguration, result ) );
+		return( _applicationConfiguration );
+	}
+
+	protected NewVersionFoundJDialog createNewVersionFoundJDialog( NewVersionQueryResult nvqResult,
+																	Consumer<InternationalizationInitializationEndCallback> windowCallback )
+	{
+		NewVersionFoundJDialog result = new NewVersionFoundJDialog( _parentJFrame, true, _applicationConfiguration );
+		result.setApplicationVersion( ApplicationVersion.instance() );
+		result.setInternationalizationEndCallBack(windowCallback);
+		result.init( nvqResult );
+
+		return( result );
 	}
 
 	protected boolean isIgnored( NewVersionQueryResult nvqr )
@@ -82,6 +104,18 @@ public class NewVersionQueryExecution implements Runnable
 			NewVersionQuery nvq = createNewVersionInetQueryForApplications();
 			NewVersionQueryResult result = nvq.queryForApplication(_isStartQuery);
 
+			SwingUtilities.invokeLater( () -> showNewVersionQueryResult( result ) );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+		}
+	}
+
+	public void showNewVersionQueryResult(NewVersionQueryResult result)
+	{
+		try
+		{
 			if( ( result != null ) &&
 				( ! _onlyShowResultWhenThereIsANewDownloadableVersion ||
 					( result.isSuccessful() ) && result.thereIsANewVersion() &&
@@ -89,21 +123,45 @@ public class NewVersionQueryExecution implements Runnable
 				)
 			  )
 			{
-				NewVersionFoundJDialog dialog = createNewVersionFoundJDialog( result );
+				NewVersionFoundJDialog dialog = createNewVersionFoundJDialog( result,
+															this::processNewVersionFoundJDialog );
+			}
+			else
+				invokeCallback();
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+			invokeCallback();
+		}
+	}
 
-				dialog.setVisible(true);
+	public void processNewVersionFoundJDialog( InternationalizationInitializationEndCallback iiec )
+	{
+		try
+		{
+			NewVersionFoundJDialog dialog = (NewVersionFoundJDialog) iiec;
 
-				_urlClicked = dialog.wasUrlClicked();
-				if( _urlClicked )
-				{
-					urlClicked();
-				}
+			dialog.setVisible(true);
+
+			_urlClicked = dialog.wasUrlClicked();
+			if( _urlClicked )
+			{
+				urlClicked();
 			}
 		}
 		catch( Exception ex )
 		{
 			ex.printStackTrace();
 		}
+
+		invokeCallback();
+	}
+
+	protected void invokeCallback()
+	{
+		if( _callback != null )
+			_callback.accept(this);
 	}
 
 	public boolean wasUrlClicked()

@@ -48,6 +48,26 @@ public class ComboBoxFunctions
 		return( _instance );
 	}
 
+	public <CC> void fillComboBoxGen( JComboBox combo, CC selection, CC ... elements )
+	{
+		int selectedIndex = -1;
+
+		if( selection == null )
+			selection = (CC) combo.getSelectedItem();
+
+		selectedIndex = ArrayFunctions.instance().getFirstIndexOfEquals( elements, selection );
+
+		combo.setModel(new javax.swing.DefaultComboBoxModel(elements));
+
+//		if( selectedIndex >= 0 ) combo.setSelectedIndex(selectedIndex);
+		combo.setSelectedIndex(selectedIndex);
+	}
+
+	public void fillComboBox( JComboBox combo, String[] elements, String selection )
+	{
+		fillComboBoxGen( combo, selection, elements );
+	}
+/*
 	public void fillComboBox( JComboBox combo, String[] elements, String selection )
 	{
 		int selectedIndex = -1;
@@ -62,7 +82,7 @@ public class ComboBoxFunctions
 //		if( selectedIndex >= 0 ) combo.setSelectedIndex(selectedIndex);
 		combo.setSelectedIndex(selectedIndex);
 	}
-
+*/
 	public JPopupMenu getComboPopup( JComboBox combo )
 	{
 		return( (JPopupMenu) combo.getUI().getAccessibleChild( combo, 0) );

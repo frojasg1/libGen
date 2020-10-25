@@ -203,6 +203,17 @@ public class OrderedArray< CC extends Comparable<CC>, SS >
 		return( result );
 	}
 
+	public CC getFirstElementFromSimplifiedKey( SS simplifiedKey )
+	{
+		CC result = null;
+		int index = findFirst( simplifiedKey, _doubleComparator );
+
+		if( index >= 0 )
+			result = _array[ index ];
+
+		return( result );
+	}
+
 	public CC getElementFromSimplifiedKey( SS simplifiedKey )
 	{
 		CC result = null;

@@ -34,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.Objects;
 import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -58,6 +59,8 @@ public class InputTextComponentListener implements DocumentListener, KeyListener
 
 	protected JTextComponent _textComp = null;
 
+	protected Integer _lastCaretPosition = null;
+	protected int _caretPositionDelta = 0;
 
 	public void setCompletionManager( InputTextCompletionManager completionManager )
 	{
@@ -72,7 +75,12 @@ public class InputTextComponentListener implements DocumentListener, KeyListener
 		_viewTextComponent = createViewTextComponent( jtc );
 
 		_textComp = jtc;
-		addListenersInputTextPaneFormatter();
+
+		if( _textComp != null )
+		{
+			_lastCaretPosition = _textComp.getCaretPosition();
+			addListenersInputTextPaneFormatter();
+		}
 	}
 
 	protected DesktopViewTextComponent createViewTextComponent( JTextComponent jtc )
@@ -137,6 +145,7 @@ public class InputTextComponentListener implements DocumentListener, KeyListener
 	@Override
 	public void insertUpdate(DocumentEvent e)
 	{
+		_caretPositionDelta += e.getLength();
 		if( _completionManager != null )
 		{
 			int lastCaretPosition = getViewTextComponent().getCaretPosition() + e.getLength();
@@ -151,6 +160,7 @@ public class InputTextComponentListener implements DocumentListener, KeyListener
 	@Override
 	public void removeUpdate(DocumentEvent e)
 	{
+		_caretPositionDelta -= e.getLength();
 		if( _completionManager != null )
 		{
 			int caretPosition = getViewTextComponent().getCaretPosition() - e.getLength();
@@ -165,16 +175,36 @@ public class InputTextComponentListener implements DocumentListener, KeyListener
 	@Override
 	public void caretUpdate(CaretEvent e)
 	{
-/*
 		if( _completionManager != null )
 		{
 			DesktopViewTextComponent viewTextComponent = getViewTextComponent();
 			int caretPosition = viewTextComponent.getCaretPosition();
-			_completionManager.newCaretPosition( viewTextComponent.getText(),
-													caretPosition,
-													viewTextComponent.getCharacterBounds( caretPosition ) );
+
+			if( !isExpectedCaretPosition(caretPosition) )
+				_completionManager.hideEverything();
+			else
+				_completionManager.newCaretPosition( viewTextComponent.getText(),
+														caretPosition,
+														viewTextComponent.getCharacterBounds( caretPosition ) );
+
+			_lastCaretPosition = getViewTextComponent().getCaretPosition();
+			_caretPositionDelta = 0;
 		}
-*/
+
+	}
+
+	protected boolean isExpectedCaretPosition( int caretPosition )
+	{
+		return( Objects.equals( calculateExpectedCaretPosition(), caretPosition ) );
+	}
+
+	protected Integer calculateExpectedCaretPosition()
+	{
+		Integer result = _lastCaretPosition;
+		if( result != null )
+			result += _caretPositionDelta;
+		
+		return( result );
 	}
 
 	protected boolean areThereCompletionOptions()

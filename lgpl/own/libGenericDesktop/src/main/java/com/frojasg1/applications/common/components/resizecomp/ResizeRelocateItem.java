@@ -18,6 +18,7 @@
  */
 package com.frojasg1.applications.common.components.resizecomp;
 
+import com.frojasg1.applications.common.components.internationalization.ExtendedZoomSemaphore;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.zoom.ZoomInterface;
 import com.frojasg1.general.number.IntegerFunctions;
@@ -58,12 +59,13 @@ import com.frojasg1.general.executor.ParamExecutorInterface;
 import com.frojasg1.general.listeners.GenericObserved;
 import com.frojasg1.general.listeners.ListOfListenersImp;
 import com.frojasg1.general.threads.ThreadFunctions;
-import java.awt.Container;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -74,6 +76,7 @@ import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxIcon;
 import javax.swing.text.JTextComponent;
@@ -109,16 +112,21 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	public static final int FILL_WHOLE_PARENT = 65536;
 	public static final int FILL_WHOLE_WIDTH = 131072;
 	public static final int FILL_WHOLE_HEIGHT = 262144;
+	public static final int SKIP_CHANGE_BOUNDS_AND_REPOSITION = 524288;
+	public static final int MOVE_MID_HORIZONTAL_SIDE_PROPORTIONAL = 1048576;
+	public static final int MOVE_MID_VERTICAL_SIDE_PROPORTIONAL = 2097152;
+	public static final int DO_NOT_ZOOM_FONT = 4194304;
 
-	public static final int MASK = 2 * FILL_WHOLE_HEIGHT - 1;
+
+	public static final int MASK = 2 * DO_NOT_ZOOM_FONT - 1;
 
 	protected static final int HORIZONTAL_MODIFIER_FLAGS = RESIZE_TO_RIGHT | MOVE_TO_RIGHT |
 		MOVE_LEFT_SIDE_PROPORTIONAL | MOVE_RIGHT_SIDE_PROPORTIONAL | MOVE_RIGHT_SIDE_TO_RIGHT |
-		LEAVE_WIDTH_UNALTERED | FILL_WHOLE_WIDTH;
+		LEAVE_WIDTH_UNALTERED | FILL_WHOLE_WIDTH | MOVE_MID_HORIZONTAL_SIDE_PROPORTIONAL;
 
 	protected static final int VERTICAL_MODIFIER_FLAGS = RESIZE_TO_BOTTOM | MOVE_TO_BOTTOM |
 		MOVE_TOP_SIDE_PROPORTIONAL | MOVE_BOTTOM_SIDE_PROPORTIONAL | MOVE_BOTTOM_SIDE_TO_BOTTOM |
-		LEAVE_HEIGHT_UNALTERED | FILL_WHOLE_HEIGHT;
+		LEAVE_HEIGHT_UNALTERED | FILL_WHOLE_HEIGHT | MOVE_MID_VERTICAL_SIDE_PROPORTIONAL;
 
 	// For the calculations of the bounds of JSplitPane in calculateBounds_JSplitPane. options for parameter: int position
 	public static final int RIGHT = 1;
@@ -170,6 +178,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	protected Rectangle _previousParentBounds = null;
 
 	protected ComponentListener _parentComponentListener = null;
+	protected ComponentListener _compComponentListener = null;
 	protected MouseAdapter _mouseAdapter = null;
 
 	protected ComponentResizedListenerList _listeners = new ComponentResizedListenerList();
@@ -183,6 +192,12 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	protected Dimension _scrollableFreeComponentSize = null;
 
 	protected boolean _forceExecution = false;
+
+	protected boolean _triedToRegisterListeners = false;
+
+	protected ExtendedZoomSemaphore _extendedZoomSemaphore = null;
+
+	protected boolean _boundsWereChanged = false;
 
 	public ResizeRelocateItem( Component comp, int flags, ResizeRelocateItem_parent parent,
 								boolean postpone_initialization ) throws InternException
@@ -252,6 +267,16 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		return( _sizeChangedObserved );
 	}
 
+	public void setExtendedZoomSemaphore( ExtendedZoomSemaphore semaphore )
+	{
+		_extendedZoomSemaphore = semaphore;
+	}
+
+	protected ExtendedZoomSemaphore getExtendedZoomSemaphore()
+	{
+		return( _extendedZoomSemaphore );
+	}
+
 	public void addResizeRelocateItemComponentResizedListener( ResizeRelocateItemComponentResizedListener listener )
 	{
 		_listeners.add(listener);
@@ -286,7 +311,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		return( _component );
 	}
 
-	protected boolean isAlreadyZoomed()
+	public boolean isAlreadyZoomed()
 	{
 		return( _isAlreadyZoomed );
 	}
@@ -484,7 +509,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	{
 		if( _component != component )
 		{
-			unregisterListeners();
+			unregisterListeners(component);
 
 			_component = component;
 
@@ -535,11 +560,14 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				_originalPreferredSizeComponentForScrollBar = hsb.getPreferredSize().height;
 			}
 
-			Dimension size = hsb.getPreferredSize();
-			hsb.setPreferredSize( new Dimension( size.width,
-									ceil(_originalPreferredSizeComponentForScrollBar, zoomFactor)
-													)
-									);
+//			if( hsb.isPreferredSizeSet() )
+			{
+				Dimension size = hsb.getPreferredSize();
+				hsb.setPreferredSize( new Dimension( size.width,
+										ceil(_originalPreferredSizeComponentForScrollBar, zoomFactor)
+														)
+										);
+			}
 		}
 	}
 	
@@ -552,11 +580,14 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				_originalPreferredSizeComponentForScrollBar = vsb.getPreferredSize().width;
 			}
 
-			Dimension size = vsb.getPreferredSize();
-			vsb.setPreferredSize( new Dimension(
-										ceil(_originalPreferredSizeComponentForScrollBar, zoomFactor),
-										size.width )
-									);
+//			if( vsb.isPreferredSizeSet() )
+			{
+				Dimension size = vsb.getPreferredSize();
+				vsb.setPreferredSize( new Dimension(
+											ceil(_originalPreferredSizeComponentForScrollBar, zoomFactor),
+											size.width )
+										);
+			}
 		}
 	}
 
@@ -692,7 +723,52 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 		}
 
-		registerListeners();
+		if( _triedToRegisterListeners )
+			registerListeners();
+	}
+
+	protected int getOriginalWitdh()
+	{
+		return( getLength( _pixelsFromTheComponentLeftBoundaryToTheRightOfTheParent,
+							_pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent )
+			);
+	}
+
+	protected int getOriginalHeight()
+	{
+		return( getLength( _pixelsFromTheComponentTopBoundaryToTheBottomOfTheParent,
+							_pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent )
+			);
+	}
+
+	protected int getLength( int minorBoundaryToMax, int majorBoundaryToMax )
+	{
+		return( minorBoundaryToMax - majorBoundaryToMax );
+	}
+
+	protected double getCenterPercentajeOfParent( int minorBoundaryToMax, int majorBoundaryToMax, int max )
+	{
+		double result = 0d;
+		if( max > 0 )
+			result = ( ( ( max - minorBoundaryToMax ) + ( (double) getLength( minorBoundaryToMax, majorBoundaryToMax  ) ) / 2 ) / max );
+
+		return( result );
+	}
+
+	protected double getOriginalHorizontalCenterPercentageOfMax()
+	{
+		return( getCenterPercentajeOfParent( _pixelsFromTheComponentLeftBoundaryToTheRightOfTheParent,
+												_pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent,
+												_originalWidthOfParent )
+			);
+	}
+
+	protected double getOriginalVerticalCenterPercentageOfMax()
+	{
+		return( getCenterPercentajeOfParent( _pixelsFromTheComponentTopBoundaryToTheBottomOfTheParent,
+											_pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent,
+											_originalHeightOfParent )
+			);
 	}
 
 	protected int unzoom( int value, double zoomFactor )
@@ -700,22 +776,73 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		return( IntegerFunctions.zoomValueRound( value, 1/zoomFactor ) );
 	}
 
-	protected void registerListeners()
+	public boolean isParentComponentListenerAdded()
 	{
-		_parentComponentListener = createComponentListener();
-		addComponentListenerToParent( _parentComponentListener );
-
-		_mouseAdapter = this.createMouseAdapter();
-		_component.addMouseListener(_mouseAdapter );
-		_component.addMouseMotionListener(_mouseAdapter );
+		return( _parentComponentListener != null );
 	}
 
-	protected void addComponentListenerToParent( ComponentListener listener )
+	public void registerListeners()
 	{
-		Component parent = getParent(_component);
+		_triedToRegisterListeners = true;
 
-		if( parent != null )
-			parent.addComponentListener( _parentComponentListener );
+		if( matches() )
+		{
+			int kk = 1;
+		}
+
+		if( _parentComponentListener == null )
+		{
+			_parentComponentListener = createComponentListener( () -> parentResized() );
+			if( ! addComponentListenerToParent( _parentComponentListener ) )
+				_parentComponentListener = null;
+		}
+
+		if( _compComponentListener == null )
+		{
+			_compComponentListener = createComponentListener( () -> compResized() );
+			_component.addComponentListener(_compComponentListener);
+		}
+
+		if( _mouseAdapter == null )
+		{
+			_mouseAdapter = this.createMouseAdapter();
+			_component.addMouseListener(_mouseAdapter );
+			_component.addMouseMotionListener(_mouseAdapter );
+		}
+	}
+
+	protected ExtendedZoomSemaphore isExtendedZoomSemaphoreActivated()
+	{
+		ExtendedZoomSemaphore result = getExtendedZoomSemaphore();
+		if( ( result == null ) || !result.isActivated() )
+			result = null;
+
+		return( result );
+	}
+
+	protected void compResized()
+	{
+		if( matches() )
+		{
+			int ii=1;
+		}
+
+		ExtendedZoomSemaphore ezs = isExtendedZoomSemaphoreActivated();
+		if( ezs != null )
+			SwingUtilities.invokeLater( () -> SwingUtilities.invokeLater( () -> ezs.getSemaphore().release() ) );
+		setExtendedZoomSemaphore(null);
+	}
+
+	protected boolean addComponentListenerToParent( ComponentListener listener )
+	{
+		boolean result = false;
+
+		Component parent = getParent(_component);
+		result = ( parent != null );
+		if( result )
+			parent.addComponentListener( listener );
+
+		return( result );
 	}
 
 	protected void storeCurrentCursor()
@@ -737,6 +864,10 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		if( "jTF_regex".equals( _component.getName() ) )
 		{
 			boolean stop = true;
+		}
+		if( matches() )
+		{
+			int kk = 1;
 		}
 //				javax.swing.JScrollPane cp;
 //				javax.swing.plaf.metal.MetalScrollButton l;
@@ -766,12 +897,12 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		}
 	}
 
-	protected ComponentListener createComponentListener()
+	protected ComponentListener createComponentListener( Runnable runnable )
 	{
 		return( new ComponentListener() {
 			@Override
 			public void componentResized(ComponentEvent e) {
-				parentResized();
+				runnable.run();
 			}
 
 			@Override
@@ -893,21 +1024,29 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			int kk=1;
 		}
 
-		Font newFont = getZoomedFont( _component.getFont(), _compOrigDimen.getOriginalFontSize(), zoomFactor );
-		if( newFont != null )
-			_component.setFont( newFont );
-
-		if( _component instanceof JComponent )
+		if( ! isFlagActive( DO_NOT_ZOOM_FONT ) )
 		{
-			JComponent jcomp = (JComponent) _component;
-			if( jcomp.getBorder() instanceof TitledBorder )
+			Font newFont = getZoomedFont( _component.getFont(), _compOrigDimen.getOriginalFontSize(), zoomFactor );
+			if( matches() )
 			{
-				TitledBorder tb = (TitledBorder) jcomp.getBorder();
-				Font newFontOfTitledBorder = getZoomedFont( tb.getTitleFont(),
-															_compOrigDimen.getOriginalFontSizeOfTitledBorder(),
-															zoomFactor );
-				if( newFontOfTitledBorder != null )
-					tb.setTitleFont( newFont );
+				int kk=1;
+			}
+
+			if( newFont != null )
+				_component.setFont( newFont );
+
+			if( _component instanceof JComponent )
+			{
+				JComponent jcomp = (JComponent) _component;
+				if( jcomp.getBorder() instanceof TitledBorder )
+				{
+					TitledBorder tb = (TitledBorder) jcomp.getBorder();
+					Font newFontOfTitledBorder = getZoomedFont( tb.getTitleFont(),
+																_compOrigDimen.getOriginalFontSizeOfTitledBorder(),
+																zoomFactor );
+					if( newFontOfTitledBorder != null )
+						tb.setTitleFont( newFont );
+				}
 			}
 		}
 	}
@@ -1016,6 +1155,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			return( null );
 
 		Dimension newSize = null;
+		boolean hasToChangeBoundsAtElse = hasToChangeBoundsAtElse();
 		if( !( _component instanceof JInternalFrame ) && 
 			( _component.getParent().getLayout() != null )&&
 			!( _component.getParent() instanceof JSplitPane ) &&
@@ -1024,11 +1164,20 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			if( _component instanceof ResizeSizeComponent )
 				newSize = changeOnlySize( zoomFactor );
 		}
+		else if( hasToChangeBoundsAtElse )// normal
+			newSize = changeBoundsAndRepositionScrolls( zoomFactor );
 
-		if( newSize == null ) // normal
+		if( ( newSize == null ) && !hasToChangeBoundsAtElse )
+//		else
 			newSize = changeBoundsAndRepositionScrolls( zoomFactor );
 
 		return( newSize );
+	}
+
+	protected boolean hasToChangeBoundsAtElse()
+	{
+		return( isFlagActive( SKIP_CHANGE_BOUNDS_AND_REPOSITION ) );//||
+//				( _component instanceof JPopupMenu ) );
 	}
 
 	protected void resizeRelocate( Component comp, ZoomParam zp )
@@ -1041,9 +1190,13 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	protected boolean matches()
 	{
 		boolean result = false;
+		
+//		result = ( _component instanceof JTabbedPane );
+//		result = ( _component.getClass().getName().contains( "LineOfTagsJPanel" ) );
+
 
 		if( _component != null )
-			result = Objects.equals( _component.getName(), "jPanel3" );
+			result = Objects.equals( _component.getName(), "jTP_variantTextView" );
 /*
 		if( _component instanceof Container )
 		{
@@ -1130,9 +1283,10 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 //		if( isActiveAnyFlagToResizeScrollableComp() )
 		if( getScrollPane() != null )
 		{
-			if( _sizeChangedObserved == null ) // if we are not a size changed listener, we have to update the scrolls
+			if( _sizeChangedObserved == null )// if we are not a size changed listener, we have to update the scrolls
 			if( _pickedWaitingForUpdate &&
-				( zoomFactor != _previousZoomFactorWhenPickingData ) )
+				( zoomFactor != _previousZoomFactorWhenPickingData )
+				)
 			{
 				_pickedWaitingForUpdate = false;
 
@@ -1364,7 +1518,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 								sb.setValue( posInt );
 								};
 
-				ThreadFunctions.instance().delayedInvoke( () -> {
+				ThreadFunctions.instance().delayedSafeInvoke( () -> {
 							SwingUtilities.invokeLater( il );
 				},
 															50 );
@@ -1422,6 +1576,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		else
 		{
 			_component.setBounds( newBounds );
+			_boundsWereChanged = true;
 		}
 	}
 
@@ -1433,6 +1588,12 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			int ii=1;
 		}
 
+		if( ( _component instanceof JScrollPane ) &&
+			( _component.getParent() instanceof BasicComboPopup ) )
+		{
+			return;
+		}
+
 		if( isViewportView( _component.getParent() ) )
 			SwingUtilities.invokeLater( () -> execute_internal( zp ) );
 		else
@@ -1441,6 +1602,8 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 	public void execute_internal( ZoomParam zp )
 	{
+		_boundsWereChanged = false;
+
 		if( _component instanceof JPopupMenu )
 		{
 			int ii=0;
@@ -1486,13 +1649,44 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				invokeListeners( _component, zoomFactor );
 			}
 
-			if( _component instanceof JScrollPane )
-				resizeRelocate( ( (JScrollPane)_component).getViewport().getView(), zp );
+//			if( _component instanceof JScrollPane )
+//				resizeRelocate( ( (JScrollPane)_component).getViewport().getView(), zp );
 		}
 
 		setForceExecution( false );
 		_previousZoomFactor = zoomFactor;
 		_newExpectedZoomParam = zp;
+
+		releaseSemaphore();
+	}
+
+	protected void releaseSemaphore()
+	{
+		ExtendedZoomSemaphore ezs = isExtendedZoomSemaphoreActivated();
+		if( ezs != null )
+		{
+			if( _boundsWereChanged )
+				ezs.getSemaphore().release();
+			else
+				ezs.skipRelease( getNumberOfChildrenWithExtendedZoomSemaphore( ezs ) );
+		}
+	}
+
+	protected int getNumberOfChildrenWithExtendedZoomSemaphore( ExtendedZoomSemaphore ezs )
+	{
+		AtomicInteger result = new AtomicInteger(0);
+		if( ezs != null )
+		{
+			ComponentFunctions.instance().browseComponentHierarchy(_component,
+				(comp) -> {
+					ResizeRelocateItem rri = _parent.getResizeRelocateComponentItem(comp);
+					if( ( rri != null ) && ( rri.getExtendedZoomSemaphore() == ezs ) )
+						result.incrementAndGet();
+					return( null );
+				});
+		}
+
+		return( result.get() );
 	}
 
 	protected String getIconResourceName( Component component )
@@ -1614,24 +1808,34 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 					{
 						double factor = (double) parentBounds.getWidth() / _originalWidthOfParent;
 
-						if( isFlagActive( MOVE_LEFT_SIDE_PROPORTIONAL ) )
-							newX = parentBounds.width - ceil( _pixelsFromTheComponentLeftBoundaryToTheRightOfTheParent, factor );  // the hiest x
-
-	//					int rightBound = newX + _component.getWidth();
-						int rightBound = newX + width;
-
-						if( isFlagActive( MOVE_RIGHT_SIDE_PROPORTIONAL ) )
+						int unalteredWidth = floor( _originalWidth, zoomFactor );
+						int rightBound = 0;
+						if( isFlagActive( MOVE_MID_HORIZONTAL_SIDE_PROPORTIONAL ) )
 						{
-							rightBound = parentBounds.width - floor( _pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent, factor );   // the lowest x
+							newX = ceil( parentBounds.width, this.getOriginalHorizontalCenterPercentageOfMax() ) - unalteredWidth / 2;  // the hiest x
+							rightBound = newX + unalteredWidth;
 						}
-						else if( isFlagActive( MOVE_RIGHT_SIDE_TO_RIGHT ) )
+						else
 						{
-							rightBound = parentBounds.width - floor( _pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent, zoomFactor );   // the lowest x
-						}
-						else if( isFlagActive( LEAVE_WIDTH_UNALTERED ) )
-						{
-	//						rightBound = newX + _originalWidth;
-							rightBound = newX + floor( _originalWidth, zoomFactor );	// the lowest x
+							if( isFlagActive( MOVE_LEFT_SIDE_PROPORTIONAL ) )
+								newX = parentBounds.width - ceil( _pixelsFromTheComponentLeftBoundaryToTheRightOfTheParent, factor );  // the hiest x
+
+		//					int rightBound = newX + _component.getWidth();
+							rightBound = newX + width;
+
+							if( isFlagActive( MOVE_RIGHT_SIDE_PROPORTIONAL ) )
+							{
+								rightBound = parentBounds.width - floor( _pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent, factor );   // the lowest x
+							}
+							else if( isFlagActive( MOVE_RIGHT_SIDE_TO_RIGHT ) )
+							{
+								rightBound = parentBounds.width - floor( _pixelsLeftFromTheComponentRightBoundaryToTheRightOfTheParent, zoomFactor );   // the lowest x
+							}
+							else if( isFlagActive( LEAVE_WIDTH_UNALTERED ) )
+							{
+		//						rightBound = newX + _originalWidth;
+								rightBound = newX + unalteredWidth;	// the lowest x
+							}
 						}
 
 						width = rightBound - newX;
@@ -1686,24 +1890,34 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 					{
 						double factor = (double) parentBounds.getHeight() / _originalHeightOfParent;
 
-						if( isFlagActive( MOVE_TOP_SIDE_PROPORTIONAL ) )
-							newY = (int)( parentBounds.getHeight() - _pixelsFromTheComponentTopBoundaryToTheBottomOfTheParent * factor );
-
-						int bottomBound = newY + height;
-
-						if( isFlagActive( MOVE_BOTTOM_SIDE_PROPORTIONAL ) )
+						int unalteredHeight = floor( _originalHeight, zoomFactor );
+						int bottomBound = 0;
+						if( isFlagActive( MOVE_MID_VERTICAL_SIDE_PROPORTIONAL ) )
 						{
-							bottomBound = (int)( parentBounds.getHeight() - _pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent * factor );
+							newY = ceil( parentBounds.width, this.getOriginalVerticalCenterPercentageOfMax() ) - unalteredHeight / 2;  // the hiest x
+							bottomBound = newX + unalteredHeight;
 						}
-						else if( isFlagActive( MOVE_BOTTOM_SIDE_TO_BOTTOM ) )
+						else
 						{
-							bottomBound = (int)( parentBounds.getHeight() - _pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent );
-						}
-						else if( isFlagActive( LEAVE_WIDTH_UNALTERED ) )
-						{
-							bottomBound = newX + _originalHeight;
-						}
+							if( isFlagActive( MOVE_TOP_SIDE_PROPORTIONAL ) )
+								newY = (int)( parentBounds.getHeight() - _pixelsFromTheComponentTopBoundaryToTheBottomOfTheParent * factor );
 
+							bottomBound = newY + height;
+
+							if( isFlagActive( MOVE_BOTTOM_SIDE_PROPORTIONAL ) )
+							{
+								bottomBound = (int)( parentBounds.getHeight() - _pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent * factor );
+							}
+							else if( isFlagActive( MOVE_BOTTOM_SIDE_TO_BOTTOM ) )
+							{
+								bottomBound = (int)( parentBounds.getHeight() - _pixelsLeftFromTheComponentBottomBoundaryToTheBottomOfTheParent );
+							}
+							else if( isFlagActive( LEAVE_HEIGHT_UNALTERED ) )
+							{
+//								bottomBound = newX + _originalHeight;
+								bottomBound = newY + unalteredHeight;
+							}
+						}
 						height = bottomBound - newY;
 					}
 				}
@@ -2108,6 +2322,9 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				_previousVerticalBarPositionPercent = getPercentage( getBarPosition( sp.getVerticalScrollBar() ),
 																preferredSize.height );
 			}
+
+			// TODO: I have changed that, that can damage current way to treat free resizable custom JTextPanes
+			_previousZoomFactorWhenPickingData = zp.getZoomFactor();
 		}
 	}
 
@@ -2158,7 +2375,12 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 			SwingUtilities.invokeLater( () -> {
 				_component.setMinimumSize(value);
-				resizeScrollableComponent();
+				if( isActiveAnyFlagToResizeScrollableComp() &&
+					( _component.getParent() instanceof JViewport ) )
+				{
+					resizeScrollableComponent();
+				}
+
 //				modifyScrollsToRight();
 				JScrollPane sp = getScrollPane();
 				boolean hasFocus = _component.hasFocus();
@@ -2188,7 +2410,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 			if( hasToRelocateScrolls( _previousZoomFactor, _previousZoomFactorWhenPickingData ) )
 			{
-				ThreadFunctions.instance().delayedInvoke( () -> {
+				ThreadFunctions.instance().delayedSafeInvoke( () -> {
 						SwingUtilities.invokeLater( ()->{
 							repositionScrolls(_previousZoomFactor );
 							_previousZoomFactorWhenPickingData = _previousZoomFactor;
@@ -2200,6 +2422,36 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 												_component.repaint(); } );
 */
 		}
+	}
+
+	protected Dimension getViewportSize()
+	{
+		Dimension parentSize = null;
+		
+		if( _component.getParent() instanceof JViewport )
+		{
+			parentSize = _component.getParent().getSize();
+			if( ( parentSize.height == 0 ) ||
+				( parentSize.width == 0 ) )
+			{
+				Rectangle visibleRect = ( (JViewport) _component.getParent() ).getVisibleRect();
+
+				parentSize.width = visibleRect.width;
+				parentSize.height = visibleRect.height;
+			}
+
+			if( ( parentSize.height == 0 ) ||
+				( parentSize.width == 0 ) )
+			{
+				JScrollPane sp = getScrollPane();
+				if( sp != null )
+					parentSize = sp.getSize();
+			}
+
+			System.out.println( "getViewportSize() : " + parentSize );
+		}
+
+		return( parentSize );
 	}
 
 	protected Dimension calculateNewMinimumPreferredSizeForScrollableFreeComponent( Dimension newSize )
@@ -2214,7 +2466,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				result = new Dimension( newSize.width, newSize.height );
 				if( _component.getParent() instanceof JViewport )
 				{
-					Dimension parentSize = _component.getParent().getSize();
+					Dimension parentSize = getViewportSize();
 					if( isFlagActive(RESIZE_SCROLLABLE_HORIZONTAL_FREE) )
 						result.width = IntegerFunctions.max( result.width, parentSize.width );
 
@@ -2250,22 +2502,58 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		return( result );
 	}
 
-	protected void unregisterListeners()
+	protected void unregisterListenersFromParent( Component comp )
 	{
 		Component parent = getParent( _component );
-		if( ( _parentComponentListener != null ) && ( parent != null ) )
+		Component parent2 = getParent( comp );
+		if( ( _parentComponentListener != null ) && ( parent != null ) && ( parent2 != parent ) )
 		{
 			parent.removeComponentListener(_parentComponentListener);
-			_parentComponentListener = null;
-		}
 
+			if( !isComponentListenerAdded( parent2, _parentComponentListener ) )
+				_parentComponentListener = null;
+		}
+	}
+
+	protected void unregisterListenersFromComp( Component comp )
+	{
 		if( _mouseAdapter != null )
 		{
 			_component.removeMouseListener(_mouseAdapter );
 			_component.removeMouseMotionListener(_mouseAdapter );
-			_mouseAdapter = null;
+
+			if( !isMouseListenerAdded( comp, _mouseAdapter ) )
+				_mouseAdapter = null;
 		}
 		
+		if( _compComponentListener != null )
+			_component.removeComponentListener(_compComponentListener);
+	}
+
+	protected boolean isComponentListenerAdded( Component comp, ComponentListener listener )
+	{
+		return( ComponentFunctions.instance().isComponentListenerAdded( comp, listener ) );
+	}
+
+	protected boolean isMouseListenerAdded( Component comp, MouseListener listener )
+	{
+		return( ComponentFunctions.instance().isMouseListenerAdded( comp, listener ) );
+	}
+
+
+	protected void unregisterListeners( Component comp )
+	{
+		unregisterListenersFromParent( comp );
+		unregisterListenersFromComp( comp );
+	}
+
+	protected void unregisterListeners()
+	{
+		if( matches() )
+		{
+			int kk = 1;
+		}
+		unregisterListeners(null);
 	}
 
 	public void dispose()

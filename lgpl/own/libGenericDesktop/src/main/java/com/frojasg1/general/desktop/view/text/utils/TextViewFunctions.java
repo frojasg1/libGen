@@ -94,10 +94,13 @@ public class TextViewFunctions
 	{
 		Rectangle result = getCharacterBounds(textComp, index);
 
-		Point location = textComp.getLocationOnScreen();
+		if( result != null )
+		{
+			Point location = textComp.getLocationOnScreen();
 
-		result = new Rectangle( result.x + location.x, result.y + location.y,
-								result.width, result.height );
+			result = new Rectangle( result.x + location.x, result.y + location.y,
+									result.width, result.height );
+		}
 
 		return( result );
 	}

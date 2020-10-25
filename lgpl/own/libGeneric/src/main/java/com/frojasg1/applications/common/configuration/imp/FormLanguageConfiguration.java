@@ -37,6 +37,8 @@ import com.frojasg1.applications.common.configuration.InternationalizedStringCon
 public class FormLanguageConfiguration extends ConfigurationFromClassPath
 										implements InternationalizedStringConf
 {
+	public static final String CONF_WINDOW_TITLE = "WINDOW_TITLE";
+
 	public FormLanguageConfiguration(	String mainFolder,
 										String applicationName, String group,
 										String configurationFileName,

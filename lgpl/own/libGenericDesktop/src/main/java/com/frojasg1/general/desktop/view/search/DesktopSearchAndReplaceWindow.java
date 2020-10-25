@@ -63,7 +63,7 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 {
 	protected static DesktopSearchAndReplaceWindow _instance = null;
 	
-	protected static final String sa_configurationBaseFileName = "searchAndReplaceJFrame";
+	public static final String sa_configurationBaseFileName = "searchAndReplaceJFrame";
 	protected static final String sa_configurationBaseFileNameForSearchCombo = "searchComboHistory";
 	protected static final String sa_configurationBaseFileNameForReplaceCombo = "replaceComboHistory";
 //	protected DesktopViewTextComponent _textComp = null;

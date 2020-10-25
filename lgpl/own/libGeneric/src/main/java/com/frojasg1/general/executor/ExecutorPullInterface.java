@@ -26,6 +26,7 @@ public interface ExecutorPullInterface
 {
 	public ExecutorInterface getNextExecutor();
 	public void addPendingExecutor( ExecutorInterface executor );
+	public void addPendingNonStopableExecutor( Runnable executor );
 
 	public boolean isFinished();
 	public void hasToStop();
