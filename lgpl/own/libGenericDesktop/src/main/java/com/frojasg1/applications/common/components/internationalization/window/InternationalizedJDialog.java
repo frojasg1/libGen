@@ -75,6 +75,7 @@ import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.threads.ThreadFunctions;
 import com.frojasg1.general.zoom.ZoomParam;
 import java.awt.Container;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -82,6 +83,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 
 /**
  *
@@ -152,6 +154,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 	protected List<ExtendedZoomSemaphore> _listOfZoomSemaphoresOnTheFly = new ArrayList<>();
 
 	protected BufferedImage _lastWindowImage = null;
+	protected double _zoomFactorOfLastWindowImage = 1.0D;
 
 	/**
 	 * Creates new form InternationalizedJDialog
@@ -277,6 +280,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			String resourceForIcon = getAppliConf().getResourceNameForApplicationIcon();
 			if( resourceForIcon != null )
 				setIcons( resourceForIcon );
+
+			_newZoomFactor = _appliConf.getZoomFactor();
 		}
 	}
 
@@ -862,6 +867,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			}
 
 			_lastWindowImage = new BufferedImage( getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB );
+			_zoomFactorOfLastWindowImage = getZoomFactor();
+
 			Graphics grp2 = _lastWindowImage.createGraphics();
 
 			super.paint( grp2 );
@@ -887,7 +894,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			}
 
 			grp2.dispose();
-			paintLast(gc);
+			paint(gc, _lastWindowImage);
 		}
 	}
 
@@ -909,8 +916,41 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 	protected void paintLast(Graphics gc)
 	{
-		if( _lastWindowImage != null )
-			gc.drawImage( _lastWindowImage, 0, 0, null );
+		if( ( _lastWindowImage != null ) &&
+			( _newZoomFactor != _zoomFactorOfLastWindowImage ) )
+		{
+			BufferedImage image = _lastWindowImage;
+			image = createLastZoomedImage( _lastWindowImage,
+											_newZoomFactor / _zoomFactorOfLastWindowImage );
+
+			paint( gc, image );
+		}
+	}
+
+	protected void paint(Graphics gc, BufferedImage image )
+	{
+		if( image != null )
+			gc.drawImage( image, 0, 0, null );
+	}
+
+	protected BufferedImage createLastZoomedImage( BufferedImage image, double zoomFactor )
+	{
+		Insets insets = a_intern.getFrameBorder();
+
+		BufferedImage imageToZoom = ImageFunctions.instance().cropImage( image, insets );
+		BufferedImage zoomedImage = ImageFunctions.instance().resizeImage(imageToZoom, zoomFactor );
+
+		BufferedImage result = new BufferedImage( zoomedImage.getWidth() + insets.left + insets.right,
+													zoomedImage.getHeight() + insets.top + insets.bottom,+
+													BufferedImage.TYPE_INT_ARGB );
+
+		Graphics grp2 = result.createGraphics();
+
+		grp2.drawImage( zoomedImage, insets.left, insets.top, null );
+
+		grp2.dispose();
+
+		return( result );
 	}
 
 	@Override
@@ -1224,6 +1264,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 		if( isMinimumSizeSet() )
 			_hundredPerCentMinimumWidth = IntegerFunctions.zoomValueRound( getMinimumSize().width, 1 / getZoomFactor() );
+
+		SwingUtilities.invokeLater( () -> setMaximumSize( getSize() ) );
 	}
 
 	@Override
@@ -1724,6 +1766,26 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 					return null;
 				});
 		});
+/*
+		SwingUtilities.invokeLater( () -> {
+			ComponentFunctions.instance().browseComponentHierarchy( this,
+				(comp) -> {
+					if( comp instanceof JViewport )
+					{
+						JViewport vp = (JViewport) comp;
+						JScrollPane jsp = ComponentFunctions.instance().getScrollPane(vp);
+						jsp.setViewportView( vp.getView() );
+					}
+					return null;
+				});
+		});
+*/
+		SwingUtilities.invokeLater( () -> revalidateChild() );
+	}
+
+	public void revalidateChild()
+	{
+		
 	}
 
 	protected void setIgnoreRepaintRecursive( boolean value )

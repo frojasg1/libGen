@@ -18,147 +18,83 @@
  */
 package com.frojasg1.general;
 
-import java.text.DateFormat;
-import java.text.DecimalFormatSymbols;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import com.frojasg1.general.string.StringFunctions;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
-public class DateFunctions
+public class DoubleFunctions
 {
 	
-	protected static DateFunctions _instance;
+	protected static DoubleFunctions _instance;
 
-	public static void changeInstance( DateFunctions inst )
+	protected NumberFormat _formatter = null;
+
+	public static void changeInstance( DoubleFunctions inst )
 	{
 		_instance = inst;
 	}
 
-	public static DateFunctions instance()
+	public static DoubleFunctions instance()
 	{
 		if( _instance == null )
-			_instance = new DateFunctions();
+			_instance = new DoubleFunctions();
 		return( _instance );
 	}
-	
-	// Both dateFormat and timeFormat, may take one of the following values:
-	// { DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL };
-	public String formatDateTime( Date date, Locale locale, int dateFormat, int timeFormat )
-	{
-		String result = null;
 
-		if( timeFormat < 0 ) result = DateFormat.getDateInstance( dateFormat, locale).format( date );
-		else
-		{
-			DateFormat df = DateFormat.getDateTimeInstance( dateFormat, timeFormat, locale);
-			result = df.format(date);
-		}
+	public DoubleFunctions()
+	{
+		_formatter = createNumberFormat();
+	}
+
+	protected NumberFormat createNumberFormat()
+	{
+		return( new DecimalFormat("#0.000000") );
+	}
+
+	public String format( Double value )
+	{
+		String result = "null";
+		if( value != null )
+			result = _formatter.format(value);
+		return( result );
+	}
+
+	public Double min( Double d1, Double d2 )
+	{
+		Double result = d1;
+		if( ( d1 == null ) || ( d2 != null ) && ( d2 < d1 ) )
+			result = d2;
 
 		return( result );
 	}
 
-	public String formatDate( Date date, String format, TimeZone tz )
+	public Double max( Double d1, Double d2 )
 	{
-		String result = null;
-
-		SimpleDateFormat sdf = new SimpleDateFormat( format );
-		
-		if( tz != null )
-			sdf.setTimeZone(tz);
-
-		result = sdf.format( date );
-
-		return( result );
-	}
-	
-	public String formatDate( Date date )
-	{
-		return( formatDate( date, "dd/MM/yyyy", null ) );
-	}
-	
-	public String formatDateTime( Date date )
-	{
-		return( formatDate( date, "dd/MM/yyyy HH:mm:ss", null ) );
-	}
-	
-	public String formatDate_yyyy( Date date, int format  )
-	{
-		DateFormat df = DateFormat.getDateInstance( DateFormat.SHORT );
-		String result = df.format( date );
-
-		SimpleDateFormat sdf = null;
-		if( df instanceof SimpleDateFormat )
-		{
-			sdf = (SimpleDateFormat) df;
-			String pattern = sdf.toPattern();
-			pattern = pattern.replaceAll( "y+", "yyyy" );
-
-			result = formatDate( date, pattern, null );
-		}
+		Double result = d1;
+		if( ( d1 == null ) || ( d2 != null ) && ( d2 > d1 ) )
+			result = d2;
 
 		return( result );
 	}
 
-	public Date parseSheetDate( String cadena, Locale locale )
+	public int sgn( double dd )
 	{
-		Date date = null;
-
-//		Locale locale = new Locale( "es", "ES" );
-
-		int arrayOfTimeOrDateFormats[] = { DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL };
-
-		for( int ii=0; ii<arrayOfTimeOrDateFormats.length; ii ++ )
-		{
-			try
-			{
-				date = DateFormat.getDateInstance( arrayOfTimeOrDateFormats[ii], locale).parse( cadena );
-				return( date );
-			}
-			catch( ParseException ex )
-			{
-			}
-		}
-
-		for( int ii=0; ii<arrayOfTimeOrDateFormats.length; ii ++ )
-			for( int jj=0; ii<arrayOfTimeOrDateFormats.length; ii ++ )
-			{
-				try
-				{
-					DateFormat df = DateFormat.getDateTimeInstance( arrayOfTimeOrDateFormats[ii], arrayOfTimeOrDateFormats[jj], locale);
-					date = df.parse( cadena );
-					return( date );
-				}
-				catch( ParseException ex )
-				{
-				}
-			}
-
-		return( date );
+		return( (dd==0) ? 0 : ( (dd>0) ? 1 : -1 ) );
 	}
 
-	public static void main( String args[] )
+	public double abs( double dd )
 	{
-		Locale locale = new Locale( "es", "ES" );
-		DateFormat formatter = DateFormat.getDateInstance(DateFormat.SHORT, locale);
-		if( formatter instanceof SimpleDateFormat )
+		return( (dd==0) ? 0 : ( (dd>0) ? dd : -dd ) );
+	}
+
+	public Double parseDouble( String str )
+	{
+		Double result = null;
+		if( str != null )
 		{
-			SimpleDateFormat sdf = (SimpleDateFormat) formatter;
-			System.out.println( "locale:" + locale.getDisplayCountry() + "   Formato de fechas: " + sdf.toPattern() + "   DateFormat.SHORT :" + DateFormat.SHORT );
+			String str2 = StringFunctions.instance().replaceSetOfChars(str, ",", "." );
+			result = ExecutionFunctions.instance().safeFunctionExecution( () -> Double.parseDouble( str2 ) );
 		}
-		
-		DecimalFormatSymbols dfs = new DecimalFormatSymbols( locale );
-		System.out.println( dfs.getDecimalSeparator() );
-		
-		DateFormat formatter1 = DateFormat.getDateTimeInstance( DateFormat.SHORT, DateFormat.MEDIUM, locale);
-		if( formatter1 instanceof SimpleDateFormat )
-		{
-			SimpleDateFormat sdf = (SimpleDateFormat) formatter1;
-			System.out.println( "locale:" + locale.getDisplayCountry() + "   Formato de fechas: " + sdf.toPattern() );
-		}
-		
-		Date date = new Date();
-		System.out.println("now: " + instance().formatDateTime(date, locale, DateFormat.SHORT, DateFormat.MEDIUM ) );
+		return( result );
 	}
 }

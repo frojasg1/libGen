@@ -10,22 +10,24 @@ import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.number.IntegerFunctions;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.plaf.metal.MetalScrollButton;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ScrollPaneMouseWheelListener implements MouseWheelListener
+public class ScrollPaneMouseListener extends MouseAdapter
 {
 	protected JScrollPane _parent = null;
 
 	protected boolean _scrollByProgram = false;
 
-	public ScrollPaneMouseWheelListener( JScrollPane parent )
+	public ScrollPaneMouseListener( JScrollPane parent )
 	{
 		_parent = parent;
 	}
@@ -65,6 +67,41 @@ public class ScrollPaneMouseWheelListener implements MouseWheelListener
 		}
 	}
 
+	@Override
+	public void mousePressed(MouseEvent evt)
+	{
+		// for vertical scroll
+		if( (evt.getButton() == MouseEvent.BUTTON1 ) && ( evt.getComponent() instanceof MetalScrollButton ) && ( _parent != null ) )
+		{
+			int units = getUnitsFromComponentClicked( evt.getComponent() );
+
+			JScrollBar scrollBar = _parent.getVerticalScrollBar();
+			incrementScrollBarValue( scrollBar, ( units * scrollBar.getVisibleAmount() ) / 26 );
+		}
+	}
+
+	/**
+	 * 
+	 * @param component		It will be a MetalScrollButton of the Vertical Scroll Bar.
+	 * @return				1 - Up button clicked
+	 *						-1 - Down button clicked
+	 *						0 - Otherwise
+	 */
+	protected int getUnitsFromComponentClicked( Component component )
+	{
+		int result = 0;
+
+		if( _parent != null )
+		{
+			if( component == _parent.getVerticalScrollBar().getComponent( 0 ) )		// up button
+				result = 1;
+			else if( component == _parent.getVerticalScrollBar().getComponent( 1 ) )		// down button
+				result = -1;
+		}
+
+		return( result );
+	}
+
 	protected void incrementScrollBarValue( JScrollBar scrollBar, int increment )
 	{
 		setScrollBarValue( scrollBar, scrollBar.getValue() + increment );
@@ -87,13 +124,29 @@ public class ScrollPaneMouseWheelListener implements MouseWheelListener
 
 	public void addListeners(Component component)
 	{
-		_parent.setWheelScrollingEnabled( false );		// we will program manually the wheel scrolling.
+		if( component instanceof JScrollPane )
+		{
+			JScrollPane jsp = (JScrollPane) component;
+
+			jsp.setWheelScrollingEnabled( false );		// we will program manually the wheel scrolling.
+			jsp.getVerticalScrollBar().getComponent(0).addMouseListener(this);
+			jsp.getVerticalScrollBar().getComponent(1).addMouseListener(this);
+		}
+
 		ComponentFunctions.instance().browseComponentHierarchy(component, comp -> { comp.addMouseWheelListener(this); return null; } );
 	}
 
 	public void removeListeners(Component component)
 	{
 		ComponentFunctions.instance().browseComponentHierarchy(component, comp -> { comp.removeMouseWheelListener(this); return null; } );
+
+		if( component instanceof JScrollPane )
+		{
+			JScrollPane jsp = (JScrollPane) component;
+
+			jsp.getVerticalScrollBar().getComponent(0).removeMouseListener(this);
+			jsp.getVerticalScrollBar().getComponent(1).removeMouseListener(this);
+		}
 	}
 
 	public void removeListeners()

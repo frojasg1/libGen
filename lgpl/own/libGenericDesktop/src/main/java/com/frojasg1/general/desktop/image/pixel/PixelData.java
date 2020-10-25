@@ -19,15 +19,13 @@
  *      http://www.gnu.org/licenses/gpl-3.0.txt
  *
  */
-package com.frojasg1.general.desktop.image;
-
-import com.frojasg1.general.number.IntegerFunctions;
+package com.frojasg1.general.desktop.image.pixel;
 
 /**
  *
  * @author Usuario
  */
-public class PixelComponents
+public abstract class PixelData<CC>
 {
 	public static final int LUMINANCE = 0;
 	public static final int RED = 1;
@@ -35,30 +33,36 @@ public class PixelComponents
 	public static final int BLUE = 3;
 	public static final int ALPHA = 4;
 
-	public short _alpha;
-	public short _red;
-	public short _green;
-	public short _blue;
+	public CC _alpha;
+	public CC _red;
+	public CC _green;
+	public CC _blue;
 
-	protected short _greyScale;
-	protected int _argb;
+	protected CC _greyScale;
 
 	protected boolean _signedComponents = false;
 
-	public PixelComponents( int argb, boolean signedComponents )
+	protected PixelData()
 	{
-		setArgb( argb, signedComponents );
+		
 	}
 
-	public PixelComponents( short alpha, short red, short green, short blue,
+	protected PixelData( CC alpha, CC red, CC green, CC blue,
 							boolean signedComponents )
 	{
 		setComponents( alpha, red, green, blue, signedComponents );
 	}
 
-	public short getComponent( int componentIndex )
+	public boolean isSigned()
 	{
-		short result = Short.MIN_VALUE;
+		return( _signedComponents );
+	}
+
+	protected abstract CC getMinimumCompValue();
+
+	public CC getComponent( int componentIndex )
+	{
+		CC result = getMinimumCompValue();
 
 		switch( componentIndex )
 		{
@@ -72,7 +76,7 @@ public class PixelComponents
 		return( result );
 	}
 
-	public void setComponent( int componentIndex, short value )
+	public void setComponent( int componentIndex, CC value )
 	{
 		switch( componentIndex )
 		{
@@ -84,7 +88,7 @@ public class PixelComponents
 		}
 	}
 
-	public void setComponentWithoutLimit( int componentIndex, short value )
+	public void setComponentWithoutLimit( int componentIndex, CC value )
 	{
 		switch( componentIndex )
 		{
@@ -96,7 +100,7 @@ public class PixelComponents
 		}
 	}
 
-	public void setComponents( short alpha, short red, short green, short blue, boolean signedComponents )
+	public void setComponents( CC alpha, CC red, CC green, CC blue, boolean signedComponents )
 	{
 		_signedComponents = signedComponents;
 
@@ -110,47 +114,9 @@ public class PixelComponents
 //		_greyScale = limit( from, to, _greyScale );
 	}
 
-	protected void recalculateArgbAndGreyScale()
-	{
-		_argb = ImageFunctions.instance().getARGB( absoluteValue( _alpha ),
-			absoluteValue( _red ), absoluteValue( _green ),
-			absoluteValue( _blue ) );
+	protected abstract void recalculateArgbAndGreyScale();
 
-		_greyScale = ImageFunctions.instance().getGrayScale(_argb);
-		if( _signedComponents )
-			_greyScale = makeSigned( _greyScale );
-	}
-
-	protected int absoluteValue( int value )
-	{
-		return( _signedComponents ? value + 128 : value );
-	}
-
-	protected short limit( short value )
-	{
-		short from = 0;
-		short to = 255;
-		if( _signedComponents )
-		{
-			from = (short) -128;
-			to = (short) 127;
-		}
-
-		short result = limit( from, to, value );
-
-		return( result );
-	}
-
-	protected short limit( short from, short to, short value )
-	{
-		short result = value;
-		if( result > to )
-			result = to;
-		if( result < from )
-			result = from;
-
-		return( result );
-	}
+	protected abstract CC limit( CC value );
 
 	protected void makeComponentsSigned()
 	{
@@ -161,117 +127,76 @@ public class PixelComponents
 		_greyScale = makeSigned( _greyScale );
 	}
 
-	protected short makeSigned( short value )
-	{
-		return( (short) ( value - 128 ) );
-	}
+	protected abstract CC makeSigned( CC value );
 
-	public void setArgb( int argb, boolean signedComponents )
-	{
-		_signedComponents = signedComponents;
-
-		_greyScale = ImageFunctions.instance().getGrayScale(argb);
-		_argb = argb;
-		_alpha = (short) ( ( argb >>> 24 ) & 0xff );
-		_red = (short) ( ( argb >>> 16 ) & 0xff );
-		_green = (short) ( ( argb >>> 8 ) & 0xff );
-		_blue = (short) ( argb & 0xff );
-
-		if( _signedComponents )
-			makeComponentsSigned();
-	}
-
-	public short getAlpha()
+	public CC getAlpha()
 	{
 		return( _alpha );
 	}
 
-	public short getRed()
+	public CC getRed()
 	{
 		return( _red );
 	}
 	
-	public short getGreen()
+	public CC getGreen()
 	{
 		return( _green );
 	}
 	
-	public short getBlue()
+	public CC getBlue()
 	{
 		return( _blue );
 	}
 
-	public void setAlpha( short value )
+	public void setAlpha( CC value )
 	{
 		_alpha = limit( value );
 		recalculateArgbAndGreyScale();
 	}
 
-	public void setGreyScale( short value )
+	public void setGreyScale( CC value )
 	{
 		setRed( value );
 		setGreen( value );
 		setBlue( value );
 	}
 
-	public void setRed( short value )
+	public void setRed( CC value )
 	{
 		_red = limit( value );
 		recalculateArgbAndGreyScale();
 	}
 
-	public void setGreen( short value )
+	public void setGreen( CC value )
 	{
 		_green = limit( value );
 		recalculateArgbAndGreyScale();
 	}
 
-	public void setBlue( short value )
+	public void setBlue( CC value )
 	{
 		_blue = limit( value );
 		recalculateArgbAndGreyScale();
 	}
 
-
-	public short getGreyScale()
+	public CC getGreyScale()
 	{
 		return( _greyScale );
 	}
 
-	public boolean nearlyEquals( short[] pixelComponents, int tolerance )
+	protected abstract CC subtractComp( CC valone, CC valtwo );
+
+	protected abstract PixelData<CC> createEmptyCopy();
+
+	public PixelData<CC> subtract( PixelData<CC> other )
 	{
-		boolean result = false;
+		PixelData result = createEmptyCopy();
 
-		if( pixelComponents != null )
-		{
-			int redDiff = IntegerFunctions.abs( pixelComponents[0] - getRed() );
-			int greenDiff = IntegerFunctions.abs( pixelComponents[1] - getGreen() );
-			int blueDiff = IntegerFunctions.abs( pixelComponents[2] - getBlue() );
-
-			if( ( getRed() >= 0 ) && ( redDiff <= tolerance ) &&
-				( getGreen() >= 0 ) && ( greenDiff <= tolerance ) &&
-				( getBlue() >= 0 ) && ( blueDiff <= tolerance ) )
-			{
-				result = true;
-			}
-		}
-
-		return( result );
-	}
-
-	public int getPixelValue()
-	{
-		return( _argb );
-	}
-
-	public PixelComponents subtract( PixelComponents other )
-	{
-		PixelComponents result = new PixelComponents( 0, _signedComponents );
-
-		result._alpha = (short) ( _alpha - other._alpha );
-		result._red = (short) ( _red - other._red );
-		result._green = (short) ( _green - other._green );
-		result._blue = (short) ( _blue - other._blue );
+		result._alpha = subtractComp( _alpha, other._alpha );
+		result._red = subtractComp( _red, other._red );
+		result._green = subtractComp( _green, other._green );
+		result._blue = subtractComp( _blue, other._blue );
 
 		result.setComponents(result._alpha, result._red, result._green, result._blue, _signedComponents);
 

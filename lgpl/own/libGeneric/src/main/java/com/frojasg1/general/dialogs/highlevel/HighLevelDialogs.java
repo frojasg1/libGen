@@ -3,11 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.frojasg1.general.desktop.dialogs.highlevel;
+package com.frojasg1.general.dialogs.highlevel;
 
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.imp.InternationalizedStringConfImp;
-import com.frojasg1.general.desktop.GenericDesktopConstants;
+import com.frojasg1.general.GenericConstants;
 import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.view.ViewComponent;
 import com.frojasg1.generic.GenericFunctions;
@@ -46,7 +46,7 @@ public class HighLevelDialogs implements InternationalizedStringConf
 	protected HighLevelDialogs()
 	{
 		_internationalizedStringConf = new InternationalizedStringConfImp( GLOBAL_CONF_FILE_NAME,
-								GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR );
+								GenericConstants.sa_PROPERTIES_PATH_IN_JAR );
 
 		registerInternationalizedStrings();
 	}

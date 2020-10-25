@@ -212,7 +212,12 @@ public class ComponentFunctions
 
 	public boolean isViewportView( Component component )
 	{
-		return( getScrollPane( component ) != null );
+		boolean result = false;
+		JScrollPane jsp = getScrollPane( component );
+		if( jsp != null )
+			result = jsp.getViewport().getView() == component;
+
+		return( result );
 	}
 
 	public JScrollPane getScrollPane( Component component )
@@ -222,11 +227,15 @@ public class ComponentFunctions
 		if( component != null )
 		{
 			Component parent = component.getParent();
-			if( parent != null )
+			if( parent instanceof JViewport )
 			{
 				parent = parent.getParent();
 				if( parent instanceof JScrollPane )
 					result = (JScrollPane) parent;
+			}
+			else if( parent instanceof JScrollPane )
+			{
+				result = (JScrollPane) parent;
 			}
 		}
 

@@ -31,6 +31,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.font.FontRenderContext;
@@ -121,12 +122,59 @@ public class ImageFunctions
 														alphaForPixelsDifferentFromColorFrom ) );
 	}
 
+	public BufferedImage resizeImage( BufferedImage original, int newWidth, int newHeight ) throws IllegalArgumentException
+	{
+		return( ResizeImageFast.instance().resizeImage( original, newWidth, newHeight ) );
+	}
+
 	public BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight ) throws IllegalArgumentException
 	{
 		return( ResizeImageAccurate.instance().resizeImage( original, newWidth, newHeight ) );
 	}
 
-	public BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
+	public BufferedImage cropImage( BufferedImage original, Insets insets )
+	{
+		BufferedImage result = original;
+		if( ( original != null ) && ( insets != null ) )
+		{
+			int width = Math.max( 0, original.getWidth() - insets.left - insets.right );
+			int height = Math.max( 0, original.getHeight() - insets.top - insets.bottom );
+
+			result = new BufferedImage( width, height, BufferedImage.TYPE_INT_ARGB );
+
+			for( int ii=0; ii<height; ii++ )
+				for( int jj=0; jj<width; jj++ )
+					result.setRGB(jj, ii, original.getRGB(jj+insets.left, ii+insets.top ) );
+		}
+
+		return( result );
+	}
+
+	public BufferedImage resizeImage( BufferedImage original, double zoomFactor ) throws IllegalArgumentException
+	{
+		return( resizeImageGen( ResizeImageFast.instance(), original, zoomFactor ) );
+	}
+
+	public BufferedImage resizeImageAccurately( BufferedImage original, double zoomFactor ) throws IllegalArgumentException
+	{
+		return( resizeImageGen( ResizeImageAccurate.instance(), original, zoomFactor ) );
+	}
+
+	protected BufferedImage resizeImageGen( ResizeImageInterface rii, BufferedImage original, double zoomFactor ) throws IllegalArgumentException
+	{
+		BufferedImage result = null;
+		if( original != null )
+		{
+			int newWidth = IntegerFunctions.zoomValueCeil(original.getWidth(), zoomFactor);
+			int newHeight = IntegerFunctions.zoomValueCeil(original.getHeight(), zoomFactor);
+
+			result = rii.resizeImage( original, newWidth, newHeight );
+		}
+
+		return( result );
+	}
+
+	protected BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
 											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
 	{
 		return( ResizeImageAccurate.instance().resizeImage(original, newWidth, newHeight,

@@ -1182,7 +1182,11 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 	protected void resizeRelocate( Component comp, ZoomParam zp )
 	{
-		ResizeRelocateItem rri = _parent.getResizeRelocateComponentItem(comp);
+		ResizeRelocateItem rri = null;
+
+		if( _parent != null )
+			rri = _parent.getResizeRelocateComponentItem(comp);
+
 		if( rri != null )
 			rri.execute( zp );
 	}
@@ -1600,9 +1604,26 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			execute_internal( zp );
 	}
 
+	protected double getNewExpectedZoomParam()
+	{
+		double result = 1.0D;
+		if( _newExpectedZoomParam != null )
+			result = _newExpectedZoomParam.getZoomFactor();
+
+		return( result );
+	}
+
+	protected boolean isExpectedZoomFactor( ZoomParam zp )
+	{
+		boolean result = ( zp != null ) && ( zp.getZoomFactor() == getNewExpectedZoomParam() );
+
+		return( result );
+	}
+
 	public void execute_internal( ZoomParam zp )
 	{
 		_boundsWereChanged = false;
+		boolean hasToReleaseSemaphore = isExpectedZoomFactor( zp );
 
 		if( _component instanceof JPopupMenu )
 		{
@@ -1657,7 +1678,8 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		_previousZoomFactor = zoomFactor;
 		_newExpectedZoomParam = zp;
 
-		releaseSemaphore();
+		if( hasToReleaseSemaphore )
+			releaseSemaphore();
 	}
 
 	protected void releaseSemaphore()

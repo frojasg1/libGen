@@ -19,31 +19,19 @@
  *      http://www.gnu.org/licenses/gpl-3.0.txt
  *
  */
-package com.frojasg1.general.desktop.image;
+package com.frojasg1.general.desktop.image.pixel.impl;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.image.pixel.PixelData;
 import com.frojasg1.general.number.IntegerFunctions;
 
 /**
  *
  * @author Usuario
  */
-public class PixelComponents
+public class PixelComponents extends PixelData<Short>
 {
-	public static final int LUMINANCE = 0;
-	public static final int RED = 1;
-	public static final int GREEN = 2;
-	public static final int BLUE = 3;
-	public static final int ALPHA = 4;
-
-	public short _alpha;
-	public short _red;
-	public short _green;
-	public short _blue;
-
-	protected short _greyScale;
 	protected int _argb;
-
-	protected boolean _signedComponents = false;
 
 	public PixelComponents( int argb, boolean signedComponents )
 	{
@@ -53,63 +41,10 @@ public class PixelComponents
 	public PixelComponents( short alpha, short red, short green, short blue,
 							boolean signedComponents )
 	{
-		setComponents( alpha, red, green, blue, signedComponents );
+		super( alpha, red, green, blue, signedComponents );
 	}
 
-	public short getComponent( int componentIndex )
-	{
-		short result = Short.MIN_VALUE;
-
-		switch( componentIndex )
-		{
-			case LUMINANCE:	result = getGreyScale(); break;
-			case RED:	result = getRed(); break;
-			case GREEN:	result = getGreen(); break;
-			case BLUE:	result = getBlue(); break;
-			case ALPHA:	result = getAlpha(); break;
-		}
-
-		return( result );
-	}
-
-	public void setComponent( int componentIndex, short value )
-	{
-		switch( componentIndex )
-		{
-			case LUMINANCE: setGreyScale(value); break;
-			case RED:	setRed(value); break;
-			case GREEN:	setGreen(value); break;
-			case BLUE:	setBlue(value); break;
-			case ALPHA:	setAlpha(value); break;
-		}
-	}
-
-	public void setComponentWithoutLimit( int componentIndex, short value )
-	{
-		switch( componentIndex )
-		{
-			case LUMINANCE: _red = value; _green = value; _blue = value; break;
-			case RED:	_red = value; break;
-			case GREEN:	_green = value; break;
-			case BLUE:	_blue = value; break;
-			case ALPHA:	_alpha = value; break;
-		}
-	}
-
-	public void setComponents( short alpha, short red, short green, short blue, boolean signedComponents )
-	{
-		_signedComponents = signedComponents;
-
-		_alpha = limit( alpha );
-		_red = limit( red );
-		_green = limit( green );
-		_blue = limit( blue );
-
-		recalculateArgbAndGreyScale();
-
-//		_greyScale = limit( from, to, _greyScale );
-	}
-
+	@Override
 	protected void recalculateArgbAndGreyScale()
 	{
 		_argb = ImageFunctions.instance().getARGB( absoluteValue( _alpha ),
@@ -126,7 +61,8 @@ public class PixelComponents
 		return( _signedComponents ? value + 128 : value );
 	}
 
-	protected short limit( short value )
+	@Override
+	protected Short limit( Short value )
 	{
 		short from = 0;
 		short to = 255;
@@ -141,7 +77,7 @@ public class PixelComponents
 		return( result );
 	}
 
-	protected short limit( short from, short to, short value )
+	protected Short limit( Short from, Short to, Short value )
 	{
 		short result = value;
 		if( result > to )
@@ -152,16 +88,8 @@ public class PixelComponents
 		return( result );
 	}
 
-	protected void makeComponentsSigned()
-	{
-		_alpha = makeSigned( _alpha );
-		_red = makeSigned( _red );
-		_green = makeSigned( _green );
-		_blue = makeSigned( _blue );
-		_greyScale = makeSigned( _greyScale );
-	}
-
-	protected short makeSigned( short value )
+	@Override
+	protected Short makeSigned( Short value )
 	{
 		return( (short) ( value - 128 ) );
 	}
@@ -179,63 +107,6 @@ public class PixelComponents
 
 		if( _signedComponents )
 			makeComponentsSigned();
-	}
-
-	public short getAlpha()
-	{
-		return( _alpha );
-	}
-
-	public short getRed()
-	{
-		return( _red );
-	}
-	
-	public short getGreen()
-	{
-		return( _green );
-	}
-	
-	public short getBlue()
-	{
-		return( _blue );
-	}
-
-	public void setAlpha( short value )
-	{
-		_alpha = limit( value );
-		recalculateArgbAndGreyScale();
-	}
-
-	public void setGreyScale( short value )
-	{
-		setRed( value );
-		setGreen( value );
-		setBlue( value );
-	}
-
-	public void setRed( short value )
-	{
-		_red = limit( value );
-		recalculateArgbAndGreyScale();
-	}
-
-	public void setGreen( short value )
-	{
-		_green = limit( value );
-		recalculateArgbAndGreyScale();
-	}
-
-	public void setBlue( short value )
-	{
-		_blue = limit( value );
-		recalculateArgbAndGreyScale();
-	}
-
-
-	public short getGreyScale()
-	{
-		return( _greyScale );
 	}
 
 	public boolean nearlyEquals( short[] pixelComponents, int tolerance )
@@ -264,17 +135,26 @@ public class PixelComponents
 		return( _argb );
 	}
 
-	public PixelComponents subtract( PixelComponents other )
+	@Override
+	protected Short subtractComp( Short valone, Short valtwo )
 	{
-		PixelComponents result = new PixelComponents( 0, _signedComponents );
+		return( (short) (valone - valtwo) );
+	}
 
-		result._alpha = (short) ( _alpha - other._alpha );
-		result._red = (short) ( _red - other._red );
-		result._green = (short) ( _green - other._green );
-		result._blue = (short) ( _blue - other._blue );
+	@Override
+	protected PixelComponents createEmptyCopy()
+	{
+		return( new PixelComponents( 0, _signedComponents ) );
+	}
 
-		result.setComponents(result._alpha, result._red, result._green, result._blue, _signedComponents);
+	@Override
+	public PixelComponents subtract( PixelData<Short> other )
+	{
+		return( (PixelComponents) super.subtract(other) );
+	}
 
-		return( result );
+	@Override
+	protected Short getMinimumCompValue() {
+		return Short.MIN_VALUE;
 	}
 }

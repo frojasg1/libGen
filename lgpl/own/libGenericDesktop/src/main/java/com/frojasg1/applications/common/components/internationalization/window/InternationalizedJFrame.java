@@ -63,6 +63,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentEvent;
@@ -84,7 +85,9 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
@@ -166,6 +169,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	protected List<ExtendedZoomSemaphore> _listOfZoomSemaphoresOnTheFly = new ArrayList<>();
 
 	protected BufferedImage _lastWindowImage = null;
+	protected double _zoomFactorOfLastWindowImage = 1.0D;
 
 	/**
 	 * Creates new form IntenationalizationJFrame
@@ -284,6 +288,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			String resourceForIcon = getAppliConf().getResourceNameForApplicationIcon();
 			if( resourceForIcon != null )
 				setIcons( resourceForIcon );
+
+			_newZoomFactor = _appliConf.getZoomFactor();
 		}
 	}
 
@@ -456,6 +462,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 		if( isMinimumSizeSet() )
 			_hundredPerCentMinimumWidth = IntegerFunctions.zoomValueRound( getMinimumSize().width, 1 / getZoomFactor() );
+
+		SwingUtilities.invokeLater( () -> setMaximumSize( getSize() ) );
 	}
 
 	@Override
@@ -854,6 +862,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			}
 
 			_lastWindowImage = new BufferedImage( getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB );
+			_zoomFactorOfLastWindowImage = getZoomFactor();
+
 			Graphics grp2 = _lastWindowImage.createGraphics();
 
 			super.paint( grp2 );
@@ -879,7 +889,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			}
 
 			grp2.dispose();
-			paintLast(gc);
+			paint(gc, _lastWindowImage);
 		}
 	}
 
@@ -902,8 +912,41 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 	protected void paintLast(Graphics gc)
 	{
-		if( _lastWindowImage != null )
-			gc.drawImage( _lastWindowImage, 0, 0, null );
+		if( ( _lastWindowImage != null ) &&
+			( _newZoomFactor != _zoomFactorOfLastWindowImage ) )
+		{
+			BufferedImage image = _lastWindowImage;
+			image = createLastZoomedImage( _lastWindowImage,
+											_newZoomFactor / _zoomFactorOfLastWindowImage );
+
+			paint( gc, image );
+		}
+	}
+
+	protected void paint(Graphics gc, BufferedImage image )
+	{
+		if( image != null )
+			gc.drawImage( image, 0, 0, null );
+	}
+
+	protected BufferedImage createLastZoomedImage( BufferedImage image, double zoomFactor )
+	{
+		Insets insets = a_intern.getFrameBorder();
+
+		BufferedImage imageToZoom = ImageFunctions.instance().cropImage( image, insets );
+		BufferedImage zoomedImage = ImageFunctions.instance().resizeImage(imageToZoom, zoomFactor );
+
+		BufferedImage result = new BufferedImage( zoomedImage.getWidth() + insets.left + insets.right,
+													zoomedImage.getHeight() + insets.top + insets.bottom,+
+													BufferedImage.TYPE_INT_ARGB );
+
+		Graphics grp2 = result.createGraphics();
+
+		grp2.drawImage( zoomedImage, insets.left, insets.top, null );
+
+		grp2.dispose();
+
+		return( result );
 	}
 
 	@Override
@@ -2036,6 +2079,26 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 					return null;
 				});
 		});
+/*
+		SwingUtilities.invokeLater( () -> {
+			ComponentFunctions.instance().browseComponentHierarchy( this,
+				(comp) -> {
+					if( comp instanceof JViewport )
+					{
+						JViewport vp = (JViewport) comp;
+						JScrollPane jsp = ComponentFunctions.instance().getScrollPane(vp);
+						jsp.setViewportView( vp.getView() );
+					}
+					return null;
+				});
+		});
+*/
+		SwingUtilities.invokeLater( () -> revalidateChild() );
+	}
+
+	public void revalidateChild()
+	{
+		
 	}
 
 	protected void setIgnoreRepaintRecursive( boolean value )

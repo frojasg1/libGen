@@ -42,7 +42,7 @@ import com.frojasg1.general.desktop.mouse.CursorFunctions;
 import com.frojasg1.general.desktop.mouse.MouseFunctions;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
-import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseWheelListener;
+import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseListener;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComposedComponent;
@@ -87,7 +87,7 @@ import javax.swing.text.JTextComponent;
  *
  * @author Usuario
  */
-public abstract class InternationalizedJFrame< CC extends ApplicationContext > extends javax.swing.JFrame
+public abstract class InternationalizedJFrame_old< CC extends ApplicationContext > extends javax.swing.JFrame
 										implements InternationalizedWindow<CC>,
 														ChangeLanguageClientInterface,
 														ChangeLanguageServerInterface,
@@ -150,10 +150,15 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 	protected int _hundredPerCentMinimumWidth = -1;
 
+	protected volatile boolean _preventFromRepainting = true;
+	protected Object _initializedLock = new Object();
+	protected volatile boolean _isVisible = false;
+	protected volatile boolean _isInitialized = false;
+
 	/**
 	 * Creates new form IntenationalizationJFrame
 	 */
-	public InternationalizedJFrame() {
+	public InternationalizedJFrame_old() {
 //		initComponents();
 
 		addComponentListener(this);
@@ -162,7 +167,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	/**
 	 * Creates new form IntenationalizationJFrame
 	 */
-	public InternationalizedJFrame( boolean visible ) {
+	public InternationalizedJFrame_old( boolean visible ) {
 //		initComponents();
 
 		setVisible( visible );
@@ -170,25 +175,25 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		addComponentListener(this);
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration )
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration )
 	{
 		this( applicationConfiguration, null );
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext )
 	{
 		this( applicationConfiguration, applicationContext, null );
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
 									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
 	{
 		this( applicationConfiguration, applicationContext, initializationEndCallBack, true );
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
 									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
 									boolean doInitComponents )
@@ -203,22 +208,27 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 		addComponentListener(this);
 
-		_initializationEndCallBack = initializationEndCallBack;
+		setInternationalizationEndCallBack( initializationEndCallBack );
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration,
 									boolean visible )
 	{
 		this( applicationConfiguration, visible, null );
 	}
 
-	public InternationalizedJFrame( BaseApplicationConfigurationInterface applicationConfiguration,
+	public InternationalizedJFrame_old( BaseApplicationConfigurationInterface applicationConfiguration,
 									boolean visible,
 									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
 	{
 		this( applicationConfiguration, null, initializationEndCallBack );
 		
 		setVisible( visible );
+	}
+
+	public void setInternationalizationEndCallBack( Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+	{
+		_initializationEndCallBack = initializationEndCallBack;
 	}
 
 	@Override
@@ -407,7 +417,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	{
 		addListenersRoot();
 
-		SwingUtilities.invokeLater( () -> changeLanguage() );
+//		SwingUtilities.invokeLater( () -> changeLanguage() );
+		changeLanguage();
 
 		registerToChangeZoomFactorAsObserver( getAppliConf() );
 
@@ -721,7 +732,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		if( ( comp != null ) &&
 			getRootPane().isAncestorOf(comp) )
 		{
-			int thick = 3;
+			int thick = IntegerFunctions.zoomValueCeil( 2.01, getZoomFactor() );
 			int gap = 2;
 
 			Dimension size = comp.getSize();
@@ -791,11 +802,23 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( result );
 	}
 
+	protected void paintEmpty( Graphics gc )
+	{
+		gc.setColor( Color.GRAY.brighter().brighter() );
+		gc.fillRect(0, 0, getWidth(), getHeight());
+	}
+
 	@Override
 	public void paint( Graphics gc )
 	{
 		synchronized( _synchronizedLockForPaint )
 		{
+			if( getPreventFromRepainting() )
+			{
+				paintEmpty(gc);
+				return;
+			}
+
 			super.paint( gc );
 
 //		System.out.println( "Painting window : " + ++_debugCounter );
@@ -1114,10 +1137,13 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 //		invokeUpdateLanguageSubmenu();
 
+		// TODO: uncomment following sentence
+/*
 		_radioButtonManager.add(new ZoomFactorRadioButtonManagerInstance( _zoomFactorRadiobuttonGroup,
 																		_zoomFactorSubmenu,
 																		getAppliConf(),
 																		this ) );
+*/
 	}
 	
 	public void addLanguageToMenu( String language )
@@ -1617,7 +1643,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		NewVersionQueryExecution executor = new NewVersionQueryExecution( parentJFrame,
 																			getAppliConf(),
 																			isStart,
-																			onlyShowResultWhenThereIsANewDownloadableVersion );
+																			onlyShowResultWhenThereIsANewDownloadableVersion,
+																			null );
 
 		executor.run();
 	}
@@ -1651,14 +1678,20 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( a_intern.getResizeRelocateComponentItem(linePanel) != null );
 	}
 
-	protected JPopupMenu getNonInheritedPopupMenu( Component comp )
+	protected JPopupMenu getNonInheritedPopupMenu( JFrameInternationalization inter,
+													Component comp )
 	{
 		JPopupMenu result = null;
 		if( comp instanceof JTextComponent )
 		{
-			result = a_intern.getNonInheritedPopupMenu( (JTextComponent) comp );
+			result = inter.getNonInheritedPopupMenu( (JTextComponent) comp );
 		}
 		return( result );
+	}
+
+	protected JPopupMenu getNonInheritedPopupMenu( Component comp )
+	{
+		return( getNonInheritedPopupMenu( a_intern, comp ) );
 	}
 
 	protected Component processComponentOnTheFlyForDefaultResizeRelocateItem( MapResizeRelocateComponentItem mapRrci,
@@ -1680,6 +1713,10 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 			if( comp instanceof ComposedComponent )
 				mapRrci.putAll( ( (ComposedComponent) comp).getResizeRelocateInfo() );
+
+			for( ResizeRelocateItem rri2: mapRrci.values() )
+				rri2.registerListeners();
+
 			a_intern.switchToZoomComponents( comp, mapRrci );
 
 			doInternationalizationTasksOnTheFly( comp );
@@ -1694,42 +1731,64 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 																				MapResizeRelocateComponentItem mapRrci,
 																				boolean setMinSize )
 	{
-		ThreadFunctions.instance().delayedInvoke( () -> SwingUtilities.invokeLater( () -> {
-			ZoomParam zp1 = new ZoomParam( 1.0D );
-			ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
-			a_intern.addMapResizeRelocateComponents(mapRrci);
-			for( Component rootComp: listOfRootComponents )
-			{
-				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
-					(comp) -> {
-						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
-						if( rri != null )
-							rri.newExpectedZoomParam(zp);
+		JFrameInternationalization inter = a_intern;
 
-						Component result = getNonInheritedPopupMenu( comp );
+		if( inter != null )
+		{
+			ThreadFunctions.instance().delayedSafeInvoke(() -> SwingUtilities.invokeLater(() -> {
+				try
+				{
+					setPreventFromRepainting( true );
 
-						return( result );
-					});
-				ComponentFunctions.instance().browseComponentHierarchy( rootComp,
-					(comp) -> {
-						ResizeRelocateItem rri = a_intern.getResizeRelocateComponentItem(comp);
-						if( rri != null )
-							rri.execute(zp);
+					ZoomParam zp1 = new ZoomParam( 1.0D );
+					ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
+					inter.addMapResizeRelocateComponents(mapRrci);
+					for( Component rootComp: listOfRootComponents )
+					{
+						ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+							(comp) -> {
+								ResizeRelocateItem rri = inter.getResizeRelocateComponentItem(comp);
+								if( rri != null )
+									rri.newExpectedZoomParam(zp);
 
-						Component result = getNonInheritedPopupMenu( comp );
+								Component result = getNonInheritedPopupMenu( inter, comp );
 
-						return( result );
-					});
-			}
+								return( result );
+							});
+						ComponentFunctions.instance().browseComponentHierarchy( rootComp,
+							(comp) -> {
+								ResizeRelocateItem rri = inter.getResizeRelocateComponentItem(comp);
+								if( rri != null )
+									rri.execute(zp);
 
-			resizeFrameToContents(setMinSize);
+								Component result = getNonInheritedPopupMenu( inter, comp );
 
-			SwingUtilities.invokeLater( () -> {
-				setMaximumSize( getSize() );
-				repaint();
-				});
-		} ),
-		250);
+								return( result );
+							});
+					}
+
+					resizeFrameToContents(setMinSize);
+				}
+				finally
+				{
+					adjustMaximumSizeToContents();
+
+					ThreadFunctions.instance().delayedSafeInvoke(
+							() -> SwingUtilities.invokeLater( () -> {
+								setPreventFromRepainting( false ); repaint(); }
+															),
+							250 );
+				}
+			} ),
+			250);
+		}
+	}
+
+	protected void adjustMaximumSizeToContents()
+	{
+		SwingUtilities.invokeLater( () -> {
+			setMaximumSize( getSize() );
+			});
 	}
 
 	protected void resizeFrameToContents()
@@ -1751,13 +1810,88 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		});
 	}
 
-	protected ScrollPaneMouseWheelListener createMouseWheelListener( JScrollPane sp )
+	protected ScrollPaneMouseListener createMouseWheelListener( JScrollPane sp )
 	{
-		return( new ScrollPaneMouseWheelListener( sp ) );
+		return( new ScrollPaneMouseListener( sp ) );
 	}
 
 	public void applyConfigurationChanges()
 	{
 		updateRadioButtonMenus();
+	}
+
+	protected Object getInitializedLock()
+	{
+		return( _initializedLock );
+	}
+
+	protected void setPreventFromRepainting( boolean value )
+	{
+		synchronized( _initializedLock )
+		{
+			if( !_preventFromRepainting && value )
+			{
+				if( !isInitialized() )
+					SwingUtilities.invokeLater( () -> super.setVisible( false ) );
+				else
+					SwingUtilities.invokeLater( () -> setIgnoreRepaintRecursive(true) );
+			}
+
+			boolean hasToUnblock = _preventFromRepainting && !value;
+			_preventFromRepainting = value;
+			if( hasToUnblock )
+			{
+				if( _isVisible && !isVisible() )
+					SwingUtilities.invokeLater( () -> setVisible( _isVisible ) );
+				else
+					SwingUtilities.invokeLater( () -> { setIgnoreRepaintRecursive(false); repaint(); } );
+			}
+		}
+	}
+
+	protected void setIgnoreRepaintRecursive( boolean value )
+	{
+		ComponentFunctions.instance().browseComponentHierarchy( this,
+			(comp) -> { comp.setIgnoreRepaint(value); return( null ); } );
+	}
+
+	protected boolean getPreventFromRepainting()
+	{
+		return( _preventFromRepainting );
+	}
+
+	@Override
+	public void setVisible( boolean value )
+	{
+		synchronized( _initializedLock )
+		{
+			_isVisible = value;
+
+			if( !getPreventFromRepainting() ) {
+				if( SwingUtilities.isEventDispatchThread() )
+					super.setVisible( value );
+				else
+					SwingUtilities.invokeLater( () -> super.setVisible( value ) );
+			}
+		}
+	}
+
+	protected boolean isInitialized()
+	{
+		synchronized( _initializedLock )
+		{
+			return( _isInitialized );
+		}
+	}
+
+	@Override
+	public void setInitialized()
+	{
+		synchronized( _initializedLock )
+		{
+			_isInitialized = true;
+			setPreventFromRepainting(false);
+			SwingUtilities.invokeLater( () -> repaint() );
+		}
 	}
 }

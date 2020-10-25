@@ -153,7 +153,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	protected static final String TXT_URL = "URL"; // for UrlJLabel
 
 	protected static final RunResizeRelocateItemProcedure CHANGE_ZOOM_PROCEDURE = (rri,zp)->{	rri.newExpectedZoomParam(zp ); };
-	protected static final RunResizeRelocateItemProcedure RESIZE_OR_RELOCATE_PROCEDURE = (rri,zp)->{	rri.execute(zp); };
+	protected static final RunResizeRelocateItemProcedure RESIZE_OR_RELOCATE_PROCEDURE = (rri,zp)->{	SwingUtilities.invokeLater( () -> rri.execute(zp) ); };
 	protected static final RunResizeRelocateItemProcedure PICK_PREVIOUS_DATA_PROCEDURE = (rri,zp)->{	rri.pickPreviousData(zp); };
 	protected static InternationalizedStringConfImp _internationalizedStringConf = new InternationalizedStringConfImp( GLOBAL_CONF_FILE_NAME,
 																											GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR );
@@ -776,11 +776,12 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 			SwingUtilities.invokeLater(() -> {
 				a_parentFrame.setSize(ViewFunctions.instance().getNewDimension(a_parentFrame.getSize(), relativeFactor) );
+				a_parentFrame.repaint();
 			});
 		}
 		else
 		{
-//			prepareResizeOrRelocateToZoom( );
+			prepareResizeOrRelocateToZoom( );
 			doTasksPriorToFrameResizing(relativeFactor);// zoomFactor );
 
 			Rectangle newBounds = ViewFunctions.instance().calculateNewBoundsOnScreen(previousBounds, _frameBorder, center, relativeFactor );
@@ -805,6 +806,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 //				blockResizeRelocateItemsResizeListeners();
 //				a_parentFrame.setBounds( xxCordinate, yyCoordinate, newBounds.width, newBounds.height );
 				a_parentFrame.setBounds( newBounds.x, newBounds.y, newBounds.width, newBounds.height );
+				a_parentFrame.repaint();
+
+				// as notify is deactivated, we must do it by hand.
+				executeResizeRelocateItemRecursive(a_parentFrame);
+
 				doTasksAfterToFrameResizing(relativeFactor);// zoomFactor );
 			}
 			finally
