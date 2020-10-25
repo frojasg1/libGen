@@ -169,6 +169,13 @@ public abstract class StartApplicationBase
 
 	protected abstract void initializeAfterImportingConfiguration() throws ConfigurationException;
 
+	protected void eraseLanguageConfigurationFileRecursive( String fileName )
+	{
+		ExecutionFunctions.instance().safeMethodExecution( () ->
+			FileFunctions.instance().eraseRecursive( getAppliConf().getDefaultLanguageBaseConfigurationFolder(),
+													fileName ) );
+	}
+
 	protected void importConfiguration()
 	{
 		new Thread( () -> importConfiguration_internal() ).start();
