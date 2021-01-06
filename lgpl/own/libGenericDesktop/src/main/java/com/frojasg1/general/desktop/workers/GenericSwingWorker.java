@@ -20,7 +20,7 @@ package com.frojasg1.general.desktop.workers;
 
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.applications.common.configuration.application.ConfigurationForFileChooserInterface;
-import com.frojasg1.general.desktop.view.generic.imp.DesktopViewFacilitiesImp;
+import com.frojasg1.general.desktop.generic.view.imp.DesktopViewFacilitiesImp;
 import com.frojasg1.general.dialogs.DialogShower;
 import com.frojasg1.general.dialogs.FileChooserParameters;
 import com.frojasg1.general.dialogs.filefilter.FilterForFile;

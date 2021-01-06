@@ -18,7 +18,7 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
-import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
 import java.awt.Rectangle;
 import javax.swing.SwingUtilities;
 

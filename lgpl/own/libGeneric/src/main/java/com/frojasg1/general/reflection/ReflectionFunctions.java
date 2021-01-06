@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.nashorn.internal.ir.annotations.Immutable;
 
 /**
  *
@@ -381,12 +380,6 @@ public class ReflectionFunctions
 			return( true );
 		else if( Boolean.class.equals( objClass ) )
 			return( true );
-
-		// Class of the object must be a direct child class of the required class
-		Class<?> superClass = objClass.getSuperclass();
-		if (Immutable.class.equals(superClass)) {
-			return true;
-		}
 
 		// Class must be final
 		if (!Modifier.isFinal(objClass.getModifiers())) {

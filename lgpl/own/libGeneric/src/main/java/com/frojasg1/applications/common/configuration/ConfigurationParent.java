@@ -353,6 +353,7 @@ public abstract class ConfigurationParent extends Properties
 
 			try
 			{
+				setLanguage( language );
 				changeLanguage_internal_simple(language);
 
 				if( _areLanguageNotificationsActivated )
@@ -368,7 +369,7 @@ public abstract class ConfigurationParent extends Properties
 				}
 
 				_avoidRecursion = true;
-				setLanguage( language );
+//				setLanguage( language );
 			}
 			catch( Throwable th )
 			{

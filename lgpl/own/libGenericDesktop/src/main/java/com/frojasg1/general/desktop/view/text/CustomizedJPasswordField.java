@@ -28,7 +28,7 @@ import com.frojasg1.applications.common.configuration.application.ChangeLanguage
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
 import com.frojasg1.general.desktop.GenericDesktopConstants;
-import com.frojasg1.general.desktop.keyboard.KeyboardFunctions;
+import com.frojasg1.general.desktop.generic.keyboard.KeyboardFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import java.awt.Component;
 import java.awt.Insets;

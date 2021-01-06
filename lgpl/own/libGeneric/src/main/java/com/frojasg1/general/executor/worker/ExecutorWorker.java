@@ -69,11 +69,15 @@ public class ExecutorWorker extends Thread
 				th.printStackTrace();
 			}
 
-			if ( _executor == null )
-				_stop = true;
+			_stop = stopAfterExecution( _executor );
 
 			setExecutor( null );
 		}
+	}
+
+	protected boolean stopAfterExecution( ExecutorInterface executor )
+	{
+		return( _executor == null );
 	}
 
 	protected synchronized void setExecutor( ExecutorInterface executor )

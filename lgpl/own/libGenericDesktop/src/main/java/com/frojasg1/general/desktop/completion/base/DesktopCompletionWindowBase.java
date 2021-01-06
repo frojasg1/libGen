@@ -5,8 +5,7 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
-import com.frojasg1.general.desktop.completion.base.CompletionDocumentFormatterBase;
-import com.frojasg1.general.desktop.completion.base.PrototypeForCompletionBase;
+import com.frojasg1.general.completion.PrototypeForCompletionBase;
 import com.frojasg1.general.desktop.completion.api.InputTextCompletionManager;
 import com.frojasg1.general.desktop.completion.api.CompletionWindow;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizedJDialog;
@@ -14,6 +13,9 @@ import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateC
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
+import com.frojasg1.general.desktop.completion.data.AlternativesForCompletionData;
+import com.frojasg1.general.desktop.completion.data.CurrentParamForCompletionData;
+import com.frojasg1.general.desktop.completion.data.TotalCompletionData;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
@@ -51,10 +53,13 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 									LinkListener<MM> {
 
 	public static final String sa_configurationBaseFileName = "DesktopCompletionWindow";
-	protected ComponentFunctions.ExecuteToComponent addFocusListenerExecutor = comp -> { comp.addFocusListener( this ); return( null ); };
+	protected ComponentFunctions.ExecuteToComponent addFocusListenerExecutor = comp -> {
+		comp.addFocusListener( this );
+		return( null );
+	};
 
 	protected CompletionDocumentFormatterBase _completionDocumentFormatter = null;
-//	protected CurrentParamDocumentFormatter _currentParamDocumentAppender = null;
+	protected CurrentParamDocumentFormatterBase _currentParamDocumentAppender = null;
 
 	protected Rectangle _lastCharBounds = null;
 	protected PrototypeForCompletionBase[] _lastCompletionPrototypes = null;
@@ -225,7 +230,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		jTP_completion.setEditorKit( new WrapEditorKit() );
 		jTP_currentParam.setEditorKit( new WrapEditorKit() );
 
-//		_currentParamDocumentAppender = createCurrentParamDocumentFormatter( jTP_currentParam );
+		_currentParamDocumentAppender = createCurrentParamDocumentFormatter( jTP_currentParam );
 	}
 
 	@Override
@@ -238,8 +243,12 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 
 //		_completionDocumentFormatter.setNewJTextPane( jTP_completion );
 		_completionDocumentFormatter.addListener( _rriForCompletionTextPane );
-//		_currentParamDocumentAppender.setNewJTextPane( jTP_currentParam );
-//		_currentParamDocumentAppender.addListener( _rriForCurrentParamTextPane );
+
+		if( isCurrentParamActive() )
+		{
+			_currentParamDocumentAppender.setNewJTextPane( jTP_currentParam );
+			_currentParamDocumentAppender.addListener( _rriForCurrentParamTextPane );
+		}
 
 		addRecursiveFocusListener( this );
 	}
@@ -256,13 +265,12 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 													_translatorOfType ) );//, getApplicationContext().getBigMathHelp() ) );
 	}
 */
+	protected abstract CurrentParamDocumentFormatterBase createCurrentParamDocumentFormatter( JTextPane textPane );
 /*
-	protected CurrentParamDocumentFormatter createCurrentParamDocumentFormatter( JTextPane textPane )
 	{
-		return( new CurrentParamDocumentFormatter( textPane, getAppliConf(), getApplicationContext().getBigMathHelp() ) );
+		return( new CurrentParamDocumentFormatterBase( textPane, getAppliConf(), getApplicationContext().getBigMathHelp() ) );
 	}
 */
-
 	/**
 	 * This method is called from within the constructor to initialize the form.
 	 * WARNING: Do NOT modify this code. The content of this method is always
@@ -339,61 +347,123 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		return( result );
 	}
 
-	@Override
-	public void setListOfAlternativesKeepingSelection(String preText, PrototypeForCompletionBase[] prototypes, Rectangle locationControl)
+	protected boolean setListOfAlternativesKeepingSelection(AlternativesForCompletionData<Rectangle> alternativesForCompletionData)
 	{
-		if( _completionDocumentFormatter != null )
+		boolean hasToSetFocus = false;
+		if( alternativesForCompletionData != null )
 		{
-			_lastCompletionPrototypes = prototypes;
+			if( _completionDocumentFormatter != null )
+			{
+				String preText = alternativesForCompletionData.getPreText();
+				PrototypeForCompletionBase[] prototypes = alternativesForCompletionData.getPrototypes();
+				Rectangle locationControl = alternativesForCompletionData.getLocationControl();
 
-			setVisibleInvokeLater( !StringFunctions.instance().isEmpty( preText ) &&
-						( prototypes != null ) && ( prototypes.length > 0 ) );
+				_lastCompletionPrototypes = prototypes;
 
-			_completionDocumentFormatter.setPrototypes(preText, prototypes);
+				setVisibleInvokeLater( !StringFunctions.instance().isEmpty( preText ) &&
+							( prototypes != null ) && ( prototypes.length > 0 ) );
+
+				_completionDocumentFormatter.setPrototypes(preText, prototypes);
+
+				locateWindow( locationControl );
+				hasToSetFocus = setVisibility();
+			}
+			else
+			{
+				SwingUtilities.invokeLater( () -> setListOfAlternativesKeepingSelection( alternativesForCompletionData ) );
+			}
+		}
+
+		return( hasToSetFocus );
+	}
+
+	protected boolean isCurrentParamActive()
+	{
+		return( _currentParamDocumentAppender != null );
+	}
+
+	protected boolean setCurrentParamPrototype(CurrentParamForCompletionData<Rectangle> currentParamForCompletionData)
+	{
+		boolean hasToSetFocus = false;
+
+		if( currentParamForCompletionData != null )
+		{
+			PrototypeForCompletionBase prototype = currentParamForCompletionData.getPrototype();
+			int currentParamIndex = currentParamForCompletionData.getCurrentParamIndex();
+			Rectangle locationControl = currentParamForCompletionData.getLocationControl();
+
+			_lastParamPrototype = prototype;
+
+			setVisibleInvokeLater( isVisible() || ( prototype != null ) );
+
+			if( isCurrentParamActive() )
+				_currentParamDocumentAppender.setCurrentParam(prototype, currentParamIndex);
 
 			locateWindow( locationControl );
-			setVisibility();
+			hasToSetFocus = setVisibility();
 		}
-		else
-		{
-			SwingUtilities.invokeLater( () -> setListOfAlternativesKeepingSelection( preText, prototypes, locationControl) );
-		}
+
+		return( hasToSetFocus );
 	}
 
 	@Override
-	public void setCurrentParamPrototype(PrototypeForCompletionBase prototype, int currentParamIndex, Rectangle locationControl)
+	public void setTotalCompletionData( TotalCompletionData<Rectangle> totalCompletionData )
 	{
-		_lastParamPrototype = prototype;
+		if( totalCompletionData != null )
+		{
+			boolean hasToSetFocus = setListOfAlternativesKeepingSelection(totalCompletionData.getAlternativesForCompletionData());
+			hasToSetFocus = setCurrentParamPrototype(totalCompletionData.getCurrentParamForCompletionData()) || hasToSetFocus;
 
-		setVisibleInvokeLater( isVisible() || ( prototype != null ) );
-//		_currentParamDocumentAppender.setCurrentParam(prototype, currentParamIndex);
-
-		locateWindow( locationControl );
-		setVisibility();
+			if( hasToSetFocus )
+				invokeLaterSetFocusToMainTextComponent();
+		}
 	}
 
 	protected void setVisibleInvokeLater( boolean value )
 	{
-		SwingUtilities.invokeLater( () -> setVisible( value ) );
+		boolean hasToSetFocus = false;
+		setVisibleInvokeLater( value, hasToSetFocus );
 	}
 
-	protected void setVisibility()
+	protected void setVisibleInvokeLater( boolean value, boolean hasToSetFocus )
+	{
+		SwingUtilities.invokeLater( () -> {
+			setVisible( value );
+			if( hasToSetFocus )
+				SwingUtilities.invokeLater( () ->
+					_completionManager.getInputTextComponent().requestFocus()
+											);
+			});
+	}
+
+	protected boolean setVisibility()
 	{
 		boolean hasToSetFocus = false;
 		if( ( _lastCompletionPrototypes != null ) && ( _lastCompletionPrototypes.length > 0 ) ||
 			( _lastParamPrototype != null ) )
 		{
 			hasToSetFocus = !isVisible();
-			setVisibleInvokeLater( true );
+			setVisibleInvokeLater( true, hasToSetFocus );
 		}
 		else
 		{
 			hasToSetFocus = isVisible();
-			setVisibleInvokeLater( false );
+			setVisibleInvokeLater( false, hasToSetFocus );
 		}
-
+/*
 		if( hasToSetFocus )
-			SwingUtilities.invokeLater( () -> _completionManager.getInputTextComponent().requestFocus() );
+			SwingUtilities.invokeLater( () ->
+				_completionManager.getInputTextComponent().requestFocus()
+										);
+*/
+		return( hasToSetFocus );
+	}
+
+	public void invokeLaterSetFocusToMainTextComponent()
+	{
+		SwingUtilities.invokeLater( () ->
+			_completionManager.getInputTextComponent().requestFocus()
+									);
 	}
 
 	@Override
@@ -539,8 +609,10 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	{
 		super.changeZoomFactor(zoomFactor);
 
-		SwingUtilities.invokeLater( () -> _completionDocumentFormatter.reformat() );
-////			_currentParamDocumentAppender.reformat(); } );
+		SwingUtilities.invokeLater( () -> {
+			_completionDocumentFormatter.reformat();
+			if( isCurrentParamActive() )
+				_currentParamDocumentAppender.reformat(); } );
 //		setVisible( false );
 	}
 
@@ -580,14 +652,33 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 //			SwingUtilities.invokeLater( () -> previousFocusedComponent.requestFocus() );
 	}
 
+	protected boolean bigEnoughTimeElapsed( long lastMs, long nowMs )
+	{
+		return( enoughTimeElapsedGen( lastMs, nowMs, 150 ) );
+	}
+
+	protected boolean enoughTimeElapsed( long lastMs, long nowMs )
+	{
+		return( enoughTimeElapsedGen( lastMs, nowMs, 15 ) );
+	}
+
+	protected boolean enoughTimeElapsedGen( long lastMs, long nowMs, long minDiff )
+	{
+		return( lastMs - nowMs >= minDiff );
+	}
+
 	@Override
 	public void focusLost(FocusEvent evt)
 	{
 		Component opposite = evt.getOppositeComponent();
-
-		if( ( opposite == null ) ||
-			!ComponentFunctions.instance().isAnyParent( _componentFocusedForNotHiding, opposite) &&
-			!ComponentFunctions.instance().isAnyParent( this, opposite) )
+		Component focused = ComponentFunctions.instance().getFocusedComponent();
+		long now = System.currentTimeMillis();
+		if( (
+				( opposite == null ) && ( focused != _componentFocusedForNotHiding ) ||
+				!ComponentFunctions.instance().isAnyParent( _componentFocusedForNotHiding, opposite) &&
+				!ComponentFunctions.instance().isAnyParent( this, opposite)
+			)
+		  )
 		{
 			hideEverything();
 		}

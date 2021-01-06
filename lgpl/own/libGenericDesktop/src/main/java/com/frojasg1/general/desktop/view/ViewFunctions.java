@@ -22,7 +22,7 @@ import com.frojasg1.applications.common.components.name.ComponentNameComponents;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.view.ViewComponent;
 import java.awt.Component;

@@ -48,6 +48,9 @@ public interface BaseApplicationConfigurationInterface
 	public String getUrlForNewVersionQuery();
 	public void setUrlForNewVersionQuery( String value );
 
+	public String getUrlForResourceCounter();
+	public void setUrlForResourceCounter( String value );
+
 	public String getAdditionalLanguage();
 	public void setAdditionalLanguage( String language );
 

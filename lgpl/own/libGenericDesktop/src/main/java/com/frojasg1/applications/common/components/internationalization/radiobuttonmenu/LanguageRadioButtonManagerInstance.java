@@ -29,7 +29,7 @@ import java.util.EventObject;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
-import javax.swing.JPopupMenu;
+import javax.swing.JMenu;
 
 /**
  *
@@ -40,10 +40,10 @@ public class LanguageRadioButtonManagerInstance extends RadioButtonManagerInstan
 	protected static final Dimension DIMENSION_FOR_HUNDRED_PERCENT_ZOOM_FLAG = new Dimension( 24, 14 );
 
 
-	public LanguageRadioButtonManagerInstance( ButtonGroup bg, JPopupMenu popupMenu,
+	public LanguageRadioButtonManagerInstance( ButtonGroup bg, JMenu menu,
 										BaseApplicationConfigurationInterface appConf )
 	{
-		super( bg, popupMenu, appConf );
+		super( bg, menu, appConf );
 	}
 
 	@Override

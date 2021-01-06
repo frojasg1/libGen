@@ -116,4 +116,10 @@ public class JTextPane_CustomHorizSize extends JTextPane_Custom
 	protected EditorKit createDefaultEditorKit() {
         return new StyledEditorKitForTesting();
     }
+
+	@Override
+	public void requestFocus()
+	{
+		super.requestFocus();
+	}
 }

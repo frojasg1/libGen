@@ -145,9 +145,17 @@ public abstract class XmlFileListPersistency<KK, MM extends KeyModel<KK>> extend
 
 	protected MM loadAndAddDocument( String item, String relativeFileName ) throws IOException, ParserConfigurationException, SAXException
 	{
-		XmlElement elem = loadDocument( null, relativeFileName );
-		MM result = createFileModel( item, elem );
-		getModelContainer().add( result );
+		MM result = null;
+		try
+		{
+			XmlElement elem = loadDocument( null, relativeFileName );
+			result = createFileModel( item, elem );
+			getModelContainer().add( result );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+		}
 
 		return( result );
 	}

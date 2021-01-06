@@ -32,7 +32,7 @@ import com.frojasg1.applications.common.configuration.application.ChangeZoomFact
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.image.ImageFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
 import com.frojasg1.general.exceptions.ConfigurationException;
 import com.frojasg1.general.desktop.mouse.CursorFunctions;
@@ -515,47 +515,6 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		formWindowClosingEvent( );
     }//GEN-LAST:event_formWindowClosing
 
-	/**
-	 * @param args the command line arguments
-	 */
-	public static void main(String args[]) {
-		/* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-		 * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-		 */
-		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					javax.swing.UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(InternationalizedJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		}
-        //</editor-fold>
-
-		/* Create and display the dialog */
-		java.awt.EventQueue.invokeLater(new Runnable() {
-			public void run() {
-/*				InternationalizedJDialog dialog = new InternationalizedJDialog(new javax.swing.JFrame(), true);
-				dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-					@Override
-					public void windowClosing(java.awt.event.WindowEvent e) {
-						System.exit(0);
-					}
-				});
-				dialog.setVisible(true); */
-			}
-		});
-	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
@@ -567,9 +526,17 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			getAppliConf().unregisterChangeLanguageObserver(this);
 	}
 	
+	protected void releasePullOfWorkers()
+	{
+		if( _pullOfWorkers != null )
+			_pullOfWorkers.hasToStop();
+	}
+
 	@Override
 	public void releaseResources()
 	{
+		releasePullOfWorkers();
+
 		unregisterFromChangeLanguageAsObserver();
 		unregisterFromChangeZoomFactorAsObserver();
 
@@ -1592,6 +1559,20 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 																				boolean setMinSize,
 																				Runnable executeAfterZooming )
 	{
+		boolean adjustMaximumSizeToContents = true;
+		initResizeRelocateItemsOComponentOnTheFly( listOfRootComponents,
+													mapRrci,
+													setMinSize,
+													executeAfterZooming,
+													adjustMaximumSizeToContents );
+	}
+
+	public <CC extends Component> void initResizeRelocateItemsOComponentOnTheFly( Collection<CC> listOfRootComponents,
+																				MapResizeRelocateComponentItem mapRrci,
+																				boolean setMinSize,
+																				Runnable executeAfterZooming,
+																				boolean adjustMaximumSizeToContents )
+	{
 		JFrameInternationalization inter = a_intern;
 
 		if( inter != null )
@@ -1640,7 +1621,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 					}
 					finally
 					{
-						adjustMaximumSizeToContents();
+						if( adjustMaximumSizeToContents )
+							adjustMaximumSizeToContents();
 
 						unsetPreventFromRepaintingWithSemaphore( ezs, 350, executeAfterZooming );
 					}
@@ -1747,7 +1729,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			if( hasToUnblock )
 			{
 				if( _isVisible && !isVisible() )
-					SwingUtilities.invokeLater( () -> setVisible( _isVisible ) );
+					SwingUtilities.invokeLater( () -> setVisibleWithLock( _isVisible ) );
 				else
 					SwingUtilities.invokeLater( () -> { setIgnoreRepaintRecursive(false); repaint(); } );
 				
@@ -1773,7 +1755,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 					if( comp instanceof JViewport )
 					{
 						JViewport vp = (JViewport) comp;
-						JScrollPane jsp = ComponentFunctions.instance().getScrollPane(vp);
+						JScrollPane jsp = ComponentFunctions.instance().getScrollPaneOfViewportView(vp);
 						jsp.setViewportView( vp.getView() );
 					}
 					return null;
@@ -1798,8 +1780,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		return( _preventFromRepainting );
 	}
 
-	@Override
-	public void setVisible( boolean value )
+	public void setVisibleWithLock( boolean value )
 	{
 		synchronized( _initializedLock )
 		{
@@ -1807,11 +1788,19 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 			if( !getPreventFromRepainting() ) {
 				if( SwingUtilities.isEventDispatchThread() )
-					super.setVisible( value );
+					setVisible( value );
 				else
 					SwingUtilities.invokeLater( () -> super.setVisible( value ) );
 			}
 		}
+	}
+
+	@Override
+	public void setVisible( boolean value )
+	{
+		_isVisible = value;
+
+		super.setVisible( value );
 	}
 
 	protected boolean isInitialized()
@@ -1831,5 +1820,10 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			setPreventFromRepainting(false);
 			SwingUtilities.invokeLater( () -> repaint() );
 		}
+	}
+
+	protected String getFinalUrl( String url )
+	{
+		return( GenericFunctions.instance().getApplicationFacilities().buildResourceCounterUrl( url ) );
 	}
 }

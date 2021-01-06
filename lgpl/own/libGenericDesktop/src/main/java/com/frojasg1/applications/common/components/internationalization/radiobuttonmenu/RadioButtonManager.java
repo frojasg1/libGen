@@ -18,6 +18,8 @@
  */
 package com.frojasg1.applications.common.components.internationalization.radiobuttonmenu;
 
+import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
+import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
@@ -32,7 +34,7 @@ import javax.swing.JRadioButtonMenuItem;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class RadioButtonManager implements ItemListener
+public class RadioButtonManager implements ItemListener, InternallyMappedComponent
 {
 	protected Map< ButtonGroup, RadioButtonManagerInstance > _map = new HashMap<>();
 
@@ -96,6 +98,16 @@ public class RadioButtonManager implements ItemListener
 				if( rbm != null )
 					rbm.distpatchEvent(evt);
 			}
+		}
+	}
+
+	@Override
+	public void setComponentMapper(ComponentMapper mapper)
+	{
+		for( Map.Entry< ButtonGroup, RadioButtonManagerInstance > entry: _map.entrySet() )
+		{
+			RadioButtonManagerInstance rbmi = entry.getValue();
+			rbmi.setMenu( mapper.mapComponent(rbmi.getMenu()) );
 		}
 	}
 }

@@ -21,7 +21,7 @@ package com.frojasg1.applications.common.components.internationalization.window;
 import com.frojasg1.applications.common.components.internationalization.InternException;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorClientInterface;
-import com.frojasg1.general.desktop.view.generic.DesktopViewWindow;
+import com.frojasg1.general.desktop.generic.view.DesktopViewWindow;
 import com.frojasg1.general.view.ViewComponent;
 import com.frojasg1.general.exceptions.ConfigurationException;
 import java.awt.Component;

@@ -44,6 +44,8 @@ public class CopyPastePopup extends BaseJPopupMenu
 		
 		public CopyPastePopup( TextCompPopupManager manager )
 		{
+			super(manager.getViewTextComponent().getComponent());
+
 			_manager = manager;
 
 			createMenuIfAnyChange();

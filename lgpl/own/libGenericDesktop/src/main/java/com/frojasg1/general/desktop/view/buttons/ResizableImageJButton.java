@@ -49,6 +49,8 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 
 	public final void setImage_final( String jarResourceNameForImage )
 	{
+		_jarResourceName = jarResourceNameForImage;
+
 		_image = ViewFunctions.instance().addImageToButtonAccurate( this, _jarResourceName, _insets );
 	}
 

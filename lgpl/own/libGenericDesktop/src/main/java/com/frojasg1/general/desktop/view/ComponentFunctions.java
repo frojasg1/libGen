@@ -99,6 +99,7 @@ public class ComponentFunctions
 						browseComponentHierarchy( jsp.getBottomComponent(), executeToComp );
 					}
 				}
+/*
 				else if( comp instanceof JScrollPane )
 				{
 					JScrollPane sp = (JScrollPane) comp;
@@ -109,7 +110,7 @@ public class ComponentFunctions
 					JViewport vp = (JViewport) comp;
 					browseComponentHierarchy( vp.getView(), executeToComp );
 				}
-
+*/
 				if( comp instanceof JTabbedPane )
 				{
 					JTabbedPane tabbedPane = (JTabbedPane) comp;
@@ -212,12 +213,17 @@ public class ComponentFunctions
 
 	public boolean isViewportView( Component component )
 	{
-		boolean result = false;
+		return( getScrollPaneOfViewportView( component ) != null );
+	}
+
+	public JScrollPane getScrollPaneOfViewportView( Component component )
+	{
 		JScrollPane jsp = getScrollPane( component );
 		if( jsp != null )
-			result = jsp.getViewport().getView() == component;
+			if( jsp.getViewport().getView() != component )
+				jsp = null;
 
-		return( result );
+		return( jsp );
 	}
 
 	public JScrollPane getScrollPane( Component component )

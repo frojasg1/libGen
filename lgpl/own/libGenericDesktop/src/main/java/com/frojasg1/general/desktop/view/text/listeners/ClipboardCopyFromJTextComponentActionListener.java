@@ -19,7 +19,7 @@
 package com.frojasg1.general.desktop.view.text.listeners;
 
 import com.frojasg1.general.ExecutionFunctions;
-import com.frojasg1.general.desktop.clipboard.SystemClipboard;
+import com.frojasg1.general.clipboard.SystemClipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.text.JTextComponent;

@@ -32,12 +32,13 @@ import com.frojasg1.applications.common.configuration.application.BaseApplicatio
 import com.frojasg1.applications.common.configuration.application.ChangeLanguageClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeLanguageServerInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
+import com.frojasg1.general.CollectionFunctions;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.execution.newversion.NewVersionQueryExecution;
 import com.frojasg1.general.desktop.execution.whatisnew.WhatIsNewExecution;
 import com.frojasg1.general.desktop.image.ImageFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
 import com.frojasg1.general.exceptions.ConfigurationException;
 import com.frojasg1.general.desktop.mouse.CursorFunctions;
@@ -84,10 +85,10 @@ import java.util.function.Consumer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
-import javax.swing.JViewport;
+import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
@@ -131,17 +132,17 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	protected boolean _hasToClearMarkedComponent = false;
 
 	protected ButtonGroup _languageRadiobuttonGroup = new ButtonGroup();
-	protected JPopupMenu _languageSubmenu = null;
+	protected JMenu _languageMenu = null;
 
 	protected ButtonGroup _zoomFactorRadiobuttonGroup = new ButtonGroup();
-	protected JPopupMenu _zoomFactorSubmenu = null;
+	protected JMenu _zoomFactorMenu = null;
 
 	protected boolean _initializing = true;
 
 	protected int _previousState = -1;
 
 	protected RadioButtonManager _radioButtonManager = new RadioButtonManager();
-	
+
 //	protected int _debugCounter = 0;
 
 	protected ChangeZoomFactorServerInterface _zoomFactorServer = null;
@@ -546,10 +547,18 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		if( getAppliConf() != null )
 			getAppliConf().unregisterChangeLanguageObserver(this);
 	}
+	
+	protected void releasePullOfWorkers()
+	{
+		if( _pullOfWorkers != null )
+			_pullOfWorkers.hasToStop();
+	}
 
 	@Override
 	public void releaseResources()
 	{
+		releasePullOfWorkers();
+
 		unregisterFromChangeLanguageAsObserver();
 		unregisterFromChangeZoomFactorAsObserver();
 
@@ -1226,29 +1235,29 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		}
 	}
 */
-	protected void setLanguageSubmenu( JPopupMenu languageSubmenu )
+	protected void setLanguageMenu( JMenu languageMenu )
 	{
-		_languageSubmenu = languageSubmenu;
+		_languageMenu = languageMenu;
 
 //		invokeUpdateLanguageSubmenu();
 
 		_radioButtonManager.add( new LanguageRadioButtonManagerInstance( _languageRadiobuttonGroup,
-																		_languageSubmenu,
+																		languageMenu,
 																		getAppliConf() ) );
 	}
 
-	protected void setZoomSubmenu( JPopupMenu zoomFactorSubmenu )
+	protected void setZoomMenu( JMenu zoomFactorMenu )
 	{
-		_zoomFactorSubmenu = zoomFactorSubmenu;
+		_zoomFactorMenu = zoomFactorMenu;
 
 //		invokeUpdateLanguageSubmenu();
 
 		_radioButtonManager.add(new ZoomFactorRadioButtonManagerInstance( _zoomFactorRadiobuttonGroup,
-																		_zoomFactorSubmenu,
+																		zoomFactorMenu,
 																		getAppliConf(),
 																		this ) );
 	}
-	
+
 	public void addLanguageToMenu( String language )
 	{
 //		GenericFunctions.instance().getObtainAvailableLanguages().newLanguageSetToConfiguration(language);
@@ -1524,7 +1533,22 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 	protected void unblockComponentsAfterHavingZoomed( ExtendedZoomSemaphore ezs )
 	{
-		unblockComponentsAfterHavingZoomed( ezs, null );
+		unblockComponentsAfterHavingZoomed( ezs, null ); //this::revalidateJRadioButtonMenus );
+	}
+
+	protected void revalidateJRadioButtonMenus()
+	{
+		revalidateJMenuSubmenu( _languageMenu );
+		revalidateJMenuSubmenu( _zoomFactorMenu );
+	}
+
+	protected void revalidateJMenuSubmenu( JMenu menu )
+	{
+		if( menu != null )
+		{
+			menu.getPopupMenu().revalidate();
+			menu.getPopupMenu().doLayout();
+		}
 	}
 
 	protected void unblockComponentsAfterHavingZoomed( ExtendedZoomSemaphore ezs,
@@ -1534,9 +1558,72 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		repaint();
 	}
 
+	protected List<Component> getItemsOfRadioButtonMenus()
+	{
+		List<Component> result = new ArrayList<>();
+
+		addMenuItems( _languageMenu, result );
+		addMenuItems( _zoomFactorMenu, result );
+
+		return( result );
+	}
+
+	protected void addMenuItems( JMenu menu, List<Component> result )
+	{
+		if( menu != null )
+		{
+			for( MenuElement me: menu.getPopupMenu().getSubElements() )
+				result.add( me.getComponent() );
+		}
+	}
+
+	protected void removeResizeRelocateItemsOfRadioButtonMenus(List<Component> list)
+	{
+		for( Component comp: list )
+			a_intern.removeResizeRelocateComponentItem(comp);
+	}
+
+	protected void removeResizeRelocateItemsOfRadioButtonMenus()
+	{
+		removeResizeRelocateItemsOfRadioButtonMenus( getItemsOfRadioButtonMenus() );
+	}
+
+	protected void addResizeRelocateItemsOfRadioButtonMenus(List<Component> radioButtonMenuItemList)
+	{
+//		List<Component> radioButtonMenuItemList = getItemsOfRadioButtonMenus();
+
+		if( !radioButtonMenuItemList.isEmpty() )
+		{
+			MapResizeRelocateComponentItem mapRrci = new MapResizeRelocateComponentItem();
+			for( Component comp: radioButtonMenuItemList )
+				ExecutionFunctions.instance().safeMethodExecution( () -> mapRrci.putResizeRelocateComponentItem(comp, 0 ) );//ResizeRelocateItem.ONLY_ZOOM_FONT) );
+
+			boolean setMinSize = true;
+			Runnable executeAfterZooming = null;
+			boolean adjustMaximumSizeToContents = false;
+			initResizeRelocateItemsOComponentOnTheFly( radioButtonMenuItemList,
+														mapRrci,
+														setMinSize,
+														executeAfterZooming,
+														adjustMaximumSizeToContents );
+		}
+	}
+
 	public void updateRadioButtonMenus()
 	{
+		List<Component> oldListOfRadioButtons = getItemsOfRadioButtonMenus();
+//		removeResizeRelocateItemsOfRadioButtonMenus();
+
 		_radioButtonManager.updateRadioButtonMenus();
+
+		List<Component> newListOfRadioButtons = getItemsOfRadioButtonMenus();
+
+		List<Component> removedComps = CollectionFunctions.instance().removeItemsThatExistInTheSecondList(newListOfRadioButtons, oldListOfRadioButtons);
+		CollectionFunctions.instance().removeItemsThatExistInTheSecondList(oldListOfRadioButtons, removedComps);
+
+		removeResizeRelocateItemsOfRadioButtonMenus(oldListOfRadioButtons);
+
+		addResizeRelocateItemsOfRadioButtonMenus(newListOfRadioButtons);
 	}
 
 	@Override
@@ -1753,6 +1840,11 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	{
 		_compMapper = compMapper;
 
+		removeResizeRelocateItemsOfRadioButtonMenus();
+		_radioButtonManager.setComponentMapper( _compMapper );
+		_languageMenu = compMapper.mapComponent( _languageMenu );
+		_zoomFactorMenu = compMapper.mapComponent(_zoomFactorMenu );
+
 		translateMappedComponents( _compMapper );
 	}
 
@@ -1780,18 +1872,25 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		executor.run();
 	}
 
-	protected WhatIsNewJDialogBase createWhatIsNewJDialog()
+	protected WhatIsNewJDialogBase createWhatIsNewJDialog(Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack)
 	{
 		JFrame parentJFrame = this;
 
-		WhatIsNewJDialogBase result = new WhatIsNewJDialogBase( parentJFrame, getAppliConf() );
+		WhatIsNewJDialogBase result = new WhatIsNewJDialogBase( parentJFrame,
+														getAppliConf(),
+														initializationEndCallBack );
 
 		return( result );
 	}
 
 	public void showWhatIsNew()
 	{
-		WhatIsNewJDialogBase dialog = createWhatIsNewJDialog();
+		WhatIsNewJDialogBase dialog = createWhatIsNewJDialog( this::executeWhatIsNew );
+	}
+
+	public void executeWhatIsNew(InternationalizationInitializationEndCallback iiec )
+	{
+		WhatIsNewJDialogBase dialog = (WhatIsNewJDialogBase) iiec;
 
 		boolean hasToShow = true;
 		WhatIsNewExecution executor = new WhatIsNewExecution( dialog, getAppliConf(), hasToShow );
@@ -1930,6 +2029,20 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 																				boolean setMinSize,
 																				Runnable executeAfterZooming )
 	{
+		boolean adjustMaximumSizeToContents = true;
+		initResizeRelocateItemsOComponentOnTheFly( listOfRootComponents,
+													mapRrci,
+													setMinSize,
+													executeAfterZooming,
+													adjustMaximumSizeToContents );
+	}
+
+	public <CC extends Component> void initResizeRelocateItemsOComponentOnTheFly( Collection<CC> listOfRootComponents,
+																				MapResizeRelocateComponentItem mapRrci,
+																				boolean setMinSize,
+																				Runnable executeAfterZooming,
+																				boolean adjustMaximumSizeToContents )
+	{
 		JFrameInternationalization inter = a_intern;
 
 		if( inter != null )
@@ -1983,7 +2096,8 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 					}
 					finally
 					{
-						adjustMaximumSizeToContents();
+						if( adjustMaximumSizeToContents )
+							adjustMaximumSizeToContents();
 
 						unsetPreventFromRepaintingWithSemaphore( ezs, 350, executeAfterZooming );
 					}
@@ -2086,7 +2200,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 					if( comp instanceof JViewport )
 					{
 						JViewport vp = (JViewport) comp;
-						JScrollPane jsp = ComponentFunctions.instance().getScrollPane(vp);
+						JScrollPane jsp = ComponentFunctions.instance().getScrollPaneOfViewportView(vp);
 						jsp.setViewportView( vp.getView() );
 					}
 					return null;
@@ -2144,5 +2258,10 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 			setPreventFromRepainting(false);
 			SwingUtilities.invokeLater( () -> repaint() );
 		}
+	}
+
+	protected String getFinalUrl( String url )
+	{
+		return( GenericFunctions.instance().getApplicationFacilities().buildResourceCounterUrl( url ) );
 	}
 }

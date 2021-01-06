@@ -20,7 +20,7 @@ package com.frojasg1.general.desktop.execution.newversion;
 
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.application.version.ApplicationVersion;
+import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQuery;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryFactory;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryResult;
@@ -77,7 +77,7 @@ public class NewVersionQueryExecution implements Runnable
 																	Consumer<InternationalizationInitializationEndCallback> windowCallback )
 	{
 		NewVersionFoundJDialog result = new NewVersionFoundJDialog( _parentJFrame, true, _applicationConfiguration );
-		result.setApplicationVersion( ApplicationVersion.instance() );
+		result.setApplicationVersion(DesktopApplicationVersion.instance() );
 		result.setInternationalizationEndCallBack(windowCallback);
 		result.init( nvqResult );
 

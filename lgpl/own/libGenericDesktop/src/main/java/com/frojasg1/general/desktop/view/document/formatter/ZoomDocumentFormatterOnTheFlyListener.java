@@ -111,6 +111,7 @@ public class ZoomDocumentFormatterOnTheFlyListener 	implements FormatterListener
 		}
 	}
 
+	@Override
 	public void setNewJTextPane( JTextPane jtp )
 	{
 		if( jtp != _pane )

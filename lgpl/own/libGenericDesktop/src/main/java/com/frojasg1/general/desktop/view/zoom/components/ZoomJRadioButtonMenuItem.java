@@ -20,7 +20,9 @@ package com.frojasg1.general.desktop.view.zoom.components;
 
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JRadioButtonMenuItem;
@@ -192,7 +194,11 @@ public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem implements Co
 	@Override
 	public void setZoomFactor( double zoomFactor )
 	{
+		breakpoint();
+
 		_zoomFactor._value = zoomFactor;
+
+		revalidate();
 
 		repaint();
 	}
@@ -259,6 +265,63 @@ public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem implements Co
 	public void initAfterCopyingAttributes()
 	{
 		
+	}
+
+	@Override
+	public void setFont( Font font )
+	{
+//		breakpoint();
+		super.setFont( font );
+	}
+
+	@Override
+	public void setMinimumSize( Dimension dimen )
+	{
+//		breakpoint();
+		super.setMinimumSize(dimen);
+	}
+
+	@Override
+	public void setMaximumSize( Dimension dimen )
+	{
+//		breakpoint();
+		super.setMaximumSize(dimen);
+	}
+
+	@Override
+	public void setPreferredSize( Dimension dimen )
+	{
+//		breakpoint();
+		super.setPreferredSize( dimen );
+	}
+
+	@Override
+	public void setSize( Dimension dimen )
+	{
+//		breakpoint();
+		super.setSize( dimen );
+	}
+
+	@Override
+	public void setBounds( Rectangle bounds )
+	{
+//		breakpoint();
+		super.setBounds( bounds );
+	}
+
+	@Override
+	public void setBounds( int xx, int yy, int width, int height )
+	{
+//		breakpoint();
+		super.setBounds( xx, yy, width, height );
+	}
+
+	protected void breakpoint()
+	{
+		if( ( getText() != null ) && getText().equals( "75%" ) )
+		{
+			int kk=0;
+		}
 	}
 
 	@Override

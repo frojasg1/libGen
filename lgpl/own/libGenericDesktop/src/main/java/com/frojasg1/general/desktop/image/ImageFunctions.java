@@ -174,7 +174,7 @@ public class ImageFunctions
 		return( result );
 	}
 
-	protected BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
+	public BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
 											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
 	{
 		return( ResizeImageAccurate.instance().resizeImage(original, newWidth, newHeight,

@@ -23,7 +23,7 @@ import com.frojasg1.applications.common.configuration.application.BaseApplicatio
 import com.frojasg1.applications.common.configuration.start.StartStringsConf;
 import com.frojasg1.general.ArrayFunctions;
 import com.frojasg1.general.FileFunctions;
-import com.frojasg1.general.desktop.dialogs.implementation.StaticDesktopDialogsWrapper;
+import com.frojasg1.general.desktop.generic.dialogs.impl.StaticDesktopDialogsWrapper;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
 import com.frojasg1.general.desktop.init.InitGenericDesktop;
 import com.frojasg1.general.desktop.view.splash.GenericBasicSplash;

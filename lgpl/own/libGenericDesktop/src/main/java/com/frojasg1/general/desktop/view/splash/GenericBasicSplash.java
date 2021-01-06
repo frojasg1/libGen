@@ -19,7 +19,7 @@
 package com.frojasg1.general.desktop.view.splash;
 
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.desktop.dialogs.implementation.StaticDesktopDialogsWrapper;
+import com.frojasg1.general.desktop.generic.dialogs.impl.StaticDesktopDialogsWrapper;
 import com.frojasg1.general.desktop.files.DesktopResourceFunctions;
 import com.frojasg1.general.desktop.view.pdf.ImageJPanel;
 import com.frojasg1.general.exceptions.ConfigurationException;

@@ -32,7 +32,7 @@ import com.frojasg1.applications.common.configuration.application.BaseApplicatio
 import com.frojasg1.general.desktop.copypastepopup.ConfForTextPopupMenu;
 import com.frojasg1.general.desktop.copypastepopup.TextCompPopupManager;
 import com.frojasg1.general.exceptions.ConfigurationException;
-import com.frojasg1.general.desktop.dialogs.implementation.StaticDesktopDialogsWrapper;
+import com.frojasg1.general.desktop.generic.dialogs.impl.StaticDesktopDialogsWrapper;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
 import com.frojasg1.general.desktop.mouse.CursorFunctions;
 import com.frojasg1.general.desktop.mouse.MouseFunctions;
@@ -40,7 +40,7 @@ import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.threads.Generic_getResultEDT;
 import com.frojasg1.general.desktop.threads.GetResultEDT;
 import com.frojasg1.general.desktop.view.ViewFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.number.IntegerReference;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
@@ -153,7 +153,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	protected static final String TXT_URL = "URL"; // for UrlJLabel
 
 	protected static final RunResizeRelocateItemProcedure CHANGE_ZOOM_PROCEDURE = (rri,zp)->{	rri.newExpectedZoomParam(zp ); };
-	protected static final RunResizeRelocateItemProcedure RESIZE_OR_RELOCATE_PROCEDURE = (rri,zp)->{	SwingUtilities.invokeLater( () -> rri.execute(zp) ); };
+//	protected static final RunResizeRelocateItemProcedure RESIZE_OR_RELOCATE_PROCEDURE = (rri,zp)->{	SwingUtilities.invokeLater( () -> rri.execute(zp) ); };
+	protected static final RunResizeRelocateItemProcedure RESIZE_OR_RELOCATE_PROCEDURE = (rri,zp)-> rri.execute(zp);
 	protected static final RunResizeRelocateItemProcedure PICK_PREVIOUS_DATA_PROCEDURE = (rri,zp)->{	rri.pickPreviousData(zp); };
 	protected static InternationalizedStringConfImp _internationalizedStringConf = new InternationalizedStringConfImp( GLOBAL_CONF_FILE_NAME,
 																											GenericDesktopConstants.sa_PROPERTIES_PATH_IN_JAR );
@@ -1368,6 +1369,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				JMenu jmnu = (JMenu) absbtn;
 				for( int ii=0; ii<jmnu.getMenuComponentCount(); ii++ )
 					convertAttributesIntoProperties( jmnu.getMenuComponent( ii ), 2 );
+
+				convertAttributesIntoProperties( jmnu.getPopupMenu(), 2 );
 			}
 		}
 	}
@@ -1752,6 +1755,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				JMenu jmnu = (JMenu) absbtn;
 				for( int ii=0; ii<jmnu.getMenuComponentCount(); ii++ )
 					convertPropertiesIntoAttributes( jmnu.getMenuComponent( ii ), zp, 2, onlyText );
+
+				convertPropertiesIntoAttributes( jmnu.getPopupMenu(), zp, 2, onlyText );
 			}
 		}
 	}
@@ -2837,16 +2842,18 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			if( comp instanceof JSplitPane	)
 			{
 				JSplitPane jsp = (JSplitPane) comp;
-				if( jsp.getOrientation() == JSplitPane.HORIZONTAL_SPLIT )
-				{
-					pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getLeftComponent(), zp, onlyGetInfo );
-					pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getRightComponent(), zp, onlyGetInfo );
-				}
-				else if( jsp.getOrientation() == JSplitPane.VERTICAL_SPLIT )
-				{
-					pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getTopComponent(), zp, onlyGetInfo );
-					pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getBottomComponent(), zp, onlyGetInfo );
-				}
+				SwingUtilities.invokeLater( () -> {
+					if( jsp.getOrientation() == JSplitPane.HORIZONTAL_SPLIT )
+					{
+						pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getLeftComponent(), zp, onlyGetInfo );
+						pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getRightComponent(), zp, onlyGetInfo );
+					}
+					else if( jsp.getOrientation() == JSplitPane.VERTICAL_SPLIT )
+					{
+						pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getTopComponent(), zp, onlyGetInfo );
+						pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, jsp.getBottomComponent(), zp, onlyGetInfo );
+					}
+				} );
 			}
 			else if( comp instanceof JScrollPane )
 			{
@@ -2885,7 +2892,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 					pickPreviousDataOrResizeOrChangeZoomFactor( rrrip, tabbedPane.getComponentAt(ii), zp, onlyGetInfo );
 				}
 			}
-			else if( comp instanceof Container )
+			else if( ( comp instanceof Container ) &&
+					!( comp instanceof JSplitPane ) )
 			{
 				Container contnr = (Container) comp;
 

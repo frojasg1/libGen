@@ -18,7 +18,8 @@
  */
 package com.frojasg1.general.desktop.completion.api;
 
-import com.frojasg1.general.desktop.completion.base.PrototypeForCompletionBase;
+import com.frojasg1.general.completion.PrototypeForCompletionBase;
+import com.frojasg1.general.desktop.completion.data.TotalCompletionData;
 import com.frojasg1.general.view.ViewComponent;
 
 /**
@@ -28,12 +29,15 @@ import com.frojasg1.general.view.ViewComponent;
 public interface CompletionWindow< LL > extends CompletionCommonActions, ViewComponent
 {
 	public PrototypeForCompletionBase getSelectedCompletion();
-	public void setListOfAlternativesKeepingSelection( String preText,
-														PrototypeForCompletionBase[] functionPrototypes,
-														LL locationControl );
-	public void setCurrentParamPrototype( PrototypeForCompletionBase prototype,
-											int currentParamIndex,
-											LL locationControl );
+/*
+	public boolean setListOfAlternativesKeepingSelection( String preText,
+															PrototypeForCompletionBase[] functionPrototypes,
+															LL locationControl );
+	public boolean setCurrentParamPrototype( PrototypeForCompletionBase prototype,
+												int currentParamIndex,
+												LL locationControl );
+*/
+	public void setTotalCompletionData( TotalCompletionData<LL> totalCompletionData );
 
 	public void locateWindow( LL charBounds );
 

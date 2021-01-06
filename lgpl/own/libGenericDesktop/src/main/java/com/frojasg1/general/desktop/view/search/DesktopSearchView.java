@@ -20,9 +20,9 @@ package com.frojasg1.general.desktop.view.search;
 
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.search.imp.SearchReplaceContext;
-import com.frojasg1.general.desktop.view.generic.DesktopViewWindow;
+import com.frojasg1.general.desktop.generic.view.DesktopViewWindow;
 import com.frojasg1.general.search.SearchReplaceContextInterface;
 import com.frojasg1.general.search.SearchReplaceFactory;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;

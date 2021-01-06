@@ -25,8 +25,8 @@ import com.frojasg1.applications.common.configuration.application.ChangeZoomFact
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.FontFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
-import com.frojasg1.general.desktop.view.generic.SimpleViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.SimpleViewTextComponent;
 import com.frojasg1.general.document.formatter.FormatterFactory;
 import com.frojasg1.general.listeners.GenericListener;
 import com.frojasg1.general.listeners.GenericObserved;

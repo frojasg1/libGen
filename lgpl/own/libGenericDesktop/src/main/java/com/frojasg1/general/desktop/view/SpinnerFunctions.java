@@ -8,6 +8,7 @@ package com.frojasg1.general.desktop.view;
 import java.awt.Component;
 import java.util.function.Consumer;
 import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.plaf.basic.BasicSpinnerUI;
 
 /**
@@ -35,6 +36,41 @@ public class SpinnerFunctions
 					consumer.accept(component);
 				}
 			}
+		}
+	}
+
+	public void setMaxValue( JSpinner spinner, Integer max )
+	{
+		modelSetterGen( spinner, (model) -> model.setMaximum(max) );
+	}
+
+	public void setMinValue( JSpinner spinner, Integer min )
+	{
+		modelSetterGen( spinner, (model) -> model.setMinimum(min) );
+	}
+
+	public void modelSetterGen( JSpinner spinner, Consumer<SpinnerNumberModel> setter )
+	{
+		SpinnerNumberModel model = getSpinnerNumberModel( spinner );
+		if( model != null )
+			setter.accept(model);
+	}
+
+	protected SpinnerNumberModel getSpinnerNumberModel( JSpinner spinner )
+	{
+		SpinnerNumberModel result = null;
+		if( spinner.getModel() instanceof SpinnerNumberModel )
+			result = (SpinnerNumberModel) spinner.getModel();
+
+		return( result );
+	}
+
+	public void limitRange( JSpinner spinner, Integer min, Integer max )
+	{
+		if( spinner != null )
+		{
+			this.setMinValue(spinner, min);
+			this.setMaxValue(spinner, max);
 		}
 	}
 }

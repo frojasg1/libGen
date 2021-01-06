@@ -97,12 +97,17 @@ public class UrlJLabel extends JLabel implements MouseListener, GenericObserved<
 		setFont( newFont );
 	}
 
+	protected String getFinalUrl()
+	{
+		return( GenericFunctions.instance().getApplicationFacilities().buildResourceCounterUrl( getUrl() ) );
+	}
+
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
 		if( ( _url != null ) && SwingUtilities.isLeftMouseButton( e ) )
 		{
-			GenericFunctions.instance().getSystem().browse(_url);
+			GenericFunctions.instance().getSystem().browse( getFinalUrl() );
 			informListeners();
 		}
 	}

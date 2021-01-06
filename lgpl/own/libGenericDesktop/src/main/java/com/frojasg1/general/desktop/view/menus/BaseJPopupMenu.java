@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general.desktop.view.menus;
 
+import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.awt.Component;
@@ -39,8 +40,20 @@ public abstract class BaseJPopupMenu extends JPopupMenu implements ActionListene
 																	MouseListener,
 																	InternallyMappedComponent
 {
-	public BaseJPopupMenu()
+	protected Component _component = null;
+	protected Component _ancestor = null;
+
+	public BaseJPopupMenu( Component comp )
 	{
+		_component = comp;
+	}
+
+	public Component getAncestor()
+	{
+		if( ( _ancestor == null ) && ( _component != null ) )
+			_ancestor = ComponentFunctions.instance().getAncestor(_component);
+
+		return( _ancestor );
 	}
 
 	public void addMouseListenerToAllComponents()
@@ -157,5 +170,14 @@ public abstract class BaseJPopupMenu extends JPopupMenu implements ActionListene
 		Point position = new Point( evt.getX() - 10, evt.getY() - 10 );
 		position = ViewFunctions.instance().getValidPositionToPlaceComponent( this, position );
 		show(evt.getComponent(), evt.getX() - 10, evt.getY() - 10);
+	}
+
+	@Override
+	public void setVisible( boolean value )
+	{
+		super.setVisible(value);
+
+		if( !value && ( getAncestor() != null ) )
+			getAncestor().repaint();
 	}
 }

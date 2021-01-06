@@ -49,6 +49,7 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public static final String CONF_DOWNLOAD_FILE_TO_IGNORE = "DOWNLOAD_FILE_TO_IGNORE";
 
 	public static final String CONF_URL_FOR_NEW_VERSION_QUERY = "URL_FOR_NEW_VERSION_QUERY";
+	public static final String CONF_URL_FOR_RESOURCE_COUNTER = "URL_FOR_RESOURCE_COUNTER";
 
 	public static final String ES_LANGUAGE = "ES";	 // Spanish language
 	public static final String EN_LANGUAGE = "EN";	 // English language
@@ -88,6 +89,7 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 		result.setProperty(CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES, "" );
 
 		result.setProperty(CONF_URL_FOR_NEW_VERSION_QUERY, "https://frojasg1.com:8443/downloads_web" );
+		result.setProperty(CONF_URL_FOR_RESOURCE_COUNTER, "https://frojasg1.com:8443/resource_counter/resourceCounter" );
 
 		return( result );
 	}
@@ -184,6 +186,18 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public String getLastDirectory()
 	{
 		return( M_getStrParamConfiguration( CONF_LAST_DIRECTORY ) );
+	}
+
+	@Override
+	public String getUrlForResourceCounter()
+	{
+		return( M_getStrParamConfiguration( CONF_URL_FOR_RESOURCE_COUNTER ) );
+	}
+
+	@Override
+	public void setUrlForResourceCounter( String value )
+	{
+		M_setStrParamConfiguration( CONF_URL_FOR_RESOURCE_COUNTER, value );
 	}
 
 	@Override

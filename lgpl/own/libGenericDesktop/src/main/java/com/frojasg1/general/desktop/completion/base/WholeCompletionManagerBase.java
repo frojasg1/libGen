@@ -5,6 +5,7 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
+import com.frojasg1.general.completion.PrototypeManagerBase;
 import com.frojasg1.applications.common.configuration.InternationalStringsConfiguration;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
@@ -45,6 +46,11 @@ public abstract class WholeCompletionManagerBase
 		_translatorOfType = createTranslatorOfType();
 
 //		_inputTextListener.setCompletionManager(_inputTextCompletionManager);
+	}
+
+	protected InputTextCompletionManagerBase< Rectangle > getInputTextCompletionManagerBase()
+	{
+		return( _inputTextCompletionManager );
 	}
 
 	protected PrototypeManagerBase getPrototypeManager()
@@ -135,5 +141,10 @@ public abstract class WholeCompletionManagerBase
 			result = _inputTextListener.getViewTextComponent().getComponent();
 
 		return( result );
+	}
+
+	public DesktopCompletionWindowBase getCompletionWindow()
+	{
+		return( _completionWindow );
 	}
 }

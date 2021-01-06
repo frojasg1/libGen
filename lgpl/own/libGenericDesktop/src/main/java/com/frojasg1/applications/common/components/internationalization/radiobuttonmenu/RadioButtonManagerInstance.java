@@ -31,6 +31,7 @@ import java.util.Map;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
+import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JPopupMenu.Separator;
 import javax.swing.JRadioButtonMenuItem;
@@ -44,7 +45,7 @@ import javax.swing.SwingUtilities;
 public abstract class RadioButtonManagerInstance implements RadioButtonManagerInterface
 {
 	protected ButtonGroup _bg;
-	protected JPopupMenu _popupSubmenu;
+	protected JMenu _menu;
 
 	protected boolean _initializing = true;
 
@@ -52,12 +53,22 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 
 	BaseApplicationConfigurationInterface _appConf;
 
-	public RadioButtonManagerInstance( ButtonGroup bg, JPopupMenu popupMenu,
+	public RadioButtonManagerInstance( ButtonGroup bg, JMenu menu,
 										BaseApplicationConfigurationInterface appConf )
 	{
 		_bg = bg;
-		_popupSubmenu = popupMenu;
+		_menu = menu;
 		_appConf = appConf;
+	}
+
+	public void setMenu( JMenu menu )
+	{
+		_menu = menu;
+	}
+
+	public JMenu getMenu()
+	{
+		return( _menu );
 	}
 
 	public BaseApplicationConfigurationInterface getAppliConf()
@@ -75,9 +86,12 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 		return( _bg );
 	}
 
-	public JPopupMenu getPopupMenu()
+	public JPopupMenu getPopupSubmenu()
 	{
-		return( _popupSubmenu );
+		JPopupMenu result = null;
+		if( _menu != null )
+			result = _menu.getPopupMenu();
+		return( result );
 	}
 
 	public Map<String, Component> getRadioButtonMenuItemMap()
@@ -85,13 +99,13 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 		HashMap<String, Component> result = new HashMap<>();
 
 		int numSeparators = 0;
-		for( int ii=0; ii<_popupSubmenu.getComponentCount(); ii++ )
+		for( int ii=0; ii<getPopupSubmenu().getComponentCount(); ii++ )
 		{
-			Component comp = _popupSubmenu.getComponent( ii );
+			Component comp = getPopupSubmenu().getComponent( ii );
 
 			if( comp instanceof AbstractButton )
 			{
-				AbstractButton btn = (AbstractButton) _popupSubmenu.getComponent( ii );
+				AbstractButton btn = (AbstractButton) comp;
 
 				result.put( btn.getText(), comp );
 			}
@@ -161,7 +175,7 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 
 	protected void updateRadioButtonSubmenu( )
 	{
-		updateSubmenu(_popupSubmenu );
+		updateSubmenu(getPopupSubmenu() );
 		_initializing = false;
 	}
 
@@ -337,9 +351,9 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 	{
 		try
 		{
-			if( ( element != null ) && ( _popupSubmenu != null ) )
+			if( ( element != null ) && ( getPopupSubmenu() != null ) )
 			{
-				MenuElement[] elems = _popupSubmenu.getSubElements();
+				MenuElement[] elems = getPopupSubmenu().getSubElements();
 
 				for( int ii=0; ii<elems.length; ii++ )
 				{
@@ -372,7 +386,7 @@ public abstract class RadioButtonManagerInstance implements RadioButtonManagerIn
 		invokeUpdateRadioButtonSubmenu();
 		Map< String, Component > finalMap = getRadioButtonMenuItemMap();
 
-		ChangeRadioButtonMenuItemListResult result = new ChangeRadioButtonMenuItemListResult( _popupSubmenu,
+		ChangeRadioButtonMenuItemListResult result = new ChangeRadioButtonMenuItemListResult( getPopupSubmenu(),
 																								originalMap, finalMap );
 		return( result );
 	}

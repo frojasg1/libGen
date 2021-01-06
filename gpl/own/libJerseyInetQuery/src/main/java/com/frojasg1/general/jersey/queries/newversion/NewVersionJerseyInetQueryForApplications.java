@@ -21,7 +21,6 @@
  */
 package com.frojasg1.general.jersey.queries.newversion;
 
-import com.frojasg1.general.application.version.ApplicationVersion;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryResult;
 import com.frojasg1.generic.GenericFunctions;
@@ -68,7 +67,7 @@ public class NewVersionJerseyInetQueryForApplications extends NewVersionJerseyIn
 
 	protected String getDownloadFile()
 	{
-		return( ApplicationVersion.instance().getDownloadFile() );
+		return( GenericFunctions.instance().getApplicationFacilities().getApplicationVersion());
 	}
 
 	protected String getWebLanguage( String applicationLanguage )

@@ -18,8 +18,10 @@
  */
 package com.frojasg1.general.desktop.view.whatisnew;
 
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.desktop.view.license.GenericLicenseJDialog;
+import java.util.function.Consumer;
 import javax.swing.JFrame;
 
 /**
@@ -31,21 +33,27 @@ public class WhatIsNewJDialogBase extends GenericLicenseJDialog
 	public static final String _configurationBaseFileName = "WhatIsNewJDialog";
 	public static final String BASE_RTF_FILE_NAME = "What.is.new.rtf";
 
-	public WhatIsNewJDialogBase( BaseApplicationConfigurationInterface appConf )
+	public WhatIsNewJDialogBase( BaseApplicationConfigurationInterface appConf,
+							Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack
+								)
 	{
-		this( null, appConf );
-	}
-
-	public WhatIsNewJDialogBase( JFrame parent, BaseApplicationConfigurationInterface appConf )
-	{
-		this( parent, appConf, BASE_RTF_FILE_NAME, _configurationBaseFileName );
+		this( null, appConf, initializationEndCallBack );
 	}
 
 	public WhatIsNewJDialogBase( JFrame parent, BaseApplicationConfigurationInterface appConf,
+							Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack
+								)
+	{
+		this( parent, appConf, initializationEndCallBack, BASE_RTF_FILE_NAME, _configurationBaseFileName );
+	}
+
+	public WhatIsNewJDialogBase( JFrame parent, BaseApplicationConfigurationInterface appConf,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
 									String singleRtfFileName,
 									String baseConfigurationFileName )
 	{
-		super( parent, appConf, singleRtfFileName, false, baseConfigurationFileName, true );
+		super( parent, appConf, initializationEndCallBack,
+				singleRtfFileName, false, baseConfigurationFileName, true );
 		setTitle("");
 	}
 

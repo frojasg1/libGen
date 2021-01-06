@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
+import com.frojasg1.general.completion.PrototypeForCompletionBase;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
 import com.frojasg1.general.ArrayFunctions;

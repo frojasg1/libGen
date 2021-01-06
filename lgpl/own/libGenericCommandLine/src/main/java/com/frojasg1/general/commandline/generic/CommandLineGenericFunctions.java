@@ -18,15 +18,18 @@
  */
 package com.frojasg1.general.commandline.generic;
 
+import com.frojasg1.general.commandline.generic.dialogs.EmptyDialogsWrapper;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.commandline.files.DesktopFileFacilities;
-import com.frojasg1.general.commandline.system.DesktopSystem;
+import com.frojasg1.general.commandline.generic.application.CommandLineApplicationFacilities;
+import com.frojasg1.general.commandline.generic.files.DesktopFileFacilities;
+import com.frojasg1.general.commandline.generic.system.DesktopSystem;
 import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.files.GenericFileFacilities;
 import com.frojasg1.general.keyboard.GenericKeyboard;
 import com.frojasg1.general.view.ViewFacilities;
 import com.frojasg1.generic.GenericFunctions;
 import com.frojasg1.generic.GenericInterface;
+import com.frojasg1.generic.application.ApplicationFacilitiesInterface;
 import com.frojasg1.generic.languages.ObtainAvailableLanguages_base;
 import com.frojasg1.generic.languages.ObtainAvailableLanguages_int;
 import com.frojasg1.generic.system.SystemInterface;
@@ -131,5 +134,11 @@ public class CommandLineGenericFunctions implements GenericInterface
 	public SystemInterface getSystem()
 	{
 		return( DesktopSystem.instance() );
+	}
+
+	@Override
+	public ApplicationFacilitiesInterface getApplicationFacilities()
+	{
+		return( CommandLineApplicationFacilities.instance() );
 	}
 }

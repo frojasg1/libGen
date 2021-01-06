@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.EventObject;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
-import javax.swing.JPopupMenu;
+import javax.swing.JMenu;
 
 /**
  *
@@ -34,12 +34,12 @@ import javax.swing.JPopupMenu;
 public class ZoomFactorRadioButtonManagerInstance extends RadioButtonManagerInstance
 {
 	protected InternationalizedJFrame _frame;
-	
-	public ZoomFactorRadioButtonManagerInstance( ButtonGroup bg, JPopupMenu popupMenu,
+
+	public ZoomFactorRadioButtonManagerInstance( ButtonGroup bg, JMenu menu,
 										BaseApplicationConfigurationInterface appConf,
 										InternationalizedJFrame frame )
 	{
-		super( bg, popupMenu, appConf );
+		super( bg, menu, appConf );
 		_frame = frame;
 	}
 

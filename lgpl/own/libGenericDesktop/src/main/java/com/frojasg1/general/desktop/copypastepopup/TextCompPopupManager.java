@@ -18,9 +18,9 @@
  */
 package com.frojasg1.general.desktop.copypastepopup;
 
-import com.frojasg1.general.desktop.clipboard.SystemClipboard;
+import com.frojasg1.general.clipboard.SystemClipboard;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
-import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
 import com.frojasg1.general.desktop.view.text.StringAndPosition;
 import com.frojasg1.general.undoredo.UndoRedoInterface;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
@@ -61,6 +61,11 @@ public class TextCompPopupManager
 	public JPopupMenu getJPopupMenu()
 	{
 		return( _popupMenu );
+	}
+
+	public DesktopViewTextComponent getViewTextComponent()
+	{
+		return( _textComp );
 	}
 
 	public void setIsUrlTextComponent( boolean value )

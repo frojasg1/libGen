@@ -18,11 +18,12 @@
  */
 package com.frojasg1.general.desktop.startapp;
 
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.FileFunctions;
-import com.frojasg1.general.application.version.ApplicationVersion;
-import com.frojasg1.general.desktop.dialogs.implementation.DesktopDialogsWrapper;
+import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
+import com.frojasg1.general.desktop.generic.dialogs.impl.DesktopDialogsWrapper;
 import com.frojasg1.general.desktop.execution.newversion.NewVersionQueryExecution;
 import com.frojasg1.general.desktop.execution.whatisnew.WhatIsNewExecution;
 import com.frojasg1.general.desktop.view.license.GenericLicenseJDialog;
@@ -33,6 +34,7 @@ import com.frojasg1.general.exceptions.ConfigurationException;
 import java.awt.Component;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.function.Consumer;
 import javax.swing.JFrame;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
@@ -260,7 +262,7 @@ public abstract class StartApplicationBase
 		}
 	}
 
-	protected abstract GenericLicenseJDialog createLicenseJDialog();
+	protected abstract GenericLicenseJDialog createLicenseJDialog(Consumer<InternationalizationInitializationEndCallback> initializationCallback);
 	protected abstract void saveApplicationConfiguration() throws ConfigurationException;
 
 	protected void acceptLicenses()
@@ -270,8 +272,26 @@ public abstract class StartApplicationBase
 
 		try
 		{
-			GenericLicenseJDialog licenseJDialog = createLicenseJDialog();
-			licenseJDialog.setVisible( true );
+			GenericLicenseJDialog licenseJDialog = createLicenseJDialog(this::acceptLicenses);
+		}
+		catch( Exception th )
+		{
+			th.printStackTrace();
+			showProblemLaunchingApplicationMessage();
+
+			System.exit(1);
+		}
+	}
+
+	protected void acceptLicenses(InternationalizationInitializationEndCallback iiec)
+	{
+		if( _exceptionThrown )
+			System.exit(1);
+
+		try
+		{
+			GenericLicenseJDialog licenseJDialog = (GenericLicenseJDialog) iiec;
+			licenseJDialog.setVisibleWithLock( true );
 
 			if( !licenseJDialog.getLicensesHaveBeenAcceptedAndWeHaveToStart() )
 			{
@@ -352,27 +372,39 @@ public abstract class StartApplicationBase
 		}
 	}
 
-	protected WhatIsNewJDialogBase createWhatIsNewJDialogBase()
+	protected WhatIsNewJDialogBase createWhatIsNewJDialogBase(Consumer<InternationalizationInitializationEndCallback> initializationCallback)
 	{
-		return( new WhatIsNewJDialogBase( getAppliConf() ) );
+		return( new WhatIsNewJDialogBase( getAppliConf(), initializationCallback ) );
 	}
 
-	protected WhatIsNewExecution createWhatIsNewExecution()
+	protected void executeWhatIsNewAndNext( InternationalizationInitializationEndCallback iiec )
 	{
-		WhatIsNewJDialogBase win = createWhatIsNewJDialogBase();
-		WhatIsNewExecution result = new WhatIsNewExecution( win, getAppliConf() );
-
-		return( result );
-	}
-
-	protected void showWhatIsNew()
-	{
-		if( hasToShowWhatIsNew() )
+		try
 		{
-			WhatIsNewExecution executor = createWhatIsNewExecution();
+			WhatIsNewJDialogBase win = (WhatIsNewJDialogBase) iiec;
+			WhatIsNewExecution executor = new WhatIsNewExecution( win, getAppliConf() );
 
 			executor.run();
+
+			goToNextOfWhatIsNewStep();
 		}
+		catch( Exception th )
+		{
+			th.printStackTrace();
+			showProblemLaunchingApplicationMessage();
+
+			System.exit(1);
+		}
+	}
+
+	protected void goToNextOfWhatIsNewStep() throws Exception
+	{
+		incrementStepsCompleted();
+
+		setCurrentActivityFromLabel( GenericBasicSplash.CONF_CREATING_MAIN_WINDOW );
+
+		GenericWaitWorker gww = new GenericWaitWorker( 100, WATING_FOR_CREATE_MAIN_WINDOW );
+		gww.execute();
 	}
 
 	protected void whatIsNewStep()
@@ -382,15 +414,10 @@ public abstract class StartApplicationBase
 
 		try
 		{
-			showWhatIsNew();
-
-
-			incrementStepsCompleted();
-
-			setCurrentActivityFromLabel( GenericBasicSplash.CONF_CREATING_MAIN_WINDOW );
-
-			GenericWaitWorker gww = new GenericWaitWorker( 100, WATING_FOR_CREATE_MAIN_WINDOW );
-			gww.execute();
+			if( hasToShowWhatIsNew() )
+				createWhatIsNewJDialogBase(this::executeWhatIsNewAndNext );
+			else
+				goToNextOfWhatIsNewStep();
 		}
 		catch( Exception th )
 		{
@@ -498,7 +525,7 @@ public abstract class StartApplicationBase
 
 		try
 		{
-			String currentDownloadFile = ApplicationVersion.instance().getDownloadFile();
+			String currentDownloadFile = DesktopApplicationVersion.instance().getDownloadFile();
 
 			result = !getAppliConf().hasBeenShownWhatIsNewOfDownloadFile(currentDownloadFile);
 		}

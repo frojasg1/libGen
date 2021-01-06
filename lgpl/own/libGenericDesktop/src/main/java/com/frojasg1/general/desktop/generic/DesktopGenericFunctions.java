@@ -19,17 +19,19 @@
 package com.frojasg1.general.desktop.generic;
 
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.desktop.dialogs.implementation.DesktopDialogsWrapper;
-import com.frojasg1.general.desktop.files.DesktopFileFacilities;
-import com.frojasg1.general.desktop.keyboard.DesktopKeyboardFacilities;
-import com.frojasg1.general.desktop.system.DesktopSystem;
-import com.frojasg1.general.desktop.view.generic.DesktopViewFacilities;
-import com.frojasg1.general.desktop.view.generic.imp.DesktopViewFacilitiesImp;
+import com.frojasg1.general.desktop.generic.application.DesktopApplicationFacilities;
+import com.frojasg1.general.desktop.generic.dialogs.impl.DesktopDialogsWrapper;
+import com.frojasg1.general.desktop.generic.files.DesktopFileFacilities;
+import com.frojasg1.general.desktop.generic.keyboard.DesktopKeyboardFacilities;
+import com.frojasg1.general.desktop.generic.system.DesktopSystem;
+import com.frojasg1.general.desktop.generic.view.DesktopViewFacilities;
+import com.frojasg1.general.desktop.generic.view.imp.DesktopViewFacilitiesImp;
 import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.files.GenericFileFacilities;
 import com.frojasg1.general.keyboard.GenericKeyboard;
 import com.frojasg1.generic.GenericFunctions;
 import com.frojasg1.generic.GenericInterface;
+import com.frojasg1.generic.application.ApplicationFacilitiesInterface;
 import com.frojasg1.generic.languages.ObtainAvailableLanguages_base;
 import com.frojasg1.generic.languages.ObtainAvailableLanguages_int;
 import com.frojasg1.generic.system.SystemInterface;
@@ -133,5 +135,11 @@ public class DesktopGenericFunctions implements GenericInterface
 	public SystemInterface getSystem()
 	{
 		return( DesktopSystem.instance() );
+	}
+
+	@Override
+	public ApplicationFacilitiesInterface getApplicationFacilities()
+	{
+		return( DesktopApplicationFacilities.instance() );
 	}
 }

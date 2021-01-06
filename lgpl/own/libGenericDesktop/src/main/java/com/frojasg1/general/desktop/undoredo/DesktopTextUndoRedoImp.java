@@ -24,8 +24,8 @@ import com.frojasg1.general.desktop.keyboard.listener.GenericKeyDispatcherInterf
 import com.frojasg1.general.desktop.keyboard.listener.KeyInterface;
 import com.frojasg1.general.desktop.keyboard.listener.imp.KeyImp;
 import com.frojasg1.general.desktop.view.ViewFunctions;
-import com.frojasg1.general.desktop.view.generic.imp.DesktopViewFacilitiesImp;
-import com.frojasg1.general.desktop.view.generic.DesktopViewTextComponent;
+import com.frojasg1.general.desktop.generic.view.imp.DesktopViewFacilitiesImp;
+import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
 import com.frojasg1.general.executor.ExecutorInterface;
 import com.frojasg1.general.executor.GenericExecutor;
 import com.frojasg1.general.executor.imp.ExecutorImp;

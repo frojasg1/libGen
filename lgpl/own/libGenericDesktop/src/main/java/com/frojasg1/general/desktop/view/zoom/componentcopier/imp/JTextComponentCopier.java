@@ -53,6 +53,7 @@ public class JTextComponentCopier extends CompCopierBase<JTextComponent>
 		result.add( createSelectedTextColorCopier() );
 		result.add( createSelectionColorCopier() );
 		result.add( createTextCopier() );
+		result.add( createEditableCopier() );
 
 		return( result );
 	}
@@ -130,6 +131,11 @@ public class JTextComponentCopier extends CompCopierBase<JTextComponent>
 	protected CompCopier<JTextComponent> createTextCopier()
 	{
 		return( (originalComponent, newComponent) -> copyText( originalComponent, newComponent ) );
+	}
+
+	protected CompCopier<JTextComponent> createEditableCopier()
+	{
+		return( (originalComponent, newComponent) -> copyEditable( originalComponent, newComponent ) );
 	}
 
 	@Override
@@ -216,5 +222,10 @@ public class JTextComponentCopier extends CompCopierBase<JTextComponent>
 	protected void copyText( JTextComponent originalComponent, JTextComponent newComponent )
 	{
 		newComponent.setText( originalComponent.getText() );
+	}
+
+	protected void copyEditable( JTextComponent originalComponent, JTextComponent newComponent )
+	{
+		newComponent.setEditable( originalComponent.isEditable() );
 	}
 }

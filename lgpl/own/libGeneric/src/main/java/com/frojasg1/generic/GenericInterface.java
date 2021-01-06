@@ -23,6 +23,7 @@ import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.files.GenericFileFacilities;
 import com.frojasg1.general.keyboard.GenericKeyboard;
 import com.frojasg1.general.view.ViewFacilities;
+import com.frojasg1.generic.application.ApplicationFacilitiesInterface;
 import com.frojasg1.generic.languages.ObtainAvailableLanguages_int;
 import com.frojasg1.generic.system.SystemInterface;
 import com.frojasg1.generic.zoom.ZoomFactorsAvailable;
@@ -40,6 +41,7 @@ public interface GenericInterface
 	public GenericKeyboard getKeyboardFacilities();
 	public ZoomFactorsAvailable getZoomFactorsAvailable();
 	public SystemInterface getSystem();
+	public ApplicationFacilitiesInterface getApplicationFacilities();
 
 	public ViewFacilities getViewFacilities();
 }

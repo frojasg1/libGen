@@ -19,7 +19,7 @@
 package com.frojasg1.general.desktop.execution.whatisnew;
 
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.application.version.ApplicationVersion;
+import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
 
 /**
@@ -31,13 +31,13 @@ public class WhatIsNewExecution implements Runnable
 	protected WhatIsNewJDialogBase _dialog;
 	protected BaseApplicationConfigurationInterface _applicationConfiguration;
 	protected Boolean _hasToShow = null;
-
+/*
 	public WhatIsNewExecution( BaseApplicationConfigurationInterface applicationConfiguration )
 	{
 		this(new WhatIsNewJDialogBase( applicationConfiguration ),
 				applicationConfiguration );
 	}
-
+*/
 	public WhatIsNewExecution( WhatIsNewJDialogBase dialog,
 								BaseApplicationConfigurationInterface applicationConfiguration )
 	{
@@ -59,7 +59,7 @@ public class WhatIsNewExecution implements Runnable
 
 		if( result == null )
 		{
-			String currentDownloadFile = ApplicationVersion.instance().getDownloadFile();
+			String currentDownloadFile = DesktopApplicationVersion.instance().getDownloadFile();
 
 			if( currentDownloadFile != null )
 			{
@@ -75,11 +75,11 @@ public class WhatIsNewExecution implements Runnable
 	@Override
 	public void run()
 	{
-		String currentDownloadFile = ApplicationVersion.instance().getDownloadFile();
+		String currentDownloadFile = DesktopApplicationVersion.instance().getDownloadFile();
 		
 		if( hasToShow() )
 		{
-			_dialog.setVisible(true);
+			_dialog.setVisibleWithLock(true);
 			_applicationConfiguration.addDownloadFileWhatIsNewShown(currentDownloadFile);
 		}
 	}

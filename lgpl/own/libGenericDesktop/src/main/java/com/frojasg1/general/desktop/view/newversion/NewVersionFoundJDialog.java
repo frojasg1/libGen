@@ -23,7 +23,7 @@ import com.frojasg1.applications.common.components.name.ComponentNameComponents;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
-import com.frojasg1.general.application.version.ApplicationVersion;
+import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryResult;
 import com.frojasg1.general.desktop.view.labels.UrlJLabel;
@@ -57,7 +57,7 @@ public class NewVersionFoundJDialog extends InternationalizedJDialog {
 
 	protected boolean _urlClicked = false;
 
-	protected ApplicationVersion _applicationVersion = null;
+	protected DesktopApplicationVersion _applicationVersion = null;
 
 	/**
 	 * Creates new form NewVersionFoundJDialog
@@ -81,12 +81,12 @@ public class NewVersionFoundJDialog extends InternationalizedJDialog {
 		setWindowConfiguration();
 	}
 
-	protected ApplicationVersion getDefaultApplicationVersion()
+	protected DesktopApplicationVersion getDefaultApplicationVersion()
 	{
-		return( ApplicationVersion.instance() );
+		return( DesktopApplicationVersion.instance() );
 	}
 
-	public void setApplicationVersion( ApplicationVersion applicationVersion )
+	public void setApplicationVersion( DesktopApplicationVersion applicationVersion )
 	{
 		_applicationVersion = applicationVersion;
 	}

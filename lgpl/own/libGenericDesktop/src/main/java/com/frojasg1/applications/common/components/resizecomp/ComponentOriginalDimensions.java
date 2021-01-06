@@ -28,6 +28,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import javax.swing.JComponent;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.metal.MetalScrollButton;
@@ -60,6 +61,13 @@ public class ComponentOriginalDimensions
 	public ComponentOriginalDimensions( Component comp, double zoomFactor )
 	{
 		_component = comp;
+		if( ( _component instanceof JRadioButtonMenuItem ) &&
+				( ( JRadioButtonMenuItem ) _component ).getText().equals( "75%" )
+			)
+		{
+			int kk=0;
+		}
+
 		fillInAttributes_final( comp, zoomFactor );
 	}
 

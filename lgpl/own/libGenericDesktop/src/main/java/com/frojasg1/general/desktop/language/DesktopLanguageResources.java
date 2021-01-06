@@ -22,7 +22,7 @@ import com.frojasg1.applications.common.components.internationalization.JFrameIn
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizedWindowFunctions;
 import com.frojasg1.general.desktop.GenericDesktopConstants;
 import com.frojasg1.general.desktop.copypastepopup.ConfForTextPopupMenu;
-import com.frojasg1.general.desktop.files.DesktopBinaryFile;
+import com.frojasg1.general.desktop.generic.files.DesktopBinaryFile;
 import com.frojasg1.general.desktop.view.newversion.NewVersionFoundJDialog;
 import com.frojasg1.general.desktop.view.search.DesktopSearchAndReplaceWindow;
 import com.frojasg1.general.desktop.view.text.CustomizedJPasswordField;

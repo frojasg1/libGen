@@ -18,12 +18,17 @@
  */
 package com.frojasg1.general.desktop.completion.base;
 
+import com.frojasg1.general.completion.PrototypeForCompletionBase;
+import com.frojasg1.general.completion.PrototypeManagerBase;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.completion.api.InputTextCompletionManager;
 import com.frojasg1.general.desktop.completion.api.CompletionWindow;
+import com.frojasg1.general.desktop.completion.data.AlternativesForCompletionData;
+import com.frojasg1.general.desktop.completion.data.CurrentParamForCompletionData;
+import com.frojasg1.general.desktop.completion.data.TotalCompletionData;
 import com.frojasg1.general.string.StringFunctions;
 import com.frojasg1.general.view.ViewTextComponent;
-import java.awt.Rectangle;
+import javax.swing.SwingUtilities;
 import javax.swing.text.LabelView;
 
 /**
@@ -88,8 +93,9 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 			_inputText = inputText;
 			_caretPos = caretPos;
 
-			updateCompletionTextComponent( inputText, caretPos, locationControl );
+//			updateCompletionTextComponent( inputText, caretPos, locationControl );
 //			updateCurrentParamPrototype( inputText, caretPos, locationControl );
+			updateTotalCompletion( inputText, caretPos, locationControl );
 		}
 	}
 
@@ -103,11 +109,12 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 			_caretPos = caretPos;
 
 ////			hideCompletionTextComponent();
-			updateCompletionTextComponent( inputText, caretPos, locationControl );
+//			updateCompletionTextComponent( inputText, caretPos, locationControl );
 //			updateCurrentParamPrototype( inputText, caretPos, locationControl );
+			updateTotalCompletion( inputText, caretPos, locationControl );
 		}
 	}
-
+/*
 	protected void updateCompletionTextComponent( String inputText, int caretPos, LL locationControl )
 	{
 		if( this.hasToShowCompletionWindow() )
@@ -126,7 +133,7 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 		else
 			_completionWindow.hideCompletionTextComponent();
 	}
-/*
+
 	protected void updateCurrentParamPrototype( String inputText, int caretPos, LL locationControl )
 	{
 		if( this.hasToShowCurrentParameterWindow() )
@@ -147,8 +154,65 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 		else
 			_completionWindow.hideCurrentParameterHelp();
 	}
+*/
+	protected TotalCompletionData<LL> createTotalCompletionData()
+	{
+		return( new TotalCompletionData<>() );
+	}
 
-	protected CurrentParamResult getCurrentParam( String inputText, int caretPos )
+	protected void updateTotalCompletion( String inputText, int caretPos, LL locationControl )
+	{
+		String preText = "empty";
+		TotalCompletionData<LL> totalCompletionData = createTotalCompletionData();
+		if( this.hasToShowCompletionWindow() )
+		{
+			AlternativesForCompletionData<LL> altData = totalCompletionData.createAndSetAlternativesForCompletionData();
+			preText = getCaretWord(inputText, caretPos);
+
+			PrototypeForCompletionBase[] possibilities = null;
+			if( ! StringFunctions.instance().isEmpty(preText) )
+			{
+//				possibilities = _bmHelp.getPrototypeRange(preText);
+				possibilities = _prototypeManager.getPrototypeRange(preText);
+			}
+			altData.setPreText(preText);
+			altData.setPrototypes(possibilities);
+			altData.setLocationControl(locationControl);
+//			setListOfAlternativesKeepingSelection(preText, possibilities, locationControl);
+		}
+		else
+			_completionWindow.hideCompletionTextComponent();
+
+		if( this.hasToShowCurrentParameterWindow() )
+		{
+			CurrentParamForCompletionData<LL> currParData = totalCompletionData.createAndSetCurrentParamForCompletionData();
+			CurrentParamResult cpr = getCurrentParam( inputText, caretPos );
+
+			if( cpr != null )
+			{
+//				setCurrentParamPrototype( cpr.getPrototypeForCompletion(),
+//											cpr.getParamIndex(),
+//											locationControl );
+				currParData.setPrototype( cpr.getPrototypeForCompletion() );
+				currParData.setCurrentParamIndex( cpr.getParamIndex() );
+				currParData.setLocationControl(locationControl);
+			}
+			else
+			{
+//				setCurrentParamPrototype( null, -1, locationControl );
+				currParData.setPrototype( null );
+				currParData.setCurrentParamIndex( -1 );
+				currParData.setLocationControl(locationControl);
+			}
+		}
+		else
+			_completionWindow.hideCurrentParameterHelp();
+
+		setTotalCompletionData( preText, totalCompletionData );
+	}
+
+	protected abstract CurrentParamResult getCurrentParam( String inputText, int caretPos );
+/*
 	{
 		String name = null;
 		int index = 0;
@@ -272,8 +336,9 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 
 		return( result );
 	}
+
+	protected abstract CurrentParamResult createCurrentParamResult( String name, int paramCount );
 /*
-	protected CurrentParamResult createCurrentParamResult( String name, int paramCount )
 	{
 		CurrentParamResult result = null;
 
@@ -305,7 +370,7 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 	protected void completionSelected( String previousText, String completedText, int start )
 	{
 		_inputTextComponent.replaceText(start, previousText, completedText );
-		_completionWindow.hideEverything();
+		SwingUtilities.invokeLater( () -> _completionWindow.hideEverything() );
 
 //		SwingUtilities.invokeLater( () -> setCaretPositionAndRequestFocus( start + completedText.length() ) );
 		setCaretPositionAndRequestFocus( start + completedText.length() );
@@ -423,6 +488,16 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 		return( false );//_conf.hasToShowCurrentParameterWindow() );
 	}
 
+	protected void setTotalCompletionData( String preText,
+										TotalCompletionData<LL> totalCompletionData )
+	{
+		if( StringFunctions.instance().isEmpty( preText ) )
+			_escapePressed = false;
+
+		if( ! _escapePressed )
+			_completionWindow.setTotalCompletionData( totalCompletionData );
+	}
+/*
 	protected void setListOfAlternativesKeepingSelection( String preText,
 															PrototypeForCompletionBase [] functionPrototypes,
 															LL locationControl )
@@ -441,7 +516,7 @@ public abstract class InputTextCompletionManagerBase< LL > implements InputTextC
 		if( ! _escapePressed )
 			_completionWindow.setCurrentParamPrototype(prototype, currentParamIndex, locationControl );
 	}
-
+*/
 	@Override
 	public void escape() {
 		_completionWindow.escape();
