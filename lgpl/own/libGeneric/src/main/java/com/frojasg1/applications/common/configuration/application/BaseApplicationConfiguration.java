@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,16 +48,22 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public static final String CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES = "WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES";
 	public static final String CONF_DOWNLOAD_FILE_TO_IGNORE = "DOWNLOAD_FILE_TO_IGNORE";
 
-	public static final String CONF_URL_FOR_NEW_VERSION_QUERY = "URL_FOR_NEW_VERSION_QUERY";
-	public static final String CONF_URL_FOR_RESOURCE_COUNTER = "URL_FOR_RESOURCE_COUNTER";
+//	public static final String CONF_URL_FOR_NEW_VERSION_QUERY = "URL_FOR_NEW_VERSION_QUERY";
+//	public static final String CONF_URL_FOR_RESOURCE_COUNTER = "URL_FOR_RESOURCE_COUNTER";
 
 	public static final String ES_LANGUAGE = "ES";	 // Spanish language
 	public static final String EN_LANGUAGE = "EN";	 // English language
+
+	protected static final String EMAIL_ADDRESS = "frojasg1@hotmail.com";
+	protected static final String HOME_PAGE_URL = "https://frojasg1.com";
+	protected static final String URL_FOR_NEW_VERSION_QUERY_VALUE = "https://frojasg1.com:8443/downloads_web";
+	protected static final String URL_FOR_RESOURCE_COUNTER_VALUE = "https://frojasg1.com:8443/resource_counter/resourceCounter";
 
 //	protected boolean _avoidRecursionZoomFactor = false;
 	protected List<ChangeZoomFactorClientInterface> _listOfObserversOfZoomFactorChanges = new ArrayList<ChangeZoomFactorClientInterface>();
 
 	protected ListString _whatIsNewShownDownloadFileListString = null;
+
 
 	public BaseApplicationConfiguration( String mainFolder, String applicationName, String group,
 								String language, String configurationFileName )
@@ -88,8 +94,8 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 		result.setProperty(CONF_ZOOM_FACTOR, "1.0" );
 		result.setProperty(CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES, "" );
 
-		result.setProperty(CONF_URL_FOR_NEW_VERSION_QUERY, "https://frojasg1.com:8443/downloads_web" );
-		result.setProperty(CONF_URL_FOR_RESOURCE_COUNTER, "https://frojasg1.com:8443/resource_counter/resourceCounter" );
+//		result.setProperty(CONF_URL_FOR_NEW_VERSION_QUERY, URL_FOR_NEW_VERSION_QUERY_VALUE );
+//		result.setProperty(CONF_URL_FOR_RESOURCE_COUNTER, URL_FOR_RESOURCE_COUNTER_VALUE );
 
 		return( result );
 	}
@@ -151,6 +157,11 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 		return( M_getStrParamConfiguration(CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES ) );
 	}
 
+	public String getLastExecutionDownloadFileName()
+	{
+		return( _whatIsNewShownDownloadFileListString.getLast() );
+	}
+
 	@Override
 	public boolean hasBeenShownWhatIsNewOfDownloadFile(String downloadFile)
 	{
@@ -191,27 +202,29 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	@Override
 	public String getUrlForResourceCounter()
 	{
-		return( M_getStrParamConfiguration( CONF_URL_FOR_RESOURCE_COUNTER ) );
+		return( URL_FOR_RESOURCE_COUNTER_VALUE );
+//		return( M_getStrParamConfiguration( CONF_URL_FOR_RESOURCE_COUNTER ) );
 	}
-
+/*
 	@Override
 	public void setUrlForResourceCounter( String value )
 	{
 		M_setStrParamConfiguration( CONF_URL_FOR_RESOURCE_COUNTER, value );
 	}
-
+*/
 	@Override
 	public String getUrlForNewVersionQuery()
 	{
-		return( M_getStrParamConfiguration( CONF_URL_FOR_NEW_VERSION_QUERY ) );
+		return( URL_FOR_NEW_VERSION_QUERY_VALUE );
+//		return( M_getStrParamConfiguration( CONF_URL_FOR_NEW_VERSION_QUERY ) );
 	}
-
+/*
 	@Override
 	public void setUrlForNewVersionQuery( String value )
 	{
 		M_setStrParamConfiguration( CONF_URL_FOR_NEW_VERSION_QUERY, value );
 	}
-
+*/
 	@Override
 	public Rectangle getLastFileChooserBounds()
 	{
@@ -298,6 +311,18 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 
 	@Override
 	public abstract String getDefaultLanguage();
+
+	@Override
+	public String getAuthorEmailAddress()
+	{
+		return( EMAIL_ADDRESS );
+	}
+
+	@Override
+	public String getHomePageUrl()
+	{
+		return( HOME_PAGE_URL );
+	}
 
 	@Override
 	protected void changeLanguage_internal_simple( String language ) throws ConfigurationException

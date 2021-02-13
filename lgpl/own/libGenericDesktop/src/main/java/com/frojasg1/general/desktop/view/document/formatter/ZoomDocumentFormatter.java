@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -422,10 +422,15 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		});
 	}
 
+	protected void resetFormat()
+	{
+		_pane.getStyledDocument().setCharacterAttributes(0, _pane.getStyledDocument().getLength(), _pane.getStyle( getDefaultStyleName() ), true);
+	}
+
 	public synchronized void formatDocument( Document doc, int initialPosition ) throws ZoomDocumentFormatterOnTheFly_markingBrackets.CharacterAnalyserException, BadLocationException
 	{
-//			int endPosition = _pane.getSelectionEnd();
-		_pane.getStyledDocument().setCharacterAttributes(0, _pane.getStyledDocument().getLength(), _pane.getStyle( getDefaultStyleName() ), true);
+////			int endPosition = _pane.getSelectionEnd();
+//		_pane.getStyledDocument().setCharacterAttributes(0, _pane.getStyledDocument().getLength(), _pane.getStyle( getDefaultStyleName() ), true);
 
 		String text = getPaneText();
 
@@ -455,7 +460,10 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		Collection< FormatForText > formatForTextCollection = formatTextWithExternalFormatter(text);
 
 		if( formatForTextCollection != null )
+		{
+			resetFormat();
 			formatText( formatForTextCollection );
+		}
 	}
 
 	protected boolean isFormatting()
@@ -741,7 +749,7 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 */
 		}
 
-		System.out.println( "Total dimension: " + result );
+//		System.out.println( "Total dimension: " + result );
 
 		return( result );
 	}

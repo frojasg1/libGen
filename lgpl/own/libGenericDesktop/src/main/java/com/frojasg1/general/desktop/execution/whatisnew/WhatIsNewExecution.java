@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ public class WhatIsNewExecution implements Runnable
 		if( hasToShow() )
 		{
 			_dialog.setVisibleWithLock(true);
-			_applicationConfiguration.addDownloadFileWhatIsNewShown(currentDownloadFile);
+//			_applicationConfiguration.addDownloadFileWhatIsNewShown(currentDownloadFile);
 		}
 	}
 }

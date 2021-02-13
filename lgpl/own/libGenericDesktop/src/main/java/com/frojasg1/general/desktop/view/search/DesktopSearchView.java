@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -152,5 +152,11 @@ public class DesktopSearchView implements SearchReplaceForWindowInterface, Deskt
 	@Override
 	public void releaseResources() {
 		_srw = null;
+	}
+
+	@Override
+	public void closeWindow()
+	{
+		_srw.closeWindow();
 	}
 }

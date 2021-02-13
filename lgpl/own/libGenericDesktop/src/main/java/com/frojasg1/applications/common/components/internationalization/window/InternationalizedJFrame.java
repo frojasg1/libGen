@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -587,7 +587,12 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	@Override
 	public String getLanguage()
 	{
-		String result = ( (a_intern!=null) ? a_intern.M_getLanguage() : null );
+		String result;
+		if( getAppliConf() != null )
+			result = getAppliConf().getLanguage();
+		else
+			result = ( (a_intern!=null) ? a_intern.M_getLanguage() : null );
+
 		return( result );
 	}
 
@@ -622,6 +627,12 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		
 	}
 */
+
+	@Override
+	public void closeWindow()
+	{
+		formWindowClosing(true);
+	}
 
 	@Override
 	public void formWindowClosing( boolean closeWindow )
@@ -2109,6 +2120,11 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	public void executeTask( Runnable runnable )
 	{
 		_pullOfWorkers.addPendingNonStopableExecutor( runnable );
+	}
+
+	public void executeDelayedInvokeEventDispatchThread( Runnable runnable, int delayMs )
+	{
+		_pullOfWorkers.addPendingNonStopableExecutor( () -> ThreadFunctions.instance().delayedInvokeEventDispatchThread(runnable, delayMs) );
 	}
 
 	public void executeDelayedTask( Runnable runnable, int delayMs )

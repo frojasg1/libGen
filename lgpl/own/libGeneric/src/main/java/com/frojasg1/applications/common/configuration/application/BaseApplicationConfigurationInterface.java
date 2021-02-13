@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,10 +46,10 @@ public interface BaseApplicationConfigurationInterface
 	public String getInternationalPropertiesPathInJar();
 
 	public String getUrlForNewVersionQuery();
-	public void setUrlForNewVersionQuery( String value );
+//	public void setUrlForNewVersionQuery( String value );
 
 	public String getUrlForResourceCounter();
-	public void setUrlForResourceCounter( String value );
+//	public void setUrlForResourceCounter( String value );
 
 	public String getAdditionalLanguage();
 	public void setAdditionalLanguage( String language );
@@ -61,6 +61,7 @@ public interface BaseApplicationConfigurationInterface
 	public boolean getLicensesHaveBeenAccepted();
 	public void setLicensesHaveBeenAccepted( boolean value );
 
+	public String getLastExecutionDownloadFileName();
 	public boolean hasBeenShownWhatIsNewOfDownloadFile(String downloadFile);
 	public void addDownloadFileWhatIsNewShown( String downloadFile );
 	public String getWhatIsNewShownDownladFileListString();

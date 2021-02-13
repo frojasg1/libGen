@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -453,6 +453,22 @@ public class ImageFunctions
 				gc.drawRect( xx - ii, yy - ii,	width + 2 * ii, height + 2 * ii );
 			}
 		}
+	}
+
+	public void drawBoldStraightLine( Graphics gc, int x1, int y1, int x2, int y2, int thick )
+	{
+		int increment = IntegerFunctions.sgn(thick);
+		int xDelta = 0;
+		int yDelta = 0;
+		
+		if( x1 == x2 )
+			xDelta = increment;
+		else if( y1 == y2 )
+			yDelta = increment;
+
+		int to = IntegerFunctions.abs(thick);
+		for( int ii=0; ii<to; ii++, x1+=xDelta, x2+=xDelta, y1+=yDelta, y2+=yDelta )
+			gc.drawLine( x1, y1, x2, y2 );
 	}
 
 	public BufferedImage loadImageFromJar( String resourceFileName ) throws IOException

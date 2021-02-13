@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,6 @@ import java.util.TimeZone;
 
 public class DateFunctions
 {
-	
 	protected static DateFunctions _instance;
 
 	public static void changeInstance( DateFunctions inst )
@@ -72,12 +71,32 @@ public class DateFunctions
 
 		return( result );
 	}
-	
+
 	public String formatDate( Date date )
 	{
 		return( formatDate( date, "dd/MM/yyyy", null ) );
 	}
-	
+
+	public String formatDate( Date date, Locale locale )
+	{
+		return( formatDate( date, getSimpleDayDateFormat(locale), null ) );
+	}
+
+	public String getSimpleDayDateFormat(Locale locale)
+	{
+		String result = "yyyy/MM/dd";
+		DateFormat formatter = DateFormat.getDateInstance(DateFormat.SHORT, locale);
+		if( formatter instanceof SimpleDateFormat )
+		{
+			SimpleDateFormat sdf = (SimpleDateFormat) formatter;
+			result = sdf.toPattern().replaceAll( "d+", "dd" )
+				.replaceAll( "M+", "MM" )
+				.replaceAll( "y+", "yyyy" );
+		}
+
+		return( result );
+	}
+
 	public String formatDateTime( Date date )
 	{
 		return( formatDate( date, "dd/MM/yyyy HH:mm:ss", null ) );

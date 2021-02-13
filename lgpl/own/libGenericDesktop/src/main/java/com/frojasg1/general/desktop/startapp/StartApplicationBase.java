@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,9 +31,11 @@ import com.frojasg1.general.desktop.view.splash.GenericBasicSplash;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
 import com.frojasg1.general.dialogs.DialogsWrapper;
 import com.frojasg1.general.exceptions.ConfigurationException;
+import com.frojasg1.general.startapp.OpenConfigurationBase;
 import java.awt.Component;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.JFrame;
 import javax.swing.LookAndFeel;
@@ -113,6 +115,15 @@ public abstract class StartApplicationBase
 	protected abstract GenericBasicSplash createSplash();
 	protected abstract OpenConfigurationBase createOpenConfiguration() throws ConfigurationException;
 
+	protected OpenConfigurationBase createOpenConfigurationAndSetBaseParams() throws ConfigurationException
+	{
+		OpenConfigurationBase result = createOpenConfiguration();
+		result.setWasANewVersionFunction( this::wasANewVersion );
+
+		return( result );
+	}
+
+
 	protected void setCurrentActivityFromLabel( String label )
 	{
 		if( _splash != null )
@@ -128,14 +139,14 @@ public abstract class StartApplicationBase
 	{
 		try
 		{
-			_oc = createOpenConfiguration();
+			_oc = createOpenConfigurationAndSetBaseParams();
 			_oc.init();
 			_totalNumberOfStepsToStart = getTotalNumberOfSteps();	// it needs _oc and ApplicationConfiguration to be created previously.
 
 			_splash = createSplash();
 
 			setCurrentActivityFromLabel( GenericBasicSplash.CONF_OPENING_CONFIGURATION );
-			_oc.setParent( _splash );
+//			_oc.setParent( _splash );
 
 			java.awt.EventQueue.invokeLater(new Runnable()  {
 				public void run() {
@@ -169,7 +180,10 @@ public abstract class StartApplicationBase
 
 	protected abstract BaseApplicationConfigurationInterface getAppliConf();
 
-	protected abstract void initializeAfterImportingConfiguration() throws ConfigurationException;
+	protected void initializeAfterImportingConfiguration() throws ConfigurationException
+	{
+		_oc.initializeAfterImportingConfiguration();
+	}
 
 	protected void eraseLanguageConfigurationFileRecursive( String fileName )
 	{
@@ -183,6 +197,12 @@ public abstract class StartApplicationBase
 		new Thread( () -> importConfiguration_internal() ).start();
 	}
 
+	protected void updateLatestStartedRelease()
+	{
+		getAppliConf().addDownloadFileWhatIsNewShown(getCurrentDownloadFile());
+		ExecutionFunctions.instance().safeMethodExecution( () -> saveApplicationConfiguration() );
+	}
+
 	protected void importConfiguration_internal()
 	{
 		if( _exceptionThrown )
@@ -190,10 +210,18 @@ public abstract class StartApplicationBase
 
 		try
 		{
+			if( ( _splash != null ) && _oc.isNewVersion() )
+				_splash.setCurrentActivityFromLabel( _splash.CONF_IMPORTING_CONFIGURATION );
+
 			if( _oc.importConfigurationIfNecessary() )
 			{
 				this.incrementStepsCompleted();
 			}
+
+			if( ! isSameAsLastExecutionRelease() )
+				_oc.removeParticularDocumentsOfMinorRelease();
+
+			updateLatestStartedRelease();
 
 			_licensesHaveBeenAccepted = getAppliConf().getLicensesHaveBeenAccepted();
 
@@ -249,7 +277,7 @@ public abstract class StartApplicationBase
 			{
 				setCurrentActivityFromLabel( GenericBasicSplash.CONF_LOOKING_FOR_A_NEW_VERSION );
 
-				GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_NEW_VERSION_QUERY );
+				GenericWaitWorker gww = new GenericWaitWorker( 350, WATING_FOR_NEW_VERSION_QUERY );
 				gww.execute();
 			}
 		}
@@ -360,7 +388,7 @@ public abstract class StartApplicationBase
 
 			setCurrentActivityFromLabel( GenericBasicSplash.CONF_SHOWING_WHAT_IS_NEW );
 
-			GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_WHAT_IS_NEW );
+			GenericWaitWorker gww = new GenericWaitWorker( 350, WATING_FOR_WHAT_IS_NEW );
 			gww.execute();
 		}
 		catch( Exception th )
@@ -519,13 +547,36 @@ public abstract class StartApplicationBase
 		return( DEFAULT_MINIMUM_NUMBER_OF_STEPS );
 	}
 
+	protected String getCurrentDownloadFile()
+	{
+		return( DesktopApplicationVersion.instance().getDownloadFile() );
+	}
+
+	protected boolean isSameAsLastExecutionRelease()
+	{
+		boolean result = true;
+
+		try
+		{
+			String currentDownloadFile = getCurrentDownloadFile();
+
+			result = Objects.equals( getAppliConf().getLastExecutionDownloadFileName(), currentDownloadFile );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace();
+		}
+
+		return( result );
+	}
+
 	protected boolean hasToShowWhatIsNew()
 	{
 		boolean result = false;
 
 		try
 		{
-			String currentDownloadFile = DesktopApplicationVersion.instance().getDownloadFile();
+			String currentDownloadFile = getCurrentDownloadFile();
 
 			result = !getAppliConf().hasBeenShownWhatIsNewOfDownloadFile(currentDownloadFile);
 		}

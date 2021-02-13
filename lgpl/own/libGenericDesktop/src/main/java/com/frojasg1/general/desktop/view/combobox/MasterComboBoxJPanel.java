@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -108,17 +108,17 @@ public class MasterComboBoxJPanel
 		jB_modify.addActionListener( _actionListener );
 	}
 
-	protected JButton getAddButton()
+	public JButton getAddButton()
 	{
 		return( jB_add );
 	}
 
-	protected JButton getRemoveButton()
+	public JButton getRemoveButton()
 	{
 		return( jB_remove );
 	}
 
-	protected JButton getModifyButton()
+	public JButton getModifyButton()
 	{
 		return( jB_modify );
 	}
@@ -349,6 +349,13 @@ public class MasterComboBoxJPanel
 	}
 
 	@Override
+	public void updateCombosKeepingSelection()
+	{
+		if( _comboBoxGroupManager != null )
+			_comboBoxGroupManager.updateCombosKeepingSelection();
+	}
+
+	@Override
 	public void setListOfItems(List<String> list)
 	{
 		if( _comboBoxGroupManager != null )
@@ -440,14 +447,14 @@ public class MasterComboBoxJPanel
 		return( jPanel1.getSize() );
 	}
 
-	protected interface ControllerInvoker<DD extends AddRemoveModifyItemResult>
-	{
-		public void invoke( AddRemoveModifyItemNewSelectionController controller, AddRemoveModifyItemResult result );
-	}
-
 	@Override
 	public Rectangle getInternalBounds()
 	{
 		return( jPanel1.getBounds() );
+	}
+
+	protected interface ControllerInvoker<DD extends AddRemoveModifyItemResult>
+	{
+		public void invoke( AddRemoveModifyItemNewSelectionController controller, AddRemoveModifyItemResult result );
 	}
 }

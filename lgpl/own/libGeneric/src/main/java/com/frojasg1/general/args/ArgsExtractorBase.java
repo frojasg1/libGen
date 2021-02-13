@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,13 +26,19 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ArgsExtractorBase {
+    public static final String DEBUG = "-debug";
 
     protected Map<String, String> _map = new HashMap<>();
+	protected String[] _args = null;
 
     public ArgsExtractorBase() {
     }
 
-    protected String getKey(String arg) {
+	public String[] getArgs() {
+		return _args;
+	}
+
+	protected String getKey(String arg) {
         String result = null;
 
         if (arg != null) {
@@ -92,15 +98,16 @@ public class ArgsExtractorBase {
     }
 
     public void process(String[] args) {
+		_args = args;
         insertArgsInMap(args);
     }
 
     protected Integer processInteger(String paramName, Integer def) {
         Integer result = def;
 
-        if (paramName != null) {
+       if (paramName != null) {
             String value = _map.get(paramName);
-            if (value != null) {
+           if (value != null) {
                 result = IntegerFunctions.parseInt( value );
             }
         }

@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -195,6 +195,16 @@ public class ChainedParentChildComboBoxManagerBase
 	}
 
 	@Override
+	public void updateCombosKeepingSelection()
+	{
+		_lastUpdateTimestamp = 0;
+		_lastUpdateTimestamp2 = 0;
+
+		boolean setSelectedElement = false;
+		updateCombos( setSelectedElement );
+	}
+
+	@Override
 	public void updateCombos()
 	{
 		_lastUpdateTimestamp = 0;
@@ -245,6 +255,9 @@ public class ChainedParentChildComboBoxManagerBase
 									String[] elements,
 									String selectedItem)
 	{
+		if( selectedItem == null )
+			selectedItem = (String) combo.getSelectedItem();
+
 		DefaultComboBoxModel<String> dcbm = null;
 		
 		if( elements != null )

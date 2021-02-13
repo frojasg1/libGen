@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,16 @@ public class ListString
 	public ListString()
 	{
 		_list = new ArrayList<>();
+	}
+
+	public String getLast()
+	{
+		String result = null;
+
+		if( ( _list != null ) && !_list.isEmpty() )
+			result = _list.get( _list.size() - 1 );
+
+		return( result );
 	}
 
 	public boolean isPresent( String value )
@@ -86,6 +96,7 @@ public class ListString
 
 	public void addElement( String elem )
 	{
-		_list.add( elem );
+		_list.remove(elem);
+		_list.add( elem );	// at last position
 	}
 }

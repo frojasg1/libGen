@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.function.Consumer;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Document;
 
 /**
@@ -333,6 +334,14 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 	{
 		_aboutJPanel.setForegroundColorOfHomeWebPage( color );
 	}
+	
+	protected void setData()
+	{
+		String authorEmailAddress = getAppliConf().getAuthorEmailAddress();
+		SwingUtilities.invokeLater( () -> {
+			setData( authorEmailAddress );
+		});
+	}
 
 	public void setData( String emailAddress )
 	{
@@ -518,7 +527,7 @@ public class GenericAboutJDialog extends InternationalizedJDialog
         jPanel1.setPreferredSize(new java.awt.Dimension(650, 405));
         jPanel1.setLayout(null);
         getContentPane().add(jPanel1);
-        jPanel1.setBounds(0, 0, 650, 405);
+        jPanel1.setBounds(0, 0, 650, 435);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -688,6 +697,8 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 
 		_animation.animationSetEnclosingDimension( getSize() );
 		_animation.animationSetMovingSpeedFactor( getAppliConf().getZoomFactor() );
+
+		setData();
 	}
 
 	public void setImageBackground( Color color )

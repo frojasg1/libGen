@@ -1,10 +1,24 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You may obtain a copy of the License at
+ *
+ *      http://www.gnu.org/licenses/lgpl-3.0.txt
+ *
  */
 package com.frojasg1.general.desktop.completion.base;
 
+import com.frojasg1.applications.common.components.internationalization.InternException;
 import com.frojasg1.general.completion.PrototypeForCompletionBase;
 import com.frojasg1.general.desktop.completion.api.InputTextCompletionManager;
 import com.frojasg1.general.desktop.completion.api.CompletionWindow;
@@ -22,6 +36,7 @@ import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkListener;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkServer;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
+import com.frojasg1.general.exceptions.ConfigurationException;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.string.StringFunctions;
 import java.awt.Component;
@@ -62,6 +77,10 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	protected CurrentParamDocumentFormatterBase _currentParamDocumentAppender = null;
 
 	protected Rectangle _lastCharBounds = null;
+
+	protected AlternativesForCompletionData<Rectangle> _lastAlternativesForCompletionData = null;
+	protected CurrentParamForCompletionData<Rectangle> _lastCurrentParamForCompletionData = null;
+
 	protected PrototypeForCompletionBase[] _lastCompletionPrototypes = null;
 	protected PrototypeForCompletionBase _lastParamPrototype = null;
 
@@ -108,7 +127,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		super( frame, false, applicationConfiguration, null, null, false );
 
 		_translatorOfType = translatorOfType;
-
+/*
 		setUndecorated( true );
 		setAlwaysOnTop( true );
 
@@ -121,6 +140,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		setListenersRecursive( this );
 
 		setWindowConfiguration( );
+*/
 	}
 
 	public DesktopCompletionWindowBase( JDialog dialog,
@@ -131,7 +151,24 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		super( dialog, false, applicationConfiguration, null, null, false );
 
 		_translatorOfType = translatorOfType;
+/*
+		setUndecorated( true );
+		setAlwaysOnTop( true );
 
+//		setAppliConf( applicationConfiguration );
+//		_applicationContext = appCtx;
+
+		initComponents();
+
+		initOwnComponents();
+		setListenersRecursive( this );
+
+		setWindowConfiguration( );
+*/
+	}
+	
+	public void init()
+	{
 		setUndecorated( true );
 		setAlwaysOnTop( true );
 
@@ -350,6 +387,8 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	protected boolean setListOfAlternativesKeepingSelection(AlternativesForCompletionData<Rectangle> alternativesForCompletionData)
 	{
 		boolean hasToSetFocus = false;
+		_lastAlternativesForCompletionData = alternativesForCompletionData;
+
 		if( alternativesForCompletionData != null )
 		{
 			if( _completionDocumentFormatter != null )
@@ -385,6 +424,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	protected boolean setCurrentParamPrototype(CurrentParamForCompletionData<Rectangle> currentParamForCompletionData)
 	{
 		boolean hasToSetFocus = false;
+		_lastCurrentParamForCompletionData = currentParamForCompletionData;
 
 		if( currentParamForCompletionData != null )
 		{
@@ -609,11 +649,16 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	{
 		super.changeZoomFactor(zoomFactor);
 
+		reformat();
+//		setVisible( false );
+	}
+
+	protected void reformat()
+	{
 		SwingUtilities.invokeLater( () -> {
 			_completionDocumentFormatter.reformat();
 			if( isCurrentParamActive() )
 				_currentParamDocumentAppender.reformat(); } );
-//		setVisible( false );
 	}
 
 	@Override
@@ -725,5 +770,19 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 
 		removeFocusListenersForMainWindow( _componentFocusedForNotHiding );
 		removeListenersRecursive( this );
+	}
+
+	@Override
+	public void changeLanguage( String language ) throws ConfigurationException, InternException
+	{
+		super.changeLanguage(language);
+
+		updateFormatters();
+	}
+
+	protected void updateFormatters()
+	{
+		setListOfAlternativesKeepingSelection(_lastAlternativesForCompletionData);
+		setCurrentParamPrototype( _lastCurrentParamForCompletionData );
 	}
 }

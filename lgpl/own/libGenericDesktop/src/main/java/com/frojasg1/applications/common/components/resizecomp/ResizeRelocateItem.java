@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2467,15 +2467,14 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				}
 
 //				modifyScrollsToRight();
-/*
+
 				JScrollPane sp = getScrollPaneOfViewportView();
 				boolean hasFocus = _component.hasFocus();
 				if( sp != null )
 					sp.setViewportView(_component);
-//				_component.revalidate();
 				if( hasFocus )
 					_component.requestFocus();
-*/
+
 				_component.repaint();
 			} );
 
@@ -2485,14 +2484,21 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	@Override
 	public void sizeChanged(GenericObserved observed, Dimension newSize)
 	{
+		SwingUtilities.invokeLater( () -> sizeChangedInternal( observed, newSize ) );
+	}
+
+	public void sizeChangedInternal(GenericObserved observed, Dimension newSize)
+	{
 		_pickedWaitingForUpdate = false;
 
 		Dimension previousPreferredSize = _component.getPreferredSize();
 		Dimension newPreferredSize = calculateNewMinimumPreferredSizeForScrollableFreeComponent( newSize );
+//		System.out.println( "previousPreferredSize: " + previousPreferredSize + "      newPreferredSize: " + newPreferredSize );
 
 		if( ( newPreferredSize != null ) && !previousPreferredSize.equals( newPreferredSize ) )
 		{
 			setMinimumPreferredSize( newPreferredSize );
+//			System.out.println( "minimumSize set: " + newPreferredSize );
 
 			if( hasToRelocateScrolls( _previousZoomFactor, _previousZoomFactorWhenPickingData ) )
 			{
@@ -2534,7 +2540,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 					parentSize = sp.getSize();
 			}
 
-			System.out.println( "getViewportSize() : " + parentSize );
+//			System.out.println( "getViewportSize() : " + parentSize );
 		}
 
 		return( parentSize );

@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
  */
 package com.frojasg1.libpdf.view;
 
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.libpdf.view.api.PdfViewerControlView;
 import com.frojasg1.libpdf.view.api.PdfViewerMaster;
 import com.frojasg1.libpdf.view.panels.PdfViewerControlPanel;
@@ -61,6 +62,7 @@ import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Vector;
+import java.util.function.Consumer;
 import javax.swing.JComboBox;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -118,6 +120,13 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 								CC applicationContext )
 	{
 		super( appliConf, applicationContext );
+	}
+
+	public PdfViewerWindowBase( BaseApplicationConfigurationInterface appliConf,
+								CC applicationContext,
+								Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+	{
+		super( appliConf, applicationContext, initializationEndCallBack );
 	}
 
 	public void init( LoadPdfControllerInterface parent,
@@ -687,6 +696,7 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		return( _appliConf );
 	}
 
+	@Override
 	public void closeWindow()
 	{
 		boolean closeWindow = false;

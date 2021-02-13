@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
+ * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -307,6 +307,7 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanel1 = new javax.swing.JPanel();
         jBtn_exit = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTa_text = new javax.swing.JTextArea();
@@ -320,6 +321,8 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
         setPreferredSize(new java.awt.Dimension(650, 405));
         setLayout(null);
 
+        jPanel1.setLayout(null);
+
         jBtn_exit.setText("Exit");
         jBtn_exit.setName("jBtn_exit"); // NOI18N
         jBtn_exit.addActionListener(new java.awt.event.ActionListener() {
@@ -327,7 +330,7 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
                 jBtn_exitActionPerformed(evt);
             }
         });
-        add(jBtn_exit);
+        jPanel1.add(jBtn_exit);
         jBtn_exit.setBounds(540, 120, 100, 20);
 
         jTa_text.setEditable(false);
@@ -335,7 +338,7 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
         jTa_text.setRows(5);
         jScrollPane1.setViewportView(jTa_text);
 
-        add(jScrollPane1);
+        jPanel1.add(jScrollPane1);
         jScrollPane1.setBounds(10, 160, 630, 230);
 
         jBtn_sendEmail.setText("Send e-mail to:  frojasg1@hotmail.com");
@@ -345,12 +348,12 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
                 jBtn_sendEmailActionPerformed(evt);
             }
         });
-        add(jBtn_sendEmail);
+        jPanel1.add(jBtn_sendEmail);
         jBtn_sendEmail.setBounds(10, 400, 630, 25);
 
         jPanelImage.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jPanelImage.setLayout(null);
-        add(jPanelImage);
+        jPanel1.add(jPanelImage);
         jPanelImage.setBounds(230, 10, 128, 128);
 
         jL_homeWebPage.setFont(new java.awt.Font("Tahoma", 1, 13)); // NOI18N
@@ -359,19 +362,19 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
         jL_homeWebPage.setText("https://frojasg1.com");
         jL_homeWebPage.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jL_homeWebPage.setName("name=jL_homeWebPage,url=https://frojasg1.com"); // NOI18N
-        add(jL_homeWebPage);
+        jPanel1.add(jL_homeWebPage);
         jL_homeWebPage.setBounds(440, 10, 200, 16);
 
         jL_Version.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jL_Version.setText("Version :");
         jL_Version.setName("jL_Version"); // NOI18N
-        add(jL_Version);
+        jPanel1.add(jL_Version);
         jL_Version.setBounds(10, 140, 60, 14);
 
         jL_downloadFileName.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         jL_downloadFileName.setForeground(new java.awt.Color(221, 135, 13));
         jL_downloadFileName.setText("Empty");
-        add(jL_downloadFileName);
+        jPanel1.add(jL_downloadFileName);
         jL_downloadFileName.setBounds(80, 140, 560, 14);
 
         jTB_showTorus.setText("press");
@@ -384,8 +387,11 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
                 jTB_showTorusActionPerformed(evt);
             }
         });
-        add(jTB_showTorus);
+        jPanel1.add(jTB_showTorus);
         jTB_showTorus.setBounds(10, 10, 60, 60);
+
+        add(jPanel1);
+        jPanel1.setBounds(0, 0, 650, 435);
     }// </editor-fold>//GEN-END:initComponents
 
     private void jBtn_exitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtn_exitActionPerformed
@@ -416,6 +422,7 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
     private javax.swing.JLabel jL_Version;
     private javax.swing.JLabel jL_downloadFileName;
     private javax.swing.JLabel jL_homeWebPage;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanelImage;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JToggleButton jTB_showTorus;
