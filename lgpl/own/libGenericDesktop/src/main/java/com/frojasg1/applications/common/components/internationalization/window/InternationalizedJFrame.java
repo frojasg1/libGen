@@ -36,7 +36,6 @@ import com.frojasg1.general.CollectionFunctions;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.execution.newversion.NewVersionQueryExecution;
-import com.frojasg1.general.desktop.execution.whatisnew.WhatIsNewExecution;
 import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
@@ -80,8 +79,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Vector;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -241,7 +243,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 
 	protected PullOfExecutorWorkers createPullOfWorkers()
 	{
-		PullOfExecutorWorkers result = new PullOfExecutorWorkers();
+		PullOfExecutorWorkers result = new PullOfExecutorWorkers( getClass().getName() );
 		result.init(getNumberOfWorkersForPull());
 		result.start();
 
@@ -692,40 +694,62 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( _appliConf );
 	}
 
+	protected boolean hasToSetSize( Dimension dimen )
+	{
+		return( !Objects.equals( dimen, getSize() ) );
+	}
+
+	protected boolean hasToSetBounds( Rectangle bounds )
+	{
+		return( !Objects.equals( bounds, getBounds() ) );
+	}
+
 	@Override
 	public void setSize( int width, int height )
 	{
-		if( a_intern != null )
-			a_intern.prepareResizeOrRelocateToZoom();
+		if( hasToSetSize( new Dimension( width, height ) ) )
+		{
+			if( a_intern != null )
+				a_intern.prepareResizeOrRelocateToZoom();
 
-		super.setSize( width, height );
+			super.setSize( width, height );
+		}
 	}
 
 	@Override
 	public void setSize( Dimension dim )
 	{
-		if( a_intern != null )
-			a_intern.prepareResizeOrRelocateToZoom();
+		if( hasToSetSize( dim ) )
+		{
+			if( a_intern != null )
+				a_intern.prepareResizeOrRelocateToZoom();
 
-		super.setSize( dim );
+			super.setSize( dim );
+		}
 	}
 
 	@Override
 	public void setBounds( int xx, int yy, int width, int height )
 	{
-		if( a_intern != null )
-			a_intern.prepareResizeOrRelocateToZoom();
+		if( hasToSetBounds( new Rectangle( xx, yy, width, height ) ) )
+		{
+			if( a_intern != null )
+				a_intern.prepareResizeOrRelocateToZoom();
 
-		super.setBounds( xx, yy, width, height );
+			super.setBounds( xx, yy, width, height );
+		}
 	}
 
 	@Override
 	public void setBounds( Rectangle rect )
 	{
-		if( a_intern != null )
-			a_intern.prepareResizeOrRelocateToZoom();
+		if( hasToSetBounds( rect ) )
+		{
+			if( a_intern != null )
+				a_intern.prepareResizeOrRelocateToZoom();
 
-		super.setBounds( rect );
+			super.setBounds( rect );
+		}
 	}
 
 	@Override
@@ -1903,10 +1927,7 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	{
 		WhatIsNewJDialogBase dialog = (WhatIsNewJDialogBase) iiec;
 
-		boolean hasToShow = true;
-		WhatIsNewExecution executor = new WhatIsNewExecution( dialog, getAppliConf(), hasToShow );
-
-		executor.run();
+		dialog.setVisibleWithLock(true);
 	}
 
 	protected void doInternationalizationTasksOnTheFly( Component comp )
@@ -2241,6 +2262,11 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 		return( _preventFromRepainting );
 	}
 
+	public void windowSetVisible( boolean value )
+	{
+		super.setVisible( value );
+	}
+
 	@Override
 	public void setVisible( boolean value )
 	{
@@ -2279,5 +2305,47 @@ public abstract class InternationalizedJFrame< CC extends ApplicationContext > e
 	protected String getFinalUrl( String url )
 	{
 		return( GenericFunctions.instance().getApplicationFacilities().buildResourceCounterUrl( url ) );
+	}
+
+	protected List<Component> getComponentsIncludingPoint( Container cont,
+		Point pointOnScreen ) {
+		return( getComponentsMatchingGen(cont,
+			(c, p) -> {
+				boolean result = false;
+				Rectangle bounds = ComponentFunctions.instance().getBoundsOnScreen(c);
+				if( bounds != null )
+					result = bounds.contains(p);
+
+				return( result );
+			},
+			pointOnScreen) );
+	}
+
+	protected <MM> List<Component> getComponentsMatchingGen( Container cont,
+		BiFunction<Component, MM, Boolean> matcher, MM magnitudeForComparison ) {
+		return( ComponentFunctions.instance().getMatchingChildComponents(cont,
+			matcher, magnitudeForComparison) );
+	}
+
+	protected List<Component> getComponentsMatchingLocation( Container cont,
+		Point originPoint, int tolerance ) {
+		return( getComponentsMatchingPosition(cont, c -> c.getLocation(),
+			originPoint, tolerance) );
+	}
+
+	protected List<Component> getComponentsMatchingWidth( Container cont,
+		int widthToCopmare, int tolerance ) {
+		return( getComponentsMatchingPosition(cont, c -> c.getSize().width,
+			widthToCopmare, tolerance) );
+	}
+
+	protected <MM> List<Component> getComponentsMatchingPosition( Container cont,
+		Function<Component, MM> getter, MM magnitudeToCompare,
+		int tolerance ) {
+
+		List<Component> result = ComponentFunctions.instance().getMatchingChildComponents( cont, getter,
+			magnitudeToCompare, tolerance );
+
+		return( result );
 	}
 }

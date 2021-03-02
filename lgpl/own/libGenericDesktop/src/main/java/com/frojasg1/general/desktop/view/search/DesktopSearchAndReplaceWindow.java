@@ -26,14 +26,12 @@ import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizedJFrame;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
-import com.frojasg1.applications.common.configuration.ParameterListConfiguration;
 import com.frojasg1.general.DateFunctions;
 import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.GenericDesktopConstants;
 import com.frojasg1.general.persistence.PersistentConfiguration;
-import com.frojasg1.general.combohistory.impl.TextComboBoxHistoryWithProperties;
 import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxGroupManager;
-import com.frojasg1.general.desktop.view.combobox.chained.impl.ChainedParentChildComboBoxManagerBase;
+import com.frojasg1.general.desktop.view.combobox.chained.impl.ChainedParentChildComboBoxManagerAutomaticSave;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.search.RegExException;
 import com.frojasg1.general.search.SearchReplaceTextInterface;
@@ -48,7 +46,6 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.util.Date;
-import java.util.List;
 import java.util.Vector;
 import javax.swing.JComboBox;
 import javax.swing.JPopupMenu;
@@ -183,15 +180,24 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 	protected ComboBoxGroupManager createComboBoxGroupManager( Integer maxItems, JComboBox combo, String confBaseFileName )
 	{
 		String language = null;
-		ParameterListConfiguration conf = new ParameterListConfiguration( getAppliConf().getConfigurationMainFolder(),
-															getAppliConf().getApplicationNameFolder(),
-															getAppliConf().getApplicationGroup(), language,
-															confBaseFileName + ".properties" );
-		TextComboBoxHistoryWithProperties content = new TextComboBoxHistoryWithProperties( maxItems, conf );
-		content.init( (List<String>)null);
-		content.loadItems();
+//		ParameterListConfiguration conf = new ParameterListConfiguration( getAppliConf().getConfigurationMainFolder(),
+//															getAppliConf().getApplicationNameFolder(),
+//															getAppliConf().getApplicationGroup(), language,
+//															confBaseFileName + ".properties" );
+//		ExecutionFunctions.instance().safeMethodExecution( () -> conf.M_openConfiguration() );
+//		TextComboBoxHistoryWithProperties content = new TextComboBoxHistoryWithProperties( maxItems, conf );
+//		content.init( (List<String>)null);
+//		content.loadItems();
 
-		ChainedParentChildComboBoxManagerBase result = new ChainedParentChildComboBoxManagerBase( null, content, null );
+//		ChainedParentChildComboBoxManagerBase result = new ChainedParentChildComboBoxManagerBase( null, content, null ) {
+//				public void newItemSelected( String newItem )
+//				{
+//					super.newItemSelected( newItem );
+//					saveComboboxContents( this );
+//				}
+//		};
+		ChainedParentChildComboBoxManagerAutomaticSave result =
+			new ChainedParentChildComboBoxManagerAutomaticSave(null, getAppliConf(), confBaseFileName, maxItems, null );
 		result.init();
 		result.addComboComp( combo );
 
@@ -475,7 +481,6 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
         jP_textToFind.setLayout(null);
 
         jCB_search.setEditable(true);
-        jCB_search.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         jCB_search.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jCB_searchActionPerformed(evt);
@@ -567,7 +572,6 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
         jP_replaceTextFor.setLayout(null);
 
         jCB_replaceFor.setEditable(true);
-        jCB_replaceFor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         jP_replaceTextFor.add(jCB_replaceFor);
         jCB_replaceFor.setBounds(10, 20, 570, 20);
 
@@ -687,6 +691,8 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 
 		search( true );
 
+//		Point locationOnScreen = ExecutionFunctions.instance().safeFunctionExecution( () -> jP_status.getLocationOnScreen() );
+//		Component[] matchingComps = ExecutionFunctions.instance().safeFunctionExecution( () -> getComponentsMatchingPosition( locationOnScreen, 20 ) );
     }//GEN-LAST:event_jCB_searchActionPerformed
 
 
@@ -724,8 +730,8 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 
 		SearchSettingsInterface ssi = getSearchSettings();
 
-		if( _comboGroupManagerForSearchCB != null )
-			_comboGroupManagerForSearchCB.saveCurrentItem();
+//		if( _comboGroupManagerForSearchCB != null )
+//			_comboGroupManagerForSearchCB.saveCurrentItem();
 
 		result = null;
 		boolean regExException = false;
@@ -863,7 +869,13 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 										jP_textToFind.getHeight() );
 		if( replace )
 		{
+			jP_replaceTextFor.setLocation( jP_replaceTextFor.getLocation().x, preferredHeight );
 			preferredHeight += (int) jP_replaceTextFor.getHeight();
+		}
+		else
+		{
+			jP_replaceTextFor.setLocation( jP_replaceTextFor.getLocation().x,
+				preferredHeight + jP_status.getSize().height );
 		}
 
 		jP_status.setBounds( 0, preferredHeight, jP_status.getWidth(), jP_status.getHeight() );
@@ -883,10 +895,10 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 		setPreferredSize( newDimen );
 		setMaximumSize( newDimen );
 		setMinimumSize( new Dimension( (int) getMinimumSize().getWidth(), preferredHeight ) );
-		setBounds( (int) bounds.getX(),
-					(int) bounds.getY(),
-					(int) bounds.getWidth(),
-					preferredHeight );
+
+//		Dimension newSize = new Dimension( bounds.width, preferredHeight );
+//		getContentPane().setSize( newSize );
+		setSize( bounds.width, preferredHeight );
 	}
 
 	protected void radioButtonsRegExChanged()
@@ -1071,4 +1083,17 @@ public class DesktopSearchAndReplaceWindow extends InternationalizedJFrame
 		_comboGroupManagerForSearchCB.setComponentMapper(compMapper);
 		_comboGroupManagerForReplaceCB.setComponentMapper(compMapper);
 	}
+
+	@Override
+	public void setBounds( int xx, int yy, int width, int height )
+	{
+		super.setBounds( xx, yy, width, height );
+	}
+
+	@Override
+	public void setBounds( Rectangle rect )
+	{
+		super.setBounds( rect );
+	}
+
 }

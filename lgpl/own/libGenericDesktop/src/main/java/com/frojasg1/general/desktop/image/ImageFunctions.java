@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
@@ -150,6 +151,16 @@ public class ImageFunctions
 		return( result );
 	}
 
+	public BufferedImage invertImage( BufferedImage original ) throws IllegalArgumentException
+	{
+		BufferedImage result = null;
+		if( original != null )
+			result = ResizeImageFast.instance().resizeImage( original, original.getWidth(),
+															original.getHeight(),
+															ImageUtilFunctions.instance()::invertColor );
+		return( result );
+	}
+
 	public BufferedImage resizeImage( BufferedImage original, double zoomFactor ) throws IllegalArgumentException
 	{
 		return( resizeImageGen( ResizeImageFast.instance(), original, zoomFactor ) );
@@ -177,9 +188,19 @@ public class ImageFunctions
 	public BufferedImage resizeImageAccurately( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
 											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
 	{
+		return( resizeImageAccurately(original, newWidth, newHeight,
+									col -> ImageUtilFunctions.instance().getPixelValue( col, switchColorFrom,
+										switchColorTo,
+										alphaForPixelsDifferentFromColorFrom ) ) );
+	}
+
+	public BufferedImage resizeImageAccurately( BufferedImage original, int newWidth,
+												int newHeight,
+												Function<Integer, Integer> colorTranslator )
+		throws IllegalArgumentException
+	{
 		return( ResizeImageAccurate.instance().resizeImage(original, newWidth, newHeight,
-														switchColorFrom, switchColorTo,
-														alphaForPixelsDifferentFromColorFrom ) );
+														colorTranslator ) );
 	}
 
 	/**
@@ -862,5 +883,17 @@ public class ImageFunctions
 	{
 		BlurFilterForImage filter = new BlurFilterForImage();
 		return( filter.applyFilter(image) );
+	}
+
+	public BufferedImage getSubImage( BufferedImage image, Rectangle bounds )
+	{
+		BufferedImage result = new BufferedImage( bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB );
+		Graphics2D grp = result.createGraphics();
+		grp.drawImage(image, 0, 0, bounds.width, bounds.height,
+							bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
+							null, null);
+		grp.dispose();
+
+		return( result );
 	}
 }

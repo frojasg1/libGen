@@ -25,8 +25,5 @@ import java.awt.image.BufferedImage;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface ImageWrapper {
-
-	public BufferedImage getImage();
-	public Rectangle getBounds();
+public interface ImageWrapper extends PdfElementWrapper {
 }

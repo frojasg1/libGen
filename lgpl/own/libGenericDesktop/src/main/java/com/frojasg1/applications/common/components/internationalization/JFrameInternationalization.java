@@ -2775,7 +2775,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	{
 		pickPreviousDataOrResizeOrChangeZoomFactor( PICK_PREVIOUS_DATA_PROCEDURE, comp, zp, onlyGetInfo );
 //		pickPreviousDataOrResizeOrChangeZoomFactor( RESIZE_OR_RELOCATE_PROCEDURE, comp, zp, onlyGetInfo );
-		pickPreviousDataOrResizeOrChangeZoomFactor( CHANGE_ZOOM_PROCEDURE, comp, zp, onlyGetInfo );
+
+		// invoke later as when window is resized, internal JPanels get coherence later.
+		// do not change!!
+		SwingUtilities.invokeLater(
+			() -> pickPreviousDataOrResizeOrChangeZoomFactor( CHANGE_ZOOM_PROCEDURE, comp, zp, onlyGetInfo ) );
 	}
 
 	protected double getZoomFactor()
@@ -2821,11 +2825,15 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				( comp instanceof JPanel ) && ( comp.getName() != null ) &&
 				( comp.getName().length() >= 5 ) && comp.getName().substring( 0, 5 ).equals( "null." ) )
 			{
+/*
 				if( parent != null )
 				{
-					if( onlyGetInfo )	insertComponentIntoResizingPanels( comp );
-					else				setSizeForResizePanels( comp );
+					SwingUtilities.invokeLater( () -> {
+						if( onlyGetInfo )	insertComponentIntoResizingPanels( comp );
+						else				setSizeForResizePanels( comp );
+					} );
 				}
+*/
 			}
 			else if( rri != null )
 				rrrip.run( rri, zp );

@@ -22,6 +22,7 @@ import com.frojasg1.applications.common.configuration.application.BaseApplicatio
 import com.frojasg1.general.desktop.files.DesktopFileFunctions;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
 import com.frojasg1.general.desktop.language.DesktopLanguageResources;
+import com.frojasg1.general.desktop.matchers.InitDesktopMatchers;
 
 /**
  *
@@ -45,5 +46,7 @@ public class InitGenericDesktop
 		DesktopLanguageResources.instance();
 
 		DesktopFileFunctions.instance();
+
+		new InitDesktopMatchers().init();
 	}
 }

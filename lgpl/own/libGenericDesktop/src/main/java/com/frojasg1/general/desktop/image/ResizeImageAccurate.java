@@ -21,6 +21,7 @@ package com.frojasg1.general.desktop.image;
 import com.frojasg1.general.number.IntegerFunctions;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.function.Function;
 
 /**
  *
@@ -40,7 +41,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 
 	protected BufferedImage resizeImageJava( BufferedImage originalImage, int newWidth, int newHeight )
 	{
-		BufferedImage resizedImage = new BufferedImage(newWidth , newHeight, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage resizedImage = new BufferedImage(newWidth , newHeight, originalImage.getType() );
 		Graphics2D g = resizedImage.createGraphics();
 		g.drawImage(originalImage, 0, 0, newWidth , newHeight , null);
 		g.dispose();
@@ -48,25 +49,27 @@ public class ResizeImageAccurate implements ResizeImageInterface
 		return( resizedImage );
 	}
 
-	public BufferedImage resizeImage( BufferedImage originalImage, int newWidth, int newHeight, Integer switchColorFrom,
-											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
+	public BufferedImage resizeImage( BufferedImage originalImage, int newWidth,
+										int newHeight,
+										Function<Integer, Integer> colorTranslator )
+		throws IllegalArgumentException
 	{
-		return( resizeImageManual( originalImage, newWidth, newHeight, switchColorFrom,
-			switchColorTo, alphaForPixelsDifferentFromColorFrom ) );
+		return( resizeImageManual( originalImage, newWidth, newHeight, colorTranslator ) );
 	}
 
 	@Override
 	public BufferedImage resizeImage( BufferedImage originalImage, int newWidth, int newHeight ) throws IllegalArgumentException
 	{
-		return( resizeImage( originalImage, newWidth, newHeight, null, null, null ) );
+		return( resizeImage( originalImage, newWidth, newHeight, null ) );
 	}
 
-	public BufferedImage resizeImageManual( BufferedImage originalImage, int newWidth, int newHeight, Integer switchColorFrom,
-											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
+	protected BufferedImage resizeImageManual( BufferedImage originalImage, int newWidth,
+											int newHeight, Function<Integer, Integer> colorTranslator )
+		throws IllegalArgumentException
 	{
 		if( ( newWidth < 1 ) || ( newHeight < 1 ) )		throw( new IllegalArgumentException( "Bad size for image.   Width: " + newWidth + ". Height: " + newHeight ) );
 
-		BufferedImage result = new BufferedImage( newWidth, newHeight, BufferedImage.TYPE_INT_ARGB );
+		BufferedImage result = new BufferedImage( newWidth, newHeight, originalImage.getType() );
 
 		double xZoomFactor = ((double) newWidth ) / originalImage.getWidth() ;
 		double yZoomFactor = ((double) newHeight ) / originalImage.getHeight() ;
@@ -86,8 +89,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 //				System.out.print( (tX==0?"":", ") + Integer.toString( tX ) );
 				int pixelColor = calculatePixelColor(pixels, offsetsXX, offsetsYY,
 														originalImage.getWidth(), dpc,
-														switchColorFrom, switchColorTo,
-														alphaForPixelsDifferentFromColorFrom );
+														colorTranslator );
 
 				result.setRGB( tX, tY, pixelColor );
 			}
@@ -100,9 +102,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 												CalculateOffsets offsetsYY,
 												int originalWidth,
 												DoublePixelComponents dpc,
-												Integer switchColorFrom,
-												Integer switchColorTo,
-												Integer alphaForPixelsDifferentFromColorFrom )
+												Function<Integer, Integer> colorTranslator )
 	{
 		dpc.reset();
 
@@ -113,7 +113,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 						pixels,
 						offsetsXX._initialFraction * offsetsYY._initialFraction,
 						dpc,
-						switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+						colorTranslator );
 
 		// top-right
 		addCornerPixel(offsetsXX.getCoordinateForFinalFraction(),
@@ -122,7 +122,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 						pixels,
 						offsetsXX._finalFraction * offsetsYY._initialFraction,
 						dpc,
-						switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+						colorTranslator );
 
 		// bottom-left
 		addCornerPixel(offsetsXX.getCoordinateForInitialFraction(),
@@ -131,7 +131,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 						pixels,
 						offsetsXX._initialFraction * offsetsYY._finalFraction,
 						dpc,
-						switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+						colorTranslator );
 
 		// bottom-right
 		addCornerPixel(offsetsXX.getCoordinateForFinalFraction(),
@@ -140,7 +140,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 						pixels,
 						offsetsXX._finalFraction * offsetsYY._finalFraction,
 						dpc,
-						switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+						colorTranslator );
 
 		int increment = 1;
 		int countX = 0;
@@ -154,7 +154,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 							increment, countX,
 							offsetsXX.getFactorForPixel() * offsetsYY._initialFraction,
 							pixels, dpc,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+							colorTranslator );
 			// bottom
 			addStraightBoundary( offsetsXX._initialWholeValue,
 							offsetsYY.getCoordinateForFinalFraction(),
@@ -162,7 +162,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 							increment, countX,
 							offsetsXX.getFactorForPixel() * offsetsYY._finalFraction,
 							pixels, dpc,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+							colorTranslator );
 		}
 
 		int countY = offsetsYY._finalWholeValue - offsetsYY._initialWholeValue + 1;
@@ -176,7 +176,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 							increment, countY,
 							offsetsXX._initialFraction * offsetsYY.getFactorForPixel(),
 							pixels, dpc,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+							colorTranslator );
 			// right
 			addStraightBoundary( offsetsXX.getCoordinateForFinalFraction(),
 							offsetsYY._initialWholeValue,
@@ -184,7 +184,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 							increment, countY,
 							offsetsXX._finalFraction * offsetsYY.getFactorForPixel(),
 							pixels, dpc,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+							colorTranslator );
 		}
 
 		// internal pixels
@@ -204,7 +204,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 					xx++, indexForOriginalPixel++ )
 				{
 					int pixelValue = getPixelValue( pixels, indexForOriginalPixel,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+							colorTranslator );
 					dpc.addPixelToComponents(pixelValue, factor );
 				}
 			}
@@ -214,13 +214,14 @@ public class ResizeImageAccurate implements ResizeImageInterface
 	}
 
 	protected int getPixelValue( int[] pixels, int index,
-									Integer switchColorFrom,
-									Integer switchColorTo,
-									Integer alphaForPixelsDifferentFromColorFrom )
+									Function<Integer, Integer> colorTranslator )
 	{
-		return( ImageUtilFunctions.instance().getPixelValue(pixels,
-										index, switchColorFrom,
-										switchColorTo, alphaForPixelsDifferentFromColorFrom) );
+		int inputColor = pixels[index];
+		int result = inputColor;
+		if( colorTranslator != null )
+			result = colorTranslator.apply(inputColor);
+
+		return( result );
 	}
 
 	protected static int getOffset( int xx, int yy, int width )
@@ -235,9 +236,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 							double factor,
 							int [] pixels,
 							DoublePixelComponents dpc,
-							Integer switchColorFrom,
-							Integer switchColorTo,
-							Integer alphaForPixelsDifferentFromColorFrom )
+							Function<Integer, Integer> colorTranslator )
 	{
 		if( ( factor > 0.1e-6D ) && ( initialXX > -1 ) && ( initialYY > -1 ) )
 		{
@@ -245,8 +244,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 
 			for( int ii=0; ii<count; ii++, offset += incrementForOffset )
 			{
-				int rgb = getPixelValue( pixels, offset,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+				int rgb = getPixelValue( pixels, offset, colorTranslator );
 				dpc.addPixelToComponents(rgb, factor);
 			}
 		}
@@ -255,15 +253,12 @@ public class ResizeImageAccurate implements ResizeImageInterface
 	protected void addCornerPixel( int xx, int yy, int width,
 											int[] pixels, double factor,
 											DoublePixelComponents dpc,
-											Integer switchColorFrom,
-											Integer switchColorTo,
-											Integer alphaForPixelsDifferentFromColorFrom )
+											Function<Integer, Integer> colorTranslator )
 	{
 		if( ( factor > 0.001D ) && ( yy>-1 ) && ( xx > -1 ) )
 		{
 			int offset = getOffset( xx, yy, width );
-			int rgb = getPixelValue( pixels, offset,
-							switchColorFrom, switchColorTo,	alphaForPixelsDifferentFromColorFrom );
+			int rgb = getPixelValue( pixels, offset, colorTranslator );
 
 			dpc.addPixelToComponents(rgb, factor);
 		}

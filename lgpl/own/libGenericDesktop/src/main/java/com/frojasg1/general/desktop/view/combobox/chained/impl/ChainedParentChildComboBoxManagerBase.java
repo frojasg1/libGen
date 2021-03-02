@@ -20,6 +20,7 @@ package com.frojasg1.general.desktop.view.combobox.chained.impl;
 
 import com.frojasg1.general.ArrayFunctions;
 import com.frojasg1.general.CollectionFunctions;
+import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.view.combobox.AddRemoveModifyItemNewSelectionController;
 import com.frojasg1.general.desktop.view.combobox.AddRemoveModifyItemResult;
 import com.frojasg1.general.desktop.view.combobox.JComboBoxContainer;
@@ -41,9 +42,11 @@ import com.frojasg1.general.combohistory.TextComboBoxContent;
 import com.frojasg1.general.desktop.view.combobox.chained.ChainedParentChildComboBoxGroupManager;
 import com.frojasg1.general.desktop.view.combobox.chained.ChainedParentForChildComboContentServer;
 import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxGroupManager;
+import com.frojasg1.general.desktop.view.combobox.utlis.ComboBoxFunctions;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import javax.swing.SwingUtilities;
 
@@ -142,6 +145,12 @@ public class ChainedParentChildComboBoxManagerBase
 		}
 	}
 
+	protected void genericInvocationForComboList( ComboBoxInvoker invoker )
+	{
+		for( Component comboComp: _comboCompList )
+			genericInvocationForCombo( comboComp, invoker );
+	}
+
 	protected void genericInvocationForCombo( Component comboComp, ComboBoxInvoker invoker )
 	{
 		if( comboComp instanceof JComboBox )
@@ -219,27 +228,60 @@ public class ChainedParentChildComboBoxManagerBase
 		return( ArrayFunctions.instance().getFirst( elements ) );
 	}
 
+	protected boolean hasToUpdateCombos( String[] elements, String selectedItem )
+	{
+		AtomicBoolean result = new AtomicBoolean(false);
+
+		genericInvocationForComboList( (combo) -> {
+				if( !result.get() )
+					result.set( !matchesModel( combo, elements, selectedItem ) );
+			});
+
+		return( result.get() );
+	}
+
+	protected boolean matchesModel( JComboBox combo, String[] elements, String selectedItem )
+	{
+		boolean result = false;
+
+		result = ArrayFunctions.instance().equals( getArrayOfItems( combo ), elements );
+		result = result && ( ( selectedItem == null ) || selectedItem.equals( combo.getSelectedItem() ) );
+
+		return( result );
+	}
+
+	protected String[] getArrayOfItems( JComboBox<String> combo )
+	{
+		return( ComboBoxFunctions.instance().getListOfItems( combo, String.class ).toArray( ArrayFunctions.STRING_ARRAY ) );
+	}
+
 	protected void updateCombos(boolean setSelectedElement)
 	{
 //		_selectedItem = null;
 
-		String[] elements = getElementsForCombo();
-
-		String tmp = null;
-		if( setSelectedElement )
-			tmp = getSelectedItem( elements );
-
-		String selectedItem = tmp;
-		_modifiedByProgram = true;
-		for( Component comboComp: _comboCompList )
+		if( _comboCompList != null )
 		{
-			genericInvocationForCombo( comboComp, (combo) -> updateComboBox( combo, elements, selectedItem ) );
+			String[] elements = getElementsForCombo();
+
+			if( elements != null )
+			{
+				String tmp = null;
+				if( setSelectedElement )
+					tmp = getSelectedItem( elements );
+
+				String selectedItem = tmp;
+				if( hasToUpdateCombos( elements, selectedItem ) )
+				{
+					_modifiedByProgram = true;
+					genericInvocationForComboList( (combo) -> updateComboBox( combo, elements, selectedItem ) );
+
+					if( ( selectedItem == null ) && ( selectedItem != _selectedItem ) )
+						newItemSelected( null );
+
+					_modifiedByProgram = false;
+				}
+			}
 		}
-
-		if( ( selectedItem == null ) && ( selectedItem != _selectedItem ) )
-			newItemSelected( null );
-
-		_modifiedByProgram = false;
 	}
 
 	protected String[] getElementsForCombo()
@@ -585,10 +627,7 @@ public class ChainedParentChildComboBoxManagerBase
 
 	@Override
 	public void setComponentMapper(ComponentMapper mapper) {
-		for( Component comboComp: _comboCompList )
-		{
-			genericInvocationForCombo( comboComp, (combo) -> replaceRenderer( combo, mapper ) );
-		}
+		genericInvocationForComboList( (combo) -> replaceRenderer( combo, mapper ) );
 	}
 
 	protected void replaceRenderer( JComboBox combo, ComponentMapper mapper )

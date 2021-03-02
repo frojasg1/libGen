@@ -51,5 +51,5 @@ public interface PdfDocumentWrapper extends PDFownerInterface
 
 	public List<ImageWrapper> getImagesOfPage( int pageIndex ) throws IOException;
 
-	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex ) throws IOException;
+	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex, boolean getImages, Float factorForImages) throws IOException;
 }

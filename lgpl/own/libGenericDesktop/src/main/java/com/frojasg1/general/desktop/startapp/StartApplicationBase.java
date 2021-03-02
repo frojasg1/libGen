@@ -25,7 +25,6 @@ import com.frojasg1.general.FileFunctions;
 import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.generic.dialogs.impl.DesktopDialogsWrapper;
 import com.frojasg1.general.desktop.execution.newversion.NewVersionQueryExecution;
-import com.frojasg1.general.desktop.execution.whatisnew.WhatIsNewExecution;
 import com.frojasg1.general.desktop.view.license.GenericLicenseJDialog;
 import com.frojasg1.general.desktop.view.splash.GenericBasicSplash;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
@@ -71,6 +70,8 @@ public abstract class StartApplicationBase
 	protected Component _mainWindow = null;
 
 	protected Boolean _wasANewVersion = null;
+
+	protected Boolean _hasToShowWhatIsNew = null;
 
 	public StartApplicationBase()
 	{
@@ -301,6 +302,10 @@ public abstract class StartApplicationBase
 		try
 		{
 			GenericLicenseJDialog licenseJDialog = createLicenseJDialog(this::acceptLicenses);
+
+			// case of simple application with no license for the user to accept
+			if( licenseJDialog == null )
+				licensesHaveBeenAccepted();
 		}
 		catch( Exception th )
 		{
@@ -327,16 +332,9 @@ public abstract class StartApplicationBase
 				System.exit(1);
 			}
 
-			saveApplicationConfiguration();
-
 			licenseJDialog.closeAndReleaseWindow();
 
-			incrementStepsCompleted();
-
-			setCurrentActivityFromLabel( GenericBasicSplash.CONF_LOOKING_FOR_A_NEW_VERSION );
-
-			GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_NEW_VERSION_QUERY );
-			gww.execute();
+			licensesHaveBeenAccepted();
 		}
 		catch( Exception th )
 		{
@@ -345,6 +343,18 @@ public abstract class StartApplicationBase
 
 			System.exit(1);
 		}
+	}
+
+	protected void licensesHaveBeenAccepted() throws Exception
+	{
+		saveApplicationConfiguration();
+
+		incrementStepsCompleted();
+
+		setCurrentActivityFromLabel( GenericBasicSplash.CONF_LOOKING_FOR_A_NEW_VERSION );
+
+		GenericWaitWorker gww = new GenericWaitWorker( 1000, WATING_FOR_NEW_VERSION_QUERY );
+		gww.execute();
 	}
 
 	protected void newVersionQuery()
@@ -410,9 +420,8 @@ public abstract class StartApplicationBase
 		try
 		{
 			WhatIsNewJDialogBase win = (WhatIsNewJDialogBase) iiec;
-			WhatIsNewExecution executor = new WhatIsNewExecution( win, getAppliConf() );
 
-			executor.run();
+			win.setVisibleWithLock(true);
 
 			goToNextOfWhatIsNewStep();
 		}
@@ -572,23 +581,24 @@ public abstract class StartApplicationBase
 
 	protected boolean hasToShowWhatIsNew()
 	{
-		boolean result = false;
-
-		try
+		if( _hasToShowWhatIsNew == null )
 		{
-			String currentDownloadFile = getCurrentDownloadFile();
+			try
+			{
+				String currentDownloadFile = getCurrentDownloadFile();
 
-			result = !getAppliConf().hasBeenShownWhatIsNewOfDownloadFile(currentDownloadFile);
+				_hasToShowWhatIsNew = !getAppliConf().hasBeenShownWhatIsNewOfDownloadFile(currentDownloadFile);
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace();
+			}
+
+			if( _wasANewVersion == null )
+				_wasANewVersion = _hasToShowWhatIsNew;
 		}
-		catch( Exception ex )
-		{
-			ex.printStackTrace();
-		}
 
-		if( _wasANewVersion == null )
-			_wasANewVersion = result;
-
-		return( result );
+		return( _hasToShowWhatIsNew != null ? _hasToShowWhatIsNew : false );
 	}
 
 	protected Boolean wasANewVersion()

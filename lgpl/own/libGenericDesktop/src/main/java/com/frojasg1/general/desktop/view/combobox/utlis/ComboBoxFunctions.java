@@ -88,6 +88,17 @@ public class ComboBoxFunctions
 		return( (JPopupMenu) combo.getUI().getAccessibleChild( combo, 0) );
 	}
 
+	public <VV> List<VV> getListOfItems( JComboBox<VV> combo, Class<VV> clazz )
+	{
+		List<VV> result = new ArrayList<>();
+		if( ( combo != null ) && ( combo.getItemCount() > 0 ) )
+		{
+			for( int ii=0; ii<combo.getItemCount(); ii++ )
+				result.add( combo.getItemAt(ii) );
+		}
+		return( result );
+	}
+
 	public class BasicJComboBoxContainer implements JComboBoxContainer, InternallyMappedComponent
 	{
 		List<JComboBox> _comboList = new ArrayList<>();

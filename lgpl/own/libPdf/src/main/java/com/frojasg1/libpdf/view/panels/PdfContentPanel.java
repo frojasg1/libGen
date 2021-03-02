@@ -279,6 +279,11 @@ public class PdfContentPanel extends javax.swing.JPanel
 		_controller.newPageSet(image, factor, pageIndex);
 	}
 
+	public DoubleReference getMostSuitableFactor( DoubleReference factor )
+	{
+		return( _pdfImagePanel.getMostSuitableFactor( factor ) );
+	}
+
 	protected double getSelectedZoomFactorDouble(DoubleReference dr)
 	{
 		double factor = 1.0D;
@@ -376,9 +381,9 @@ public class PdfContentPanel extends javax.swing.JPanel
 	public void setNewPdfZoomFactor( DoubleReference factor )
 	{
 		if( factor != null )
-			_pdfZoomFactor = factor;
+			_pdfZoomFactor = getMostSuitableFactor( factor );
 
-		setPage(_pdfOwner.getPage(_currentPageIndex, factor._value ), factor, _currentPageIndex );
+		setPage(_pdfOwner.getPage(_currentPageIndex, _pdfZoomFactor._value ), _pdfZoomFactor, _currentPageIndex );
 	}
 	
 	@Override

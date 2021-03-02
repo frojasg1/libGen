@@ -20,6 +20,7 @@ package com.frojasg1.libpdf.api.impl;
 
 import com.frojasg1.libpdf.api.GlyphWrapper;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 /**
  *
@@ -30,6 +31,7 @@ public class GlyphImpl implements GlyphWrapper
 	protected int[] _codes = null;
 	protected Rectangle _bounds = null;
 	protected String _unicodeString = null;
+	protected BufferedImage _image = null;
 
 	public GlyphImpl( int[] codes, String unicodeString, Rectangle bounds )
 	{
@@ -54,5 +56,16 @@ public class GlyphImpl implements GlyphWrapper
 	public String getUnicodeString()
 	{
 		return( _unicodeString );
+	}
+
+	@Override
+	public BufferedImage getImage()
+	{
+		return( _image );
+	}
+
+	public void setImage( BufferedImage image )
+	{
+		_image = image;
 	}
 }

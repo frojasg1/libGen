@@ -23,6 +23,7 @@ package com.frojasg1.libpdfbox.impl;
 
 import com.frojasg1.libpdf.api.GlyphWrapper;
 import com.frojasg1.libpdf.api.impl.GlyphImpl;
+import com.frojasg1.libpdfbox.utils.PDFboxWrapperUtils;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -33,13 +34,13 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import javax.imageio.ImageIO;
+import java.util.Map;
 import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -51,6 +52,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType3CharProc;
 import org.apache.pdfbox.pdmodel.font.PDType3Font;
 import org.apache.pdfbox.pdmodel.font.PDVectorFont;
+import org.apache.pdfbox.pdmodel.font.encoding.GlyphList;
 import org.apache.pdfbox.pdmodel.interactive.pagenavigation.PDThreadBead;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -74,7 +76,7 @@ public class GetTextLocations extends PDFTextStripper
     static final int SCALE = 4;
     private Graphics2D g2d;
 
-	protected List<GlyphWrapper> _listOfGlyphs = new ArrayList<>();
+	protected Map<MatrixWrapper, GlyphWrapper> _mapOfGlyphs = new HashMap<>();
 
 	/**
      * Instantiate a new PDFTextStripper object.
@@ -87,7 +89,7 @@ public class GetTextLocations extends PDFTextStripper
     {
 		this.document = document; // must initialize here, base class initializes too late
 //		this.filename = filename;
-    }
+   }
 
     /**
      * This will print the documents data.
@@ -129,14 +131,19 @@ public class GetTextLocations extends PDFTextStripper
     }
 */
 
-	protected void addGlyph( GlyphWrapper glyphWrapper )
+	protected MatrixWrapper createMatrixWrapper( Matrix matrix )
 	{
-		_listOfGlyphs.add( glyphWrapper );
+		return( PDFboxWrapperUtils.instance().createMatrixWrapper(matrix) );
 	}
 
-	public List<GlyphWrapper> getGlyphList()
+	protected void putGlyph( Matrix matrix, GlyphWrapper glyphWrapper )
 	{
-		return( _listOfGlyphs );
+		_mapOfGlyphs.put( createMatrixWrapper(matrix), glyphWrapper );
+	}
+
+	public Map<MatrixWrapper, GlyphWrapper> getGlyphMap()
+	{
+		return( _mapOfGlyphs );
 	}
 
 	protected GlyphWrapper createGlyphWrapper( Rectangle bounds, PDFont font,
@@ -176,15 +183,16 @@ public class GetTextLocations extends PDFTextStripper
             cyanShape = rotateAT.createTransformedShape(cyanShape);
             cyanShape = transAT.createTransformedShape(cyanShape);
 
-			addGlyph( createGlyphWrapper( getAscendingYBounds( cyanShape.getBounds() ), font,
-				code, unicode, displacement ) );
+			putGlyph( textRenderingMatrix,
+					createGlyphWrapper( getAscendingYBounds( cyanShape.getBounds() ),
+										font, code, unicode, displacement ) );
 
 			g2d.setColor(Color.CYAN);
             g2d.draw(cyanShape);
 		}
 	}
 
-    // this calculates the real (except for type 3 fonts) individual glyph bounds
+// this calculates the real (except for type 3 fonts) individual glyph bounds
     private Shape calculateGlyphBounds(Matrix textRenderingMatrix, PDFont font, int code) throws IOException
     {
         GeneralPath path = null;

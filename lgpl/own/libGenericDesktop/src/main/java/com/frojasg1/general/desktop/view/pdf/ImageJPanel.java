@@ -421,7 +421,18 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 		setPreferredSize(getSizeForPreferredSize( 1.0D ) );
 	}
 
-	protected DoubleReference getMostSuitableFactor( DoubleReference factor )
+	public Double getMostSuitableFactor( double factor )
+	{
+		DoubleReference factorDr = new DoubleReference( factor );
+		DoubleReference resultDr = getMostSuitableFactor( factorDr );
+		Double result = null;
+		if( resultDr != null )
+			result = resultDr._value;
+
+		return( result );
+	}
+
+	public DoubleReference getMostSuitableFactor( DoubleReference factor )
 	{
 		DoubleReference result = null;
 

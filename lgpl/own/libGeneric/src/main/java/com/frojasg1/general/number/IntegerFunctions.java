@@ -391,6 +391,11 @@ public class IntegerFunctions
 		return( !isEven( value ) );
 	}
 
+	public static boolean match( int i1, int i2, int tolerance )
+	{
+		return( abs( i1 - i2 ) <= tolerance );
+	}
+
 	protected static void registerInternationalString(String label, String value)
 	{
 		_internationalizedStringConf.registerInternationalString(label, value);

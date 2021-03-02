@@ -19,6 +19,7 @@
 package com.frojasg1.general.desktop.image;
 
 import java.awt.image.BufferedImage;
+import java.util.function.Function;
 
 /**
  *
@@ -45,9 +46,18 @@ public class ResizeImageFast implements ResizeImageInterface
 	public BufferedImage resizeImage( BufferedImage original, int newWidth, int newHeight, Integer switchColorFrom,
 											Integer switchColorTo, Integer alphaForPixelsDifferentFromColorFrom ) throws IllegalArgumentException
 	{
+		return( resizeImage( original, newWidth, newHeight,
+							col -> ImageUtilFunctions.instance().getPixelValue( col, switchColorFrom,
+									switchColorTo,
+									alphaForPixelsDifferentFromColorFrom ) ) );
+	}
+
+	public BufferedImage resizeImage( BufferedImage original, int newWidth, int newHeight,
+										Function<Integer, Integer> colorTranslator ) throws IllegalArgumentException
+	{
 		if( ( newWidth < 1 ) || ( newHeight < 1 ) )		throw( new IllegalArgumentException( "Bad size for image.   Width: " + newWidth + ". Height: " + newHeight ) );
 
-		BufferedImage result = new BufferedImage( newWidth, newHeight, BufferedImage.TYPE_INT_ARGB );
+		BufferedImage result = new BufferedImage( newWidth, newHeight, original.getType() );
 
 		double factorX = ((double) original.getWidth()) / newWidth ;
 		double factorY = ( (double) original.getHeight() ) / newHeight;
@@ -64,8 +74,7 @@ public class ResizeImageFast implements ResizeImageInterface
 				int originalX = (int) ( Math.floor( transformedX*factorX ) );
 
 				int pixelColor = getPixelValue(pixels,
-										originalOffsetY+originalX, switchColorFrom,
-										switchColorTo, alphaForPixelsDifferentFromColorFrom);
+										originalOffsetY+originalX, colorTranslator);
 
 				result.setRGB( tX, tY, pixelColor );
 			}
@@ -75,12 +84,12 @@ public class ResizeImageFast implements ResizeImageInterface
 	}
 
 	protected int getPixelValue( int[] pixels, int index,
-									Integer switchColorFrom,
-									Integer switchColorTo,
-									Integer alphaForPixelsDifferentFromColorFrom )
+									Function<Integer, Integer> colorTranslator )
 	{
-		return( ImageUtilFunctions.instance().getPixelValue(pixels,
-										index, switchColorFrom,
-										switchColorTo, alphaForPixelsDifferentFromColorFrom) );
+		int inputColor = pixels[index];
+		int result = inputColor;
+		if( colorTranslator != null )
+			result = colorTranslator.apply(inputColor);
+		return( result );
 	}
 }

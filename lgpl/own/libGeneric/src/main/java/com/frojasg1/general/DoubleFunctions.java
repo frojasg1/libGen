@@ -21,6 +21,9 @@ package com.frojasg1.general;
 import com.frojasg1.general.string.StringFunctions;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DoubleFunctions
 {
@@ -28,6 +31,8 @@ public class DoubleFunctions
 	protected static DoubleFunctions _instance;
 
 	protected NumberFormat _formatter = null;
+
+	protected Map<Locale, NumberFormat> _formatterMap = new ConcurrentHashMap<>();
 
 	public static void changeInstance( DoubleFunctions inst )
 	{
@@ -95,6 +100,36 @@ public class DoubleFunctions
 			String str2 = StringFunctions.instance().replaceSetOfChars(str, ",", "." );
 			result = ExecutionFunctions.instance().safeFunctionExecution( () -> Double.parseDouble( str2 ) );
 		}
+		return( result );
+	}
+
+	protected NumberFormat getNumberFormat( Locale locale )
+	{
+		NumberFormat result = _formatterMap.get(locale);
+		if( result == null )
+		{
+			result = createNumberFormat(locale);
+			_formatterMap.put(locale, result);
+		}
+		return( result );
+	}
+
+	protected NumberFormat createNumberFormat( Locale locale )
+	{
+		NumberFormat result = NumberFormat.getNumberInstance(locale);
+		DecimalFormat df = (DecimalFormat)result;
+		df.applyPattern("###,###.00");
+
+		return( result );
+	}
+
+	// https://stackoverflow.com/questions/10411414/how-to-format-double-value-for-a-given-locale-and-number-of-decimal-places/10416264
+	public String formatDoubleLocale( double value, Locale locale )
+	{
+		NumberFormat nf = getNumberFormat(locale);
+		DecimalFormat df = (DecimalFormat)nf;
+		String result = df.format(value);
+
 		return( result );
 	}
 }

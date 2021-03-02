@@ -77,6 +77,21 @@ public class ImageUtilFunctions
 								alphaForPixelsDifferentFromColorFrom) );
 	}
 
+	public int invertColor( int inPixelValue )
+	{
+		int rr = ( inPixelValue & 0xff0000 ) >> 16;
+		int gg = ( inPixelValue & 0xff00 ) >> 8;
+		int bb = ( inPixelValue & 0xff );
+		
+		return( ( inPixelValue & 0xff000000 ) + (invertComponent(rr) << 16) +
+				(invertComponent(gg) << 8) + invertComponent(bb) );
+	}
+
+	protected int invertComponent( int componentValue )
+	{
+		return( 255 - componentValue );
+	}
+
 	public int getPixelValue( int inPixelValue,
 								Integer switchColorFrom,
 								Integer switchColorTo,

@@ -49,8 +49,11 @@ public class PullOfExecutorWorkers implements ExecutorPullInterface
 
 	protected volatile boolean _isActivated = true;
 
-	public PullOfExecutorWorkers( )
+	protected String _name = null;
+
+	public PullOfExecutorWorkers( String name )
 	{
+		_name = name;
 	}
 
 	public void init( int capacity )
@@ -174,7 +177,7 @@ public class PullOfExecutorWorkers implements ExecutorPullInterface
 		addPendingExecutor( new ExecutorInterface() {
 			@Override
 			public void hasToStop() {}
-			
+
 			@Override
 			public void execute()
 			{

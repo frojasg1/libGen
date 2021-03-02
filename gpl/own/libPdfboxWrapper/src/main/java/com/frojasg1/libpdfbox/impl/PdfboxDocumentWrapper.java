@@ -24,17 +24,18 @@ package com.frojasg1.libpdfbox.impl;
 import com.frojasg1.libpdf.api.GlyphWrapper;
 import com.frojasg1.libpdf.api.ImageWrapper;
 import com.frojasg1.libpdf.api.PdfDocumentWrapper;
+import com.frojasg1.libpdfbox.utils.PDFboxWrapperUtils;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 
 /**
@@ -113,10 +114,17 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 	@Override
 	public BufferedImage renderImageWithDPIForBackground( int pageIndex, float dpi )
 	{
+		return( renderImageWithDPIForBackground(_pdfRendererDoNotShowText,
+												pageIndex, dpi) );
+	}
+
+	public BufferedImage renderImageWithDPIForBackground( PDFRenderer renderer,
+															int pageIndex, float dpi )
+	{
 		BufferedImage result = null;
 		try
 		{
-			result = _pdfRendererDoNotShowText.renderImageWithDPI(pageIndex, dpi);
+			result = renderer.renderImageWithDPI(pageIndex, dpi);
 		}
 		catch( Exception ex )
 		{
@@ -235,9 +243,10 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 	}
 */
 	@Override
-	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex ) throws IOException
+	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex, boolean getImages,
+												Float factorForImages ) throws IOException
 	{
-		return( getGlyphsOfPageStripper( pageIndex ) );
+		return( getGlyphsOfPageStripper( pageIndex, getImages, factorForImages ) );
 //		return( getGlyphsOfPageRenderer( pageIndex ) );
 	}
 
@@ -246,16 +255,32 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 		MyPDFRenderer renderer = createRenderer();
 		renderer.setGetGlyphsAndImages(true);
 
-		float dpi = getDpi( 1.0f );
-		renderer.renderImageWithDPI(pageIndex, dpi);
+		float factor = 4f;
 
-		return( renderer.getGlyphList() );
+		float dpi = getDpi( factor );
+		BufferedImage pageImage = renderer.renderImageWithDPI(pageIndex, dpi);
+		renderer.setGetGlyphsAndImages(false);
+
+		List<GlyphWrapper> result = renderer.getGlyphList();
+		adjustGlyphs( pageImage, factor, factor, result );
+
+		return( result );
 	}
 
-	public List<GlyphWrapper> getGlyphsOfPageStripper( int pageIndex ) throws IOException
+	protected void adjustGlyphs( BufferedImage pageImage, float pageFactor,
+								float boundsFactor, List<GlyphWrapper> result )
+	{
+		for( GlyphWrapper gw: result )
+			PDFboxWrapperUtils.instance().adjustGlyph( pageImage,
+				getPDPage(_currentPageNumber).getCropBox(),
+				pageFactor, boundsFactor, gw );
+	}
+
+	public List<GlyphWrapper> getGlyphsOfPageStripper( int pageIndex, boolean getImages,
+												Float factorForImages ) throws IOException
 	{
 		GetTextLocations stripper = new GetTextLocations(_pdfDocument);
-		stripper.setSortByPosition( true );
+//		stripper.setSortByPosition( true );
 //		stripper.setStartPage(pageIndex);
 //		stripper.setEndPage(pageIndex);
 
@@ -263,9 +288,35 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 //		stripper.writeText( _pdfDocument, dummy );
 		stripper.stripPage( pageIndex );
 
-		return( stripper.getGlyphList() );
-	}
+		Map<MatrixWrapper, GlyphWrapper> glyphMap = stripper.getGlyphMap();
 /*
+		float factor = 4f;
+		BufferedImage pageImage = this.getPage(pageIndex, factor);
+//		ImageIO.write(pageImage, "png", new File( "J:\\page.png" ) );
+		adjustGlyphs( pageImage, factor, 1.0f, result );
+*/
+		if( getImages )
+		{
+			float factor = ( factorForImages != null ) ? factorForImages : 4f;
+			MyPDFRendererWithDrawer renderer = createMyPDFRendererWithDrawer(glyphMap, factor);
+			renderer.setGetGlyphsAndImages(false);
+			renderer.setShowText(true);
+
+			renderImageWithDPIForBackground( renderer, pageIndex, getDpi(factor) );
+		}
+
+		List<GlyphWrapper> result = new ArrayList<>(glyphMap.values());
+
+		return( result );
+	}
+
+	protected MyPDFRendererWithDrawer createMyPDFRendererWithDrawer( Map<MatrixWrapper, GlyphWrapper> glyphMap,
+																	float pageFactor )
+	{
+		return( new MyPDFRendererWithDrawer( _pdfDocument, glyphMap, pageFactor ) );
+	}
+	
+	/*
 	public List<ImageWrapper> getImagesFromPage(PDPage page) throws IOException {
 		GetImageLocationsAndSize printer = new GetImageLocationsAndSize();
 	    printer.processPage(page);  

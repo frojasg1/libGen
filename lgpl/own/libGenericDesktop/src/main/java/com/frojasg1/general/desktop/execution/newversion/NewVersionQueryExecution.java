@@ -62,8 +62,14 @@ public class NewVersionQueryExecution implements Runnable
 
 	protected NewVersionQuery createNewVersionInetQueryForApplications()
 	{
-		NewVersionQuery result = NewVersionQueryFactory.instance().createNewVersionQuery();
-		result.init( getAppliConf().getUrlForNewVersionQuery() );
+		NewVersionQueryFactory factory = NewVersionQueryFactory.instance();
+		NewVersionQuery result = null;
+		
+		if( factory != null )
+		{
+			result = factory.createNewVersionQuery();
+			result.init( getAppliConf().getUrlForNewVersionQuery() );
+		}
 
 		return( result );
 	}
@@ -102,7 +108,9 @@ public class NewVersionQueryExecution implements Runnable
 		try
 		{
 			NewVersionQuery nvq = createNewVersionInetQueryForApplications();
-			NewVersionQueryResult result = nvq.queryForApplication(_isStartQuery);
+			NewVersionQueryResult result = ( nvq != null ) ?
+											nvq.queryForApplication(_isStartQuery) :
+											null;
 
 			SwingUtilities.invokeLater( () -> showNewVersionQueryResult( result ) );
 		}

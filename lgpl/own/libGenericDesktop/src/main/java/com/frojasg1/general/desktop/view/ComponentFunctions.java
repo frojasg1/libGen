@@ -18,14 +18,22 @@
  */
 package com.frojasg1.general.desktop.view;
 
+import com.frojasg1.general.ExecutionFunctions;
+import com.frojasg1.general.matchers.impl.IntegerToleranceMatcher;
 import com.frojasg1.general.view.ViewComponent;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ComponentListener;
 import java.awt.event.MouseListener;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -298,6 +306,74 @@ public class ComponentFunctions
 					tp.setSelectedComponent(tab);
 				}
 			}
+		}
+
+		return( result );
+	}
+
+	public boolean positionOnScreenMatches( Component comp, Point originPointOnScreen,
+		int tolerance )
+	{
+		
+		return( positionMatches(comp, c -> c.getLocationOnScreen(), originPointOnScreen,
+			tolerance ) );
+	}
+
+	public <CC, MM> boolean positionMatches( CC obj, Function<CC, MM> getter,
+		MM magnitudeToCompare, int tolerance )
+	{
+		boolean result = false;
+
+		if( obj != null )
+		{
+			result = ExecutionFunctions.instance().safeFunctionExecution(
+				() -> IntegerToleranceMatcher.instance().match(
+					getter.apply(obj), magnitudeToCompare, tolerance ) );
+		}
+
+		return( result );
+	}
+
+	public <MM> List<Component> getMatchingChildComponents( Container cont,
+		Function<Component, MM> getter, MM magnitudeToCompare,
+		int tolerance )
+	{
+		List<Component> result = new ArrayList<>();
+		browseComponentHierarchy( cont, (comp) -> {
+			if( positionMatches( comp, getter, magnitudeToCompare, tolerance ) )
+				result.add( comp );
+
+			return(null);
+		});
+
+		return( result );
+	}
+
+	public <MM> List<Component> getMatchingChildComponents( Container cont,
+		BiFunction<Component, MM, Boolean> matcher, MM magnitudeToCompare )
+	{
+		List<Component> result = new ArrayList<>();
+		if( matcher != null )
+		{
+			browseComponentHierarchy( cont, (comp) -> {
+				if( matcher.apply( comp, magnitudeToCompare ) )
+					result.add( comp );
+
+				return(null);
+			});
+		}
+
+		return( result );
+	}
+
+	public Rectangle getBoundsOnScreen( Component comp )
+	{
+		Rectangle result = null;
+		Point origin = ExecutionFunctions.instance().safeSilentFunctionExecution( () -> comp.getLocationOnScreen() );
+		if( origin != null )
+		{
+			Dimension dimen = comp.getSize();
+			result = new Rectangle( origin, dimen );
 		}
 
 		return( result );

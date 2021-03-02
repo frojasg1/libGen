@@ -19,14 +19,14 @@
 package com.frojasg1.libpdf.api;
 
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface GlyphWrapper {
+public interface GlyphWrapper extends PdfElementWrapper {
 
 	public int[] getCodes();
-	public Rectangle getBounds();
 	public String getUnicodeString();
 }

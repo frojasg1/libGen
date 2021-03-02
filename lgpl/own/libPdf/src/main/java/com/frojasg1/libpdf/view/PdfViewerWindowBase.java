@@ -18,6 +18,7 @@
  */
 package com.frojasg1.libpdf.view;
 
+import com.frojasg1.applications.common.components.internationalization.ExtendedZoomSemaphore;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.libpdf.view.api.PdfViewerControlView;
 import com.frojasg1.libpdf.view.api.PdfViewerMaster;
@@ -52,6 +53,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -108,6 +110,9 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	protected KeyListener _keyListener = null;
 
+	protected boolean _getCharacterImages = false;
+	protected Float _factorForCharacterImages = null;
+
 	/**
 	 * Creates new form MainWindow
 	 */
@@ -141,6 +146,22 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		initPanels();
 
 		SwingUtilities.invokeLater( () -> setWindowConfiguration( ) );
+	}
+
+	public boolean isGetCharacterImages() {
+		return _getCharacterImages;
+	}
+
+	public void setGetCharacterImages(boolean _getCharacterImages) {
+		this._getCharacterImages = _getCharacterImages;
+	}
+
+	public Float getFactorForCharacterImages() {
+		return _factorForCharacterImages;
+	}
+
+	public void setFactorForCharacterImages(Float _factorForCharacterImages) {
+		this._factorForCharacterImages = _factorForCharacterImages;
 	}
 
 	protected Rectangle getHoverImageBounds()
@@ -289,10 +310,16 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	protected void updatePdfObjects( int pageIndex )
 	{
-		List<GlyphWrapper> glyphs = ExecutionFunctions.instance().safeFunctionExecution( () -> getPdfDocument().getGlyphsOfPage(pageIndex) );
+		List<GlyphWrapper> glyphs = getGlyphsOfPage(pageIndex);
 		List<ImageWrapper> images = ExecutionFunctions.instance().safeFunctionExecution( () -> getPdfDocument().getImagesOfPage(pageIndex) );
 		_pdfObjectsControllerListener.setGlyphsOfPage(glyphs);
 		_pdfObjectsControllerListener.setImagesOfPage(images);
+	}
+
+	protected List<GlyphWrapper> getGlyphsOfPage( int pageIndex )
+	{
+		return( ExecutionFunctions.instance().safeFunctionExecution( () -> getPdfDocument().getGlyphsOfPage(pageIndex, isGetCharacterImages(),
+												getFactorForCharacterImages() ) ) );
 	}
 
 	public void updateCurrentPageTexts()
@@ -882,4 +909,11 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		_hoverGlyphBoundsOnImageJPanel = bounds;
 		getPdfContentImageJPanel().repaint();
 	}
+
+	@Override
+	protected void changeZoomFactorPreventingToPaint(double zoomFactor, Point center)
+	{
+		a_intern.changeZoomFactor( zoomFactor, center );
+	}
+
 }

@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +29,8 @@ import java.util.List;
  */
 public class ArrayFunctions
 {
+	public static String[] STRING_ARRAY = new String[0];
+
 	protected static ArrayFunctions _instance;
 
 	public static void changeInstance( ArrayFunctions inst )
@@ -141,5 +144,31 @@ public class ArrayFunctions
 	// https://stackoverflow.com/questions/7863792/compilation-error-generic-array-creation
 	public <E> E[] createArrayWithLength(int length, E... elements) {
 		return Arrays.copyOf(elements, length);
+	}
+
+	public <E> void cleanArray( E[] array )
+	{
+		if( array != null )
+			for( int ii=0; ii<array.length; ii++ )
+				array[ii] = null;
+	}
+
+	public <E> boolean equals( E[] array1, E[] array2 )
+	{
+		boolean result = true;
+
+		if( array1 != array2 )
+		{
+			if( ( array1 == null ) || ( array2 == null ) ||
+				( array1.length != array2.length ) )
+				result = false;
+			else
+			{
+				for( int ii=0; result && (ii<array1.length); ii++ )
+					result = ( array1[ii] == array2[ii] );
+			}
+		}
+
+		return( result );
 	}
 }
