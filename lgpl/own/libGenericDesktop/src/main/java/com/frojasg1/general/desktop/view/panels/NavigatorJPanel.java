@@ -27,7 +27,7 @@ import java.awt.Insets;
  *
  * @author Usuario
  */
-public class NavigatorJPanel extends javax.swing.JPanel implements InformerInterface, InternallyMappedComponent
+public class NavigatorJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InformerInterface, InternallyMappedComponent
 {
 	protected static final String _resourcePath = "com/frojasg1/generic/resources/navigator/version2";
 
@@ -38,6 +38,9 @@ public class NavigatorJPanel extends javax.swing.JPanel implements InformerInter
 	 */
 	public NavigatorJPanel( NavigatorControllerInterface controller )
 	{
+		super.init();
+
+
 		_controller = controller;
 		initComponents();
 //		initNavigatorButtons();

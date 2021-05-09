@@ -18,16 +18,13 @@
  */
 package com.frojasg1.general.listeners;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class GenericListOfListenersImp< LT extends GenericListener > extends ListOfListenersImp<LT>
-																	implements GenericListOfListeners<LT>
+public class GenericListOfListenersImp<LT extends GenericListener>
+	extends ListOfListenersImp<LT>
+	implements GenericListOfListeners<LT>
 {
 }
 

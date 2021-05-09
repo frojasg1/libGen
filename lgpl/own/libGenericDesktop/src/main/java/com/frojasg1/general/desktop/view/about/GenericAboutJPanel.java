@@ -18,12 +18,14 @@
  */
 package com.frojasg1.general.desktop.view.about;
 
+import com.frojasg1.desktop.liblens.graphics.Coordinate2D;
 import com.frojasg1.general.string.StringFunctions;
 import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
 import com.frojasg1.general.desktop.view.pdf.ImageJPanel;
 import com.frojasg1.desktop.liblens.graphics.lens.LensJPanel;
 import com.frojasg1.general.desktop.view.FontFunctions;
-import com.frojasg1.general.desktop.view.about.animation.AnimationForAbout;
+import com.frojasg1.general.desktop.view.editorpane.FastColorInversorStaticDocumentJEditorPane;
+import com.frojasg1.general.lib3d.components.api.about.animation.AnimationForAbout;
 import com.frojasg1.general.desktop.view.text.link.imp.ScrollableJTextComponentUrlLauncher;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
@@ -32,9 +34,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import javax.swing.JEditorPane;
 import javax.swing.JToggleButton;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
@@ -43,7 +45,7 @@ import javax.swing.text.JTextComponent;
  *
  * @author Usuario
  */
-public class GenericAboutJPanel extends javax.swing.JPanel  implements InternallyMappedComponent	//,MouseListener, MouseMotionListener
+public class GenericAboutJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel  implements InternallyMappedComponent	//,MouseListener, MouseMotionListener
 {
 //	protected static final String TORUS_IMAGE_RESOURCE = "com/frojasg1/generic/resources/images/torus.png";
 
@@ -55,7 +57,7 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
 
 	protected BufferedImage _image = null;
 
-	protected JEditorPane _rtfEditorPane = null;
+	protected FastColorInversorStaticDocumentJEditorPane _rtfEditorPane = null;
 
 	protected LensJPanel _lensJPanel = null;
 
@@ -83,6 +85,8 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
 								String downloadFileName,
 								double zoomFactor )
 	{
+		super.init();
+
 		_zoomFactor = zoomFactor;
 		_this = this;
 		_controller = controller;
@@ -154,13 +158,15 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
 			if( _rtfEditorPane != null )
 				_lensJPanel.removeComponentNotToPaint( _rtfEditorPane );
 
-			_rtfEditorPane = new JEditorPane( "text/rtf", "" );
+			_rtfEditorPane = new FastColorInversorStaticDocumentJEditorPane( "text/rtf", "" );
 			_rtfEditorPane.setEditorKit( new WrapEditorKit() );
 			_rtfEditorPane.setEditable( false );
 			_rtfEditorPane.setDocument( doc );
 			jScrollPane1.setViewportView( _rtfEditorPane );
 			_rtfEditorPane.setSelectionStart(0);
 			_rtfEditorPane.setSelectionEnd(0);
+
+			getColorInversor().setDarkMode(_rtfEditorPane, isDarkMode(), null);
 
 			try
 			{
@@ -507,7 +513,16 @@ public class GenericAboutJPanel extends javax.swing.JPanel  implements Internall
 			_animation.animationDoStep();
 
 			if( _animation.animationGetPosition() != null )
-				_lensJPanel.setSprite( _animation.animationGetFrame(), _animation.animationGetPosition() );
+				_lensJPanel.setSprite( _animation.animationGetFrame(), point2Coordinate2D(_animation.animationGetPosition() ) );
 		}
+	}
+
+	protected Coordinate2D point2Coordinate2D( Point pnt )
+	{
+		Coordinate2D result = null;
+		if( pnt != null )
+			result = new Coordinate2D(pnt.x, pnt.y);
+
+		return( result );
 	}
 }

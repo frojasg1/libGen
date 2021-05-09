@@ -18,10 +18,13 @@
  */
 package com.frojasg1.general.desktop.view;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.view.zoom.ZoomIcon;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import javax.swing.Icon;
-import com.frojasg1.general.number.DoubleReference;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import javax.swing.ImageIcon;
 
 /**
  *
@@ -47,6 +50,64 @@ public class IconFunctions {
 	{
 		ZoomIcon result = new ZoomIconImp( icon );
 
+		return( result );
+	}
+
+	public Icon invertIconColors( Icon icon )
+	{
+		Icon result = null;
+		
+		Icon curr = icon;
+		ZoomIconImp zii = null;
+		while( curr instanceof ZoomIconImp )
+		{
+			zii = (ZoomIconImp) curr;
+
+			curr = zii.getOriginalIcon();
+		}
+
+		Icon invertedSingleIcon = invertSingleIcon( curr );
+
+		if( zii != null )
+		{
+			result = icon;
+			zii.setIconWithInvertedColors( invertedSingleIcon );
+		}
+		else
+		{
+			result = invertedSingleIcon;
+		}
+
+		return( result );
+	}
+
+	protected Icon invertSingleIcon( Icon originalIcon )
+	{
+		Icon result = null;
+		if( originalIcon != null )
+		{
+			BufferedImage bi = toImage( originalIcon );
+
+			BufferedImage invertedImage = ImageFunctions.instance().invertImage(bi);
+
+			result = new ImageIcon(invertedImage);
+		}
+		return( result );
+	}
+
+	public BufferedImage toImage( Icon icon )
+	{
+		BufferedImage result = null;
+		if( icon != null )
+		{
+			result = new BufferedImage( icon.getIconWidth(),
+										icon.getIconHeight(),
+										BufferedImage.TYPE_INT_ARGB );
+
+			Graphics g2 = result.getGraphics();
+			icon.paintIcon(null, g2, 0, 0);
+			g2.dispose();
+		}
 		return( result );
 	}
 }

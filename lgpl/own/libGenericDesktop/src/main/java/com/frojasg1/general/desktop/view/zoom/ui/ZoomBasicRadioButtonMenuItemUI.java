@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicRadioButtonMenuItemUI;
 
 /**
@@ -39,6 +40,10 @@ public class ZoomBasicRadioButtonMenuItemUI extends BasicRadioButtonMenuItemUI i
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomBasicRadioButtonMenuItemUI();
+    }
 
 	@Override
 	public void init()

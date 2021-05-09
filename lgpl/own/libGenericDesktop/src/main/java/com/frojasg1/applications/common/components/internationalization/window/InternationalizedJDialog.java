@@ -25,12 +25,14 @@ import com.frojasg1.applications.common.components.internationalization.window.e
 import com.frojasg1.applications.common.components.internationalization.window.result.ZoomComponentOnTheFlyResult;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
+import com.frojasg1.applications.common.configuration.application.BaseApplicationConfiguration;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeLanguageClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeLanguageServerInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
+import com.frojasg1.applications.common.configuration.listener.ConfigurationParameterListener;
+import com.frojasg1.applications.common.configuration.listener.ConfigurationParameterObserved;
 import com.frojasg1.general.ExecutionFunctions;
-import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.generic.view.DesktopViewComponent;
 import com.frojasg1.general.desktop.generic.DesktopGenericFunctions;
@@ -68,6 +70,16 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 import com.frojasg1.general.ExecutionFunctions.UnsafeMethod;
+import com.frojasg1.general.NullFunctions;
+import com.frojasg1.general.desktop.copypastepopup.TextCompPopupManager;
+import com.frojasg1.general.desktop.startapp.GenericDesktopInitContext;
+import com.frojasg1.general.desktop.view.ComponentTranslator;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
+import com.frojasg1.general.desktop.view.ViewFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableBaseBuilder;
+import com.frojasg1.general.desktop.view.color.factory.impl.ColorInversorFactoryImpl;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
 import com.frojasg1.general.desktop.view.scrollpane.ScrollPaneMouseListener;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComposedComponent;
 import com.frojasg1.general.executor.worker.PullOfExecutorWorkers;
@@ -90,7 +102,7 @@ import javax.swing.JScrollPane;
  *
  * @author Usuario
  */
-public abstract class InternationalizedJDialog< CC extends ApplicationContext > extends javax.swing.JDialog
+public abstract class InternationalizedJDialog< CC extends GenericDesktopInitContext > extends javax.swing.JDialog
 										implements InternationalizedWindow<CC>,
 													ChangeLanguageClientInterface,
 													ChangeLanguageServerInterface,
@@ -157,37 +169,58 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 	protected BufferedImage _lastWindowImage = null;
 	protected double _zoomFactorOfLastWindowImage = 1.0D;
 
+	protected ColorThemeChangeableBase _colorThemeStatus;
+	protected ConfigurationParameterListener _colorThemeChangeListener;
+
+	protected ColorInversor _colorInversor;
+
 	/**
 	 * Creates new form InternationalizedJDialog
 	 */
 	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration )
 	{
-		this(parent, modal, applicationConfiguration, null);
+		this(parent, modal, applicationConfiguration, true);
 	}
 
 	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
-									CC applicationContext )
+									boolean initialPreventFromRepainting )
 	{
-		this(parent, modal, applicationConfiguration, applicationContext, null);
+		this(parent, modal, applicationConfiguration, null, initialPreventFromRepainting);
 	}
 
 	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
-									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+									boolean initialPreventFromRepainting )
 	{
-		this(parent, modal, applicationConfiguration, applicationContext, initializationEndCallBack, true );
+		this(parent, modal, applicationConfiguration, applicationContext, null,
+			initialPreventFromRepainting);
 	}
 
 	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
 									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
-									boolean doInitComponents )
+									boolean initialPreventFromRepainting )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext,
+			initializationEndCallBack, true, initialPreventFromRepainting );
+	}
+
+	public InternationalizedJDialog(java.awt.Frame parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
+									boolean doInitComponents,
+									boolean initialPreventFromRepainting )
 	{
 		super(parent, modal);
+
+		this.setPreventFromRepainting(initialPreventFromRepainting);
+
+		_colorThemeStatus = createColorThemeChangeableBase();
 
 		if( doInitComponents )
 			initComponents();
@@ -208,31 +241,47 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration )
 	{
-		this(parent, modal, applicationConfiguration, null);
+		this(parent, modal, applicationConfiguration, true);
 	}
 
 	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
-									CC applicationContext )
+									boolean initialPreventFromRepainting )
 	{
-		this(parent, modal, applicationConfiguration, applicationContext, null);
+		this(parent, modal, applicationConfiguration, null, initialPreventFromRepainting);
 	}
 
 	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
-									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
+									boolean initialPreventFromRepainting )
 	{
-		this(parent, modal, applicationConfiguration, applicationContext, initializationEndCallBack, true);
+		this(parent, modal, applicationConfiguration, applicationContext, null,
+			initialPreventFromRepainting);
 	}
 
 	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
 									BaseApplicationConfigurationInterface applicationConfiguration,
 									CC applicationContext,
 									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
-									boolean doInitComponents )
+									boolean initialPreventFromRepainting )
+	{
+		this(parent, modal, applicationConfiguration, applicationContext,
+			initializationEndCallBack, true, initialPreventFromRepainting);
+	}
+
+	public InternationalizedJDialog(javax.swing.JDialog parent, boolean modal,
+									BaseApplicationConfigurationInterface applicationConfiguration,
+									CC applicationContext,
+									Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack,
+									boolean doInitComponents,
+									boolean initialPreventFromRepainting )
 	{
 		super(parent, modal);
+
+		this.setPreventFromRepainting(initialPreventFromRepainting);
+
+		_colorThemeStatus = createColorThemeChangeableBase();
 
 		if( doInitComponents )
 			initComponents();
@@ -245,6 +294,16 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		setInternationalizationEndCallBack( initializationEndCallBack );
 
 		_pullOfWorkers = createPullOfWorkers();
+	}
+
+	protected <CC, RR> RR getIfNotNull( CC obj, Function<CC, RR> getter )
+	{
+		return( NullFunctions.instance().getIfNotNull(obj, getter) );
+	}
+
+	protected ColorThemeChangeableBase createColorThemeChangeableBase()
+	{
+		return( ColorThemeChangeableBaseBuilder.instance().createColorThemeChangeableBase() );
 	}
 
 	protected int getNumberOfWorkersForPull()
@@ -277,6 +336,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		{
 			getAppliConf().registerChangeLanguageObserver( this );
 			registerToChangeZoomFactorAsObserver( getAppliConf() );
+			registerToChangeColorThemeAsObserver( getAppliConf() );
 
 			String resourceForIcon = getAppliConf().getResourceNameForApplicationIcon();
 			if( resourceForIcon != null )
@@ -291,7 +351,12 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		addComponentListener(this);
 		addWindowStateListener(this);
 
-		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) -> { comp.addFocusListener(this); return( null ); } );
+		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) ->
+		{
+			if( ( comp != this ) && ( comp.getParent() != null ) )
+				comp.addFocusListener(this);
+			return( null );
+		} );
 	}
 
 	protected void removeListenersRoot()
@@ -299,7 +364,12 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		removeComponentListener(this);
 		removeWindowStateListener(this);
 
-		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) -> { comp.removeFocusListener(this); return( null ); } );
+		ComponentFunctions.instance().browseComponentHierarchy( this, (comp) ->
+		{
+			if( ( comp != this ) && ( comp.getParent() != null ) )
+				comp.removeFocusListener(this);
+			return( null );
+		} );
 	}
 
 
@@ -402,6 +472,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		if( delayToInvokeCallback != null )
 			a_intern.setDelayToInvokeCallback( delayToInvokeCallback );
 
+		preInternationalizationInit();
+
 		a_intern.initialize(	mainFolder,
 								applicationName,
 								group,
@@ -432,6 +504,11 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			th.printStackTrace();
 		}
 */
+	}
+
+	protected void preInternationalizationInit()
+	{
+		// derived classes can override it
 	}
 
 	@Override
@@ -917,7 +994,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 	protected void paintLast(Graphics gc)
 	{
-		if( ( _lastWindowImage != null ) &&
+		if( ( _lastWindowImage == null ) ||
 			( _newZoomFactor != _zoomFactorOfLastWindowImage ) )
 		{
 			BufferedImage image = _lastWindowImage;
@@ -934,9 +1011,28 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 			gc.drawImage( image, 0, 0, null );
 	}
 
+	protected BufferedImage createEmptyImage( double zoomFactor )
+	{
+		Dimension unzoomedDimen = ViewFunctions.instance().getNewDimension( getSize(), 1/zoomFactor );
+		BufferedImage result = new BufferedImage( unzoomedDimen.width,
+												unzoomedDimen.height,
+												BufferedImage.TYPE_INT_ARGB );
+		Graphics grp2 = result.createGraphics();
+
+		grp2.setColor( getBackground() );
+		grp2.fillRect(0, 0, unzoomedDimen.width, unzoomedDimen.height);
+
+		grp2.dispose();
+
+		return( result );
+	}
+
 	protected BufferedImage createLastZoomedImage( BufferedImage image, double zoomFactor )
 	{
 		Insets insets = a_intern.getFrameBorder();
+
+		if( image == null )
+			image = createEmptyImage(zoomFactor);
 
 		BufferedImage imageToZoom = ImageFunctions.instance().cropImage( image, insets );
 		BufferedImage zoomedImage = ImageFunctions.instance().resizeImage(imageToZoom, zoomFactor );
@@ -1467,6 +1563,11 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		a_intern.doInternationalizationTasksOnTheFly(comp);
 	}
 
+	public boolean alreadyInitializedOnTheFly( Component comp )
+	{
+		return( a_intern.getResizeRelocateComponentItemOnTheFly(comp) != null );
+	}
+
 	public boolean alreadyInitialized( Component comp )
 	{
 		return( a_intern.getResizeRelocateComponentItem(comp) != null );
@@ -1504,7 +1605,7 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 		ExtendedZoomSemaphore ezs = createExtendedZoomSemaphore();
 
 		MapResizeRelocateComponentItem mapRrci = new MapResizeRelocateComponentItem();
-		if( ! alreadyInitialized( comp ) )
+		if( ! alreadyInitializedOnTheFly( comp ) )
 		{
 			if( rri != null )
 				mapRrci.put( comp, rri );
@@ -1519,7 +1620,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 				ezs.increaseCount();
 			}
 
-			a_intern.switchToZoomComponents( comp, mapRrci );
+			boolean isOnTheFly = true;
+			a_intern.switchToZoomComponentsGen( comp, mapRrci, isOnTheFly );
 
 			doInternationalizationTasksOnTheFly( comp );
 
@@ -1620,6 +1722,8 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 					{
 						setPreventFromRepainting( true );
 
+						createComponentDataOnTheFly(listOfRootComponents);
+
 						ZoomParam zp1 = new ZoomParam( 1.0D );
 						ZoomParam zp = new ZoomParam( getAppliConf().getZoomFactor() );
 						inter.addMapResizeRelocateComponents(mapRrci);
@@ -1648,6 +1752,10 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 									return( result );
 								});
+
+							getColorInversor().setDarkMode(rootComp, wasLatestModeDark(),
+									comp2 -> getIfNotNull(this.getInternationalization(),
+												inter2 -> inter2.getColorThemeChangeable(comp2)));
 						}
 
 						ezs.setActivated(true);
@@ -1663,6 +1771,15 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 				} );
 			} );
 		}
+	}
+
+	protected <CC extends Component> void createComponentDataOnTheFly(Collection<CC> listOfRootComponents)
+	{
+		for( Component comp: listOfRootComponents )
+			ComponentFunctions.instance().browseComponentHierarchy(comp, comp2 -> {
+				FrameworkComponentFunctions.instance().getComponentDataOnTheFly(comp2);
+				return( null );
+			});
 	}
 
 	public void executeTask( Runnable runnable )
@@ -1904,6 +2021,132 @@ public abstract class InternationalizedJDialog< CC extends ApplicationContext > 
 
 		List<Component> result = ComponentFunctions.instance().getMatchingChildComponents( cont, getter,
 			magnitudeToCompare, tolerance );
+
+		return( result );
+	}
+
+	@Override
+	public boolean isDarkMode()
+	{
+		return( _colorThemeStatus.isDarkMode() );
+	}
+
+	@Override
+	public void setDarkMode(boolean value, ColorInversor colorInversor)
+	{
+		_colorThemeStatus.setDarkMode( value, colorInversor );
+	}
+
+	@Override
+	public boolean wasLatestModeDark()
+	{
+		return( _colorThemeStatus.wasLatestModeDark() );
+	}
+
+	@Override
+	public void setLatestWasDark(boolean value) {
+		_colorThemeStatus.setLatestWasDark(value);
+	}
+
+	protected boolean hasToInvertColors( boolean value )
+	{
+		return( wasLatestModeDark() != value );
+	}
+
+	protected void unregisterFromChangeColorThemeAsObserver()
+	{
+		if( ( _colorThemeChangeListener != null ) && ( getAppliConf() != null ) )
+		{
+			getAppliConf().removeConfigurationParameterListener(BaseApplicationConfiguration.CONF_IS_DARK_MODE_ACTIVATED,
+																_colorThemeChangeListener);
+			_colorThemeChangeListener = null;
+		}
+	}
+
+	protected ColorInversor createColorInversor()
+	{
+		return( ColorInversorFactoryImpl.instance().createColorInversor() );
+	}
+
+	@Override
+	public ColorInversor getColorInversor()
+	{
+		if( _colorInversor == null )
+			_colorInversor = getIfNotNull( getApplicationContext(), ac -> ac.getColorInversor() );
+
+		if( _colorInversor == null )
+			_colorInversor = createColorInversor();
+
+		return( _colorInversor );
+	}
+
+	protected void invertSingleWindowColors(ColorInversor colorInversor)
+	{
+		if( getIfNotNull( getInternationalization(), JFrameInternationalization::getVectorOfPopupMenus ) != null )
+			for( JPopupMenu popupMenu: getInternationalization().getVectorOfPopupMenus() )
+				colorInversor.setDarkMode( popupMenu, isDarkMode(), getInternationalization()::getColorThemeChangeable );
+
+		colorInversor.invertSingleColorsGen(this);
+		_colorThemeStatus.setLatestWasDark( isDarkMode() );
+
+		invertUndoRedoPopups();
+	}
+
+	protected void invertUndoRedoPopups()
+	{
+		ComponentFunctions.instance().browseComponentHierarchy( this, (comp, res) -> {
+			JPopupMenu menu = getIfNotNull( this.getInternationalization()
+				.getMapOfComponents().getOrCreateOnTheFly(comp).getTextCompPopupManager(),
+				TextCompPopupManager::getJPopupMenu );
+			if( menu != null )
+				getColorInversor().setDarkMode( menu, isDarkMode(),
+					comp2 -> this.getInternationalization().getColorThemeChangeableOnTheFly(comp2) );
+		});
+	}
+
+	protected void setDarkMode( boolean isDarkMode )
+	{
+		ColorInversor ci = getColorInversor();
+		if( ci != null )
+		{
+			ci.setDarkMode(this, isDarkMode, null);
+			invertSingleWindowColors(ci);
+		}
+	}
+
+	public void configurationParameterColorThemeChanged( ConfigurationParameterObserved observed, String label,
+															Object oldValue, Object newValue )
+	{
+		boolean isDarkMode = (Boolean) newValue;
+
+		setDarkMode( isDarkMode );
+	}
+
+	@Override
+	public void invokeConfigurationParameterColorThemeChanged()
+	{
+		if( getAppliConf() != null )
+			configurationParameterColorThemeChanged( null, BaseApplicationConfiguration.CONF_IS_DARK_MODE_ACTIVATED,
+													null,
+													getAppliConf().isDarkModeActivated() );
+	}
+
+	public void registerToChangeColorThemeAsObserver(BaseApplicationConfigurationInterface conf)
+	{
+		unregisterFromChangeColorThemeAsObserver();
+
+		if( conf != null )
+		{
+			_colorThemeChangeListener = this::configurationParameterColorThemeChanged;
+			conf.addConfigurationParameterListener(BaseApplicationConfiguration.CONF_IS_DARK_MODE_ACTIVATED,
+													_colorThemeChangeListener);
+		}
+	}
+
+	protected Color[] invertColorsIfNecessary( Color ... brightModeColors ) {
+		Color[] result = brightModeColors;
+		if( getAppliConf().isDarkModeActivated() )
+			result = getColorInversor().invertColors(brightModeColors);
 
 		return( result );
 	}

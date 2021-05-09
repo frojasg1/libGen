@@ -22,6 +22,7 @@ package com.frojasg1.general.listeners;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface GenericListOfListeners<LT extends GenericListener> extends ListOfListeners<LT>
+public interface GenericListOfListeners<LT extends GenericListener>
+	extends ListOfListenersGenListener<LT>
 {
 }

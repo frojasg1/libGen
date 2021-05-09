@@ -44,6 +44,8 @@ public class JComboBoxCopier extends CompCopierBase<JComboBox>
 
 		List<CompCopier<JComboBox>> result = new ArrayList<>();
 
+		result.add( createEditableCopier() );
+		result.add( createSelectedItemCopier() );
 		result.add( createActionCopier() );
 		result.add( createActionCommandCopier() );
 		result.add( createActionListenersCopier() );
@@ -55,7 +57,6 @@ public class JComboBoxCopier extends CompCopierBase<JComboBox>
 		result.add( createPopupMenuListenersCopier() );
 		result.add( createPrototypeDisplayValueCopier() );
 		result.add( createRendererCopier() );
-		result.add( createSelectedItemCopier() );
 //		result.add( createSelectedObjectsCopier() );
 
 		return( result );
@@ -119,6 +120,11 @@ public class JComboBoxCopier extends CompCopierBase<JComboBox>
 	protected CompCopier<JComboBox> createSelectedItemCopier()
 	{
 		return( (originalComponent, newComponent) -> copySelectedItem( originalComponent, newComponent ) );
+	}
+
+	protected CompCopier<JComboBox> createEditableCopier()
+	{
+		return( (originalComponent, newComponent) -> copyEditable( originalComponent, newComponent ) );
 	}
 /*
 	protected CompCopier<JComboBox> createSelectedObjectsCopier()
@@ -217,6 +223,12 @@ public class JComboBoxCopier extends CompCopierBase<JComboBox>
 		Object value = originalComponent.getSelectedItem();
 		if( !isClassOfJdk( value ) )
 			newComponent.setSelectedItem( value );
+	}
+
+	protected void copyEditable( JComboBox originalComponent, JComboBox newComponent )
+	{
+		boolean value = originalComponent.isEditable();
+		newComponent.setEditable( value );
 	}
 /*
 	protected void copySelectedObjects( JComboBox originalComponent, JComboBox newComponent )

@@ -18,13 +18,17 @@
  */
 package com.frojasg1.general.commandline.files;
 
+import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.exceptions.GeneralFileException;
 import com.frojasg1.general.desktop.files.charset.CharsetManager;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
@@ -39,7 +43,10 @@ import java.nio.file.StandardCopyOption;
 public class TextFileWrapper
 {
 	protected String _fileName = null;
-	protected FileInputStream _fis = null;
+	protected InputStream _originalInputStream = null;
+	protected InputStream _isCopy = null;
+
+//	protected FileInputStream _fis = null;
 	protected InputStreamReader _isr = null;
 	protected BufferedReader _br = null;
 
@@ -52,14 +59,27 @@ public class TextFileWrapper
 	protected static final String _saSecureReplaceFileNameSuffix = "._#####";
 
 	protected boolean _fileWasOpenedWithSecureReplaceFileNameSuffix = false;
-	
-	public TextFileWrapper( String fileName )
+
+	protected byte[] _originalContent;
+
+	public TextFileWrapper( String fileName ) throws FileNotFoundException
 	{
+		this( new FileInputStream( fileName ) );
 		_fileName = fileName;
+	}
+
+	public TextFileWrapper( InputStream is )
+	{
+		_originalInputStream = is;
 	}
 
 	public String getCharsetName()			{ return( _charsetName ); }
 	public String getFileName()				{ return( _fileName );	}
+
+	protected InputStream createOriginalInputStreamCopy()
+	{
+		return( new ByteArrayInputStream( _originalContent ) );
+	}
 
 	public BufferedReader openReadStream() throws GeneralFileException
 	{
@@ -68,32 +88,41 @@ public class TextFileWrapper
 			throw( new GeneralFileException( "File already opened to read: " + _fileName ) );
 		}
 
+		InputStream isCopyTmp = null;
 		try
 		{
-			_charsetName = CharsetManager.instance().M_detectCharset( _fileName );
+			_originalContent = new byte[_originalInputStream.available()];
+			_originalInputStream.read(_originalContent);
+			_originalInputStream.close();
 
-			_fis = null; 
+			isCopyTmp = createOriginalInputStreamCopy();
+			_charsetName = CharsetManager.instance().M_detectCharset( isCopyTmp );
+
+//			_fis = null; 
 			_isr = null;
 			_br = null;
 
-			_fis = new FileInputStream( _fileName );
+//			_fis = new FileInputStream( _fileName );
+			_isCopy = createOriginalInputStreamCopy();
 
-			if( _charsetName != null )	_isr = new InputStreamReader( _fis, _charsetName );
-			else							_isr = new InputStreamReader( _fis );
+			if( _charsetName != null )	_isr = new InputStreamReader( _isCopy, _charsetName );
+			else							_isr = new InputStreamReader( _isCopy );
 
 			_br = new BufferedReader( _isr );
 		}
-		catch( Throwable th )
+		catch( Exception ex )
 		{
-			try
-			{
-				closeReadStream();
-			}
-			catch( Throwable th1 )
-			{
-			}
+			ExecutionFunctions.instance().safeMethodExecution( () -> closeReadStream() );
 
-			throw( new GeneralFileException( th.getMessage() ) );
+			throw( new GeneralFileException( ex.getMessage(), ex ) );
+		}
+		finally
+		{
+			if( isCopyTmp != null )
+			{
+				InputStream is = isCopyTmp;
+				ExecutionFunctions.instance().safeMethodExecution( () -> is.close() );
+			}
 		}
 
 		return( _br );
@@ -101,14 +130,14 @@ public class TextFileWrapper
 
 	public void closeReadStream() throws GeneralFileException
 	{
-		if( ( _br == null ) && ( _isr == null ) && ( _fis == null ) )
+		if( ( _br == null ) && ( _isr == null ) && ( _isCopy == null ) )
 			throw( new GeneralFileException( "The file was not opened for reading." ) );
 		
 		try
 		{
 			if( _br != null ) _br.close();
 			else if( _isr != null ) _isr.close();
-			else if( _fis != null ) _fis.close();
+			else if( _isCopy != null ) _isCopy.close();
 		}
 		catch( Throwable th )
 		{
@@ -118,7 +147,7 @@ public class TextFileWrapper
 		{
 			_br = null;
 			_isr = null;
-			_fis = null;
+			_isCopy = null;
 		}
 	}
 
@@ -155,17 +184,11 @@ public class TextFileWrapper
 
 			_fileName = fileName;
 		}
-		catch( Throwable th )
+		catch( Exception ex )
 		{
-			try
-			{
-				closeWriteStream();
-			}
-			catch( Throwable th1 )
-			{
-			}
+			ExecutionFunctions.instance().safeMethodExecution( () -> closeWriteStream() );
 
-			throw( new GeneralFileException( th.getMessage() ) );
+			throw( new GeneralFileException( ex.getMessage() ) );
 		}
 		
 		return( _bw );

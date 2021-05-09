@@ -30,8 +30,8 @@ import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateC
 import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.DesktopStreamFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
-import com.frojasg1.general.desktop.view.about.animation.AnimationForAbout;
-import com.frojasg1.general.desktop.view.about.animation.AnimationForAboutFactory;
+import com.frojasg1.general.lib3d.components.api.about.animation.AnimationForAbout;
+import com.frojasg1.general.lib3d.components.api.about.animation.AnimationForAboutFactory;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.language.file.LanguageFile;
 import com.frojasg1.generic.GenericFunctions;
@@ -229,9 +229,10 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 								AnimationForAboutFactory animFactory,
 								Consumer<InternationalizationInitializationEndCallback> initializationEndCallback )
 	{
-		super(parent, modal, applicationConfiguration, null, initializationEndCallback);
+		super(parent, modal, applicationConfiguration, null,
+			initializationEndCallback, true);
 
-		_animation = animFactory.createAnimationForAbout();
+		_animation = createAnimationForAbout( animFactory );
 
 		_languageFile = createLanguageFile( rtfSingleFileName,
 											applicationConfiguration.getInternationalPropertiesPathInJar(),
@@ -244,7 +245,7 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 
 		initOwnComponents( image );
 
-		setWindowConfiguration( );
+		SwingUtilities.invokeLater( this::setWindowConfiguration );
 
 		if( modal )
 			setAlwaysOnTop( true );
@@ -300,9 +301,10 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 								AnimationForAboutFactory animFactory,
 								Consumer<InternationalizationInitializationEndCallback> initializationEndCallback )
 	{
-		super(parent, modal, applicationConfiguration, null, initializationEndCallback);
+		super(parent, modal, applicationConfiguration, null, initializationEndCallback,
+			true);
 
-		_animation = animFactory.createAnimationForAbout();
+		_animation = createAnimationForAbout( animFactory );
 
 		_languageFile = createLanguageFile( rtfSingleFileName,
 											languageFolderResourceName,
@@ -315,10 +317,17 @@ public class GenericAboutJDialog extends InternationalizedJDialog
 
 		initOwnComponents( image );
 
-		setWindowConfiguration( );
+		SwingUtilities.invokeLater( this::setWindowConfiguration );
 
 		if( modal )
 			setAlwaysOnTop( true );
+	}
+
+	protected AnimationForAbout createAnimationForAbout( AnimationForAboutFactory animFactory )
+	{
+		animFactory.setColors( invertColorsIfNecessary( animFactory.getBrightModeColors() ) );
+		AnimationForAbout result = animFactory.createAnimationForAbout();
+		return( result );
 	}
 
 	protected LanguageFile createLanguageFile( String rtfSingleFileName,

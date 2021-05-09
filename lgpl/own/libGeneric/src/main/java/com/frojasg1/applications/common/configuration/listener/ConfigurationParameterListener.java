@@ -22,6 +22,7 @@ package com.frojasg1.applications.common.configuration.listener;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
+@FunctionalInterface
 public interface ConfigurationParameterListener
 {
 	public <CC> void configurationParameterChanged( ConfigurationParameterObserved observed, String label,

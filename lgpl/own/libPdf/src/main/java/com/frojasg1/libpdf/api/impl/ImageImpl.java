@@ -31,6 +31,8 @@ public class ImageImpl implements ImageWrapper
 {
 	protected BufferedImage _image = null;
 	protected Rectangle _bounds = null;
+	protected boolean _isBackground = false;
+	protected int _numberOfOverlappingGlyphs = 0;
 
 	public ImageImpl( BufferedImage image, Rectangle bounds )
 	{
@@ -48,5 +50,23 @@ public class ImageImpl implements ImageWrapper
 	public Rectangle getBounds()
 	{
 		return( _bounds );
+	}
+
+	public boolean isBackground()
+	{
+		return( _isBackground );
+	}
+
+	public void setIsBackground( boolean value )
+	{
+		_isBackground = value;
+	}
+
+	public int getNumberOfOverlappingGlyphs() {
+		return _numberOfOverlappingGlyphs;
+	}
+
+	public void setNumberOfOverlappingGlyphs(int _numberOfOverlappingGlyphs) {
+		this._numberOfOverlappingGlyphs = _numberOfOverlappingGlyphs;
 	}
 }

@@ -18,8 +18,13 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
+import com.frojasg1.general.desktop.view.IconFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeInvertible;
+import com.frojasg1.general.desktop.view.zoom.ZoomIcon;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import com.frojasg1.general.number.DoubleReference;
+import java.util.function.Function;
 import javax.swing.Icon;
 
 /**
@@ -27,22 +32,38 @@ import javax.swing.Icon;
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
 public class ComponentWithIconForZoomOverriden extends ComponentForZoomOverriden
+												implements ColorThemeInvertible
 {
 	protected ComponentWithIconForZoomInterface _abstractButtonForZoomComponent = null;
 
-	protected ZoomIconImp _disabledIcon = null;
-	protected ZoomIconImp _disabledSelectedIcon = null;
-	protected ZoomIconImp _icon = null;
-	protected ZoomIconImp _pressedIcon = null;
-	protected ZoomIconImp _rollOverIcon = null;
-	protected ZoomIconImp _rollOverSelectedIcon = null;
-	protected ZoomIconImp _selectedIcon = null;
+	protected static int DISABLED_ICON_INDEX = 0;
+	protected static int DISABLED_SELECTED_ICON_INDEX = 1;
+	protected static int ICON_INDEX = 2;
+	protected static int PRESSED_ICON_INDEX = 3;
+	protected static int ROLL_OVER_ICON_INDEX = 4;
+	protected static int ROLL_OVER_SELECTED_ICON_INDEX = 5;
+	protected static int SELECTED_ICON_INDEX = 6;
+
+	protected IconData[] zoomIcons;
+
+	protected boolean _hasToInvert = false;
+	protected boolean _colorsAreInverted = false;
 
 	public ComponentWithIconForZoomOverriden( ComponentWithIconForZoomInterface component,
 									DoubleReference zoomFactor )
 	{
 		super( component, zoomFactor );
 		_abstractButtonForZoomComponent = component;
+
+		zoomIcons = new IconData[] {
+			new IconData( but -> but.superGetDisabledIcon() ),
+			new IconData( but -> but.superGetDisabledSelectedIcon() ),
+			new IconData( but -> but.superGetIcon() ),
+			new IconData( but -> but.superGetPressedIcon() ),
+			new IconData( but -> but.superGetRolloverIcon() ),
+			new IconData( but -> but.superGetRolloverSelectedIcon() ),
+			new IconData( but -> but.superGetSelectedIcon() )
+		};
 	}
 
 	protected ZoomIconImp createZoomIcon( Icon icon )
@@ -61,66 +82,100 @@ public class ComponentWithIconForZoomOverriden extends ComponentForZoomOverriden
 		return( result );
 	}
 
+	protected Icon getIcon( int index )
+	{
+		IconData id = zoomIcons[index];
+		Icon icon = id._iconGetter.apply(_abstractButtonForZoomComponent);
+		Icon originalIcon = getOriginalIcon(id._zoomedIcon);
+		if( (id._zoomedIcon == null) ||
+			( originalIcon != null ) && ( originalIcon != icon) )
+		{
+			id._zoomedIcon = createZoomIcon( icon );
+		}
+
+		id._zoomedIcon = this.invertZoomIconIfNecessary( id._zoomedIcon );
+
+		return( id._zoomedIcon );
+	}
+
+	protected Icon getOriginalIcon( ZoomIcon zi )
+	{
+		Icon result = null;
+		if( zi instanceof ZoomIconImp )
+			result = ( (ZoomIconImp) zi).getOriginalIcon();
+
+		return( result );
+	}
+
 	public Icon getDisabledIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetDisabledIcon();
-		if( (_disabledIcon == null) || ( icon != _disabledIcon.getOriginalIcon() ) )
-			_disabledIcon = createZoomIcon( icon );
-
-		return( _disabledIcon );
+		return( getIcon( DISABLED_ICON_INDEX ) );
 	}
 
 	public Icon getDisabledSelectedIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetDisabledSelectedIcon();
-		if(  (_disabledSelectedIcon == null) || ( icon != _disabledSelectedIcon.getOriginalIcon() ) )
-			_disabledSelectedIcon = createZoomIcon( icon );
-
-		return( _disabledSelectedIcon );
+		return( getIcon( DISABLED_SELECTED_ICON_INDEX ) );
 	}
 
 	public Icon getIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetIcon();
-		if(  (_icon == null) || ( icon != _icon.getOriginalIcon() ) )
-			_icon = createZoomIcon( icon );
-
-		return( _icon );
+		return( getIcon( ICON_INDEX ) );
 	}
 
 	public Icon getPressedIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetPressedIcon();
-		if(  (_pressedIcon == null) || ( icon != _pressedIcon.getOriginalIcon() ) )
-			_pressedIcon = createZoomIcon( icon );
-
-		return( _pressedIcon );
+		return( getIcon( PRESSED_ICON_INDEX ) );
 	}
 
 	public Icon getRolloverIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetRolloverIcon();
-		if(  (_rollOverIcon == null) || ( icon != _rollOverIcon.getOriginalIcon() ) )
-			_rollOverIcon = createZoomIcon( icon );
-
-		return( _rollOverIcon );
+		return( getIcon( ROLL_OVER_ICON_INDEX ) );
 	}
 
 	public Icon getRolloverSelectedIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetRolloverSelectedIcon();
-		if(  (_rollOverSelectedIcon == null) || ( icon != _rollOverSelectedIcon.getOriginalIcon() ) )
-			_rollOverSelectedIcon = createZoomIcon( icon );
-
-		return( _rollOverSelectedIcon );
+		return( getIcon( ROLL_OVER_SELECTED_ICON_INDEX ) );
 	}
 
 	public Icon getSelectedIcon()
 	{
-		Icon icon = _abstractButtonForZoomComponent.superGetSelectedIcon();
-		if(  (_selectedIcon == null) || ( icon != _selectedIcon.getOriginalIcon() ) )
-			_selectedIcon = createZoomIcon( icon );
+		return( getIcon( SELECTED_ICON_INDEX ) );
+	}
 
-		return( _selectedIcon );
+	protected ZoomIcon invertZoomIconIfNecessary( ZoomIcon original )
+	{
+		ZoomIcon result = original;
+		
+		// by default this class works together with Component classes that invert the colors of a whole component
+		// so that, if an icon cannot invert colors, if inverted, we must invert colors (for them remain as original)
+		// otherwise we will have not to invert colors
+		if( ( result != null )  && !result.canInvertColors() )
+		{
+			if( hasToInvert() != result.areColorsInverted() )
+				result = (ZoomIcon) IconFunctions.instance().invertIconColors(result);
+		}
+
+		return( result );
+	}
+
+	protected boolean hasToInvert()
+	{
+		return( _hasToInvert );
+	}
+
+	public void invertColors( ColorInversor colorInversor )
+	{
+		_hasToInvert = !_hasToInvert;
+	}
+
+	protected static class IconData
+	{
+		public Function<ComponentWithIconForZoomInterface, Icon> _iconGetter;
+		public ZoomIcon _zoomedIcon;
+
+		public IconData( Function<ComponentWithIconForZoomInterface, Icon> iconGetter )
+		{
+			_iconGetter = iconGetter;
+		}
 	}
 }

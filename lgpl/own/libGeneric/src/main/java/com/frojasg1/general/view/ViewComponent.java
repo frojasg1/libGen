@@ -22,7 +22,7 @@ package com.frojasg1.general.view;
  *
  * @author Usuario
  */
-public interface ViewComponent
+public interface ViewComponent extends ReleaseResourcesable
 {
 	public void setVisible( boolean value );
 	public void requestFocus();
@@ -30,6 +30,4 @@ public interface ViewComponent
 	public boolean hasFocus();
 
 	public ViewComponent getParentViewComponent();
-
-	public void releaseResources();
 }

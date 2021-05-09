@@ -28,6 +28,7 @@ import com.frojasg1.applications.common.components.internationalization.InternEx
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizedJFrame;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
+import com.frojasg1.general.desktop.view.colors.Colors;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import java.awt.Color;
 import java.awt.Component;
@@ -94,12 +95,21 @@ public abstract class GenericBasicSplash extends InternationalizedJFrame impleme
 		_instance = this;
 	}
 
+	protected Color getTextColorForProgressBar( Color brightModeColor, Color darkModeColor )
+	{
+		Color result = brightModeColor;
+		if( isDarkMode() )
+			result = darkModeColor;
+		
+		return( result );
+	}
+
 	protected final void initOwnComponents_Parent()
 	{
 		// http://stackoverflow.com/questions/3480125/setting-the-colors-of-a-jprogressbar-text
 		jPB_progress.setUI( new BasicProgressBarUI() {
-								protected Color getSelectionBackground() { return Color.black; }
-								protected Color getSelectionForeground() { return Color.black; }
+								protected Color getSelectionBackground() { return getTextColorForProgressBar(Color.BLACK, Color.WHITE); }
+								protected Color getSelectionForeground() { return getTextColorForProgressBar(Color.BLACK, Color.BLUE); }
 							  });
 		
 		setPreferredSize( jPanel1.getSize() );

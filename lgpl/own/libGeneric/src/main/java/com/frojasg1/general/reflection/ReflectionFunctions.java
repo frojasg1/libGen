@@ -27,6 +27,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -34,6 +37,8 @@ import java.util.Map;
  */
 public class ReflectionFunctions
 {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ReflectionFunctions.class);
+
 	protected static ReflectionFunctions _instance;
 
 	protected Map< String, Map< String, Field > > _mapOfMapsOfFields = new HashMap<>();
@@ -118,9 +123,40 @@ public class ReflectionFunctions
 	}
 
 	public <T> T getStaticAttribute( String attributeName, Class<T> returnClazz,
-									Class<?> classOfTheAttribute )
+									Class<?> classOwnerOfTheAttribute )
 	{
-		return( getAttribute( attributeName, returnClazz, null, classOfTheAttribute ) );
+		T result = null;
+		try
+		{
+			Field field = classOwnerOfTheAttribute.getDeclaredField(attributeName);
+			field.setAccessible(true); // Suppress Java language access checking
+
+			// Get value
+			result = (T) field.get(null);
+		}
+		catch( Exception ex )
+		{
+			LOGGER.error( "Error getting attribute: {} of class {}", attributeName, classOwnerOfTheAttribute );
+		}
+
+		return( result );
+	}
+
+	public <T> void setStaticAttribute( String attributeName,
+										Class<?> classOwnerOfTheAttribute, T value)
+	{
+		try
+		{
+			Field field = classOwnerOfTheAttribute.getDeclaredField(attributeName);
+			field.setAccessible(true); // Suppress Java language access checking
+
+			// Set value
+			field.set(null, value);
+		}
+		catch( Exception ex )
+		{
+			LOGGER.error( "Error setting attribute: {} of class {}", attributeName, classOwnerOfTheAttribute );
+		}
 	}
 
 	public <T> T getAttribute( String attributeName, Class<T> returnClazz,
@@ -150,14 +186,26 @@ public class ReflectionFunctions
 		return( result );
 	}
 
-	public Object invokeClassMethod( String methodName, Class<?> clazz, Object obj, Object ... args )
+	public Object invokeClassMethod( String methodName, Class<?> clazz, Object obj,
+									AtomicBoolean hasBeenInvoked, Object ... args )
 	{
+		hasBeenInvoked.set(false);
 		Object result = null;
 		Method method = getMethod( methodName, clazz );
 		if( method != null )
+		{
 			result = invokeMethod( methodName, method, obj, args );
+			hasBeenInvoked.set(true);
+		}
 
 		return( result );
+	}
+
+	public Object invokeClassMethod( String methodName, Class<?> clazz, Object obj,
+									Object ... args )
+	{
+		AtomicBoolean hasBeenInvoked = new AtomicBoolean(false);
+		return( invokeClassMethod(methodName, clazz, obj, hasBeenInvoked, args ) );
 	}
 
 	public Object invokeMethod( String methodName, Object obj, Object ... args )
@@ -170,9 +218,12 @@ public class ReflectionFunctions
 
 			Collections.reverse(classList);
 
+			AtomicBoolean hasBeenInvoked = new AtomicBoolean(false);
 			for( Class<?> clazz: classList )
 			{
-				invokeClassMethod( methodName, clazz, obj, args );
+				result = invokeClassMethod( methodName, clazz, obj, hasBeenInvoked, args );
+				if( hasBeenInvoked.get() )
+					break;
 /*
 				Method method = getMethod( methodName, clazz );
 				if( method != null )
@@ -348,17 +399,24 @@ public class ReflectionFunctions
 		List<Class<?>> result = new ArrayList<>();
 		
 		if( object != null )
-		{
-			Class<?> currentClass = object.getClass();
-			do
-			{
-				result.add( currentClass );
-				currentClass = currentClass.getSuperclass();
-			}
-			while( currentClass != null );
+			result = getListOfClassesOfClassFromTheMostGenericToTheMostParticular( object.getClass() );
 
-			Collections.reverse(result);
+		return( result );
+	}
+
+	public List<Class<?>> getListOfClassesOfClassFromTheMostGenericToTheMostParticular( Class<?> clazz )
+	{
+		List<Class<?>> result = new ArrayList<>();
+		
+		Class<?> currentClass = clazz;
+		do
+		{
+			result.add( currentClass );
+			currentClass = currentClass.getSuperclass();
 		}
+		while( currentClass != null );
+
+		Collections.reverse(result);
 
 		return( result );
 	}

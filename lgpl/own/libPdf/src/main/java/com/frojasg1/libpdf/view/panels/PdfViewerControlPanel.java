@@ -39,7 +39,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class PdfViewerControlPanel extends javax.swing.JPanel
+public class PdfViewerControlPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 	implements ComposedComponent, PdfViewerControlView,
 				NavigatorControllerInterface, InformerInterface
 {
@@ -59,6 +59,8 @@ public class PdfViewerControlPanel extends javax.swing.JPanel
 
 	public void init( PdfViewerMaster controller )
 	{
+		super.init();
+
 		_controller = controller;
 
 		initComponents();

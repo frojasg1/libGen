@@ -22,17 +22,20 @@ import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateC
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.applications.common.configuration.imp.InternationalizedStringConfImp;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
 import com.frojasg1.libpdf.api.PDFownerInterface;
 import com.frojasg1.libpdf.api.PdfDocumentWrapper;
 import com.frojasg1.libpdf.viewer.PdfViewer;
-import com.frojasg1.general.desktop.view.panels.InformerInterface;
-import com.frojasg1.general.desktop.view.panels.NavigatorControllerInterface;
 import com.frojasg1.general.desktop.view.pdf.ImageJPanel;
 import com.frojasg1.general.desktop.view.pdf.ImageJPanelControllerInterface;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComposedComponent;
 import com.frojasg1.general.number.DoubleReference;
 import com.frojasg1.general.number.IntegerFunctions;
+import com.frojasg1.libpdf.api.GlyphWrapper;
+import com.frojasg1.libpdf.api.ImageWrapper;
+import com.frojasg1.libpdf.color.PdfPageColorInversor;
 import com.frojasg1.libpdf.constants.LibPdfConstants;
 import com.frojasg1.libpdf.view.api.PdfViewerMaster;
 import java.awt.Dimension;
@@ -40,6 +43,7 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.LinkedList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JScrollPane;
 
@@ -47,9 +51,9 @@ import javax.swing.JScrollPane;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class PdfContentPanel extends javax.swing.JPanel
+public class PdfContentPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 	implements ComposedComponent,
-				ImageJPanelControllerInterface, NavigatorControllerInterface,
+				ImageJPanelControllerInterface, //NavigatorControllerInterface,
 				PDFownerInterface, PdfViewer, InternationalizedStringConf
 {
 	public static final String GLOBAL_CONF_FILE_NAME = "PdfContentPanel.properties";
@@ -74,11 +78,19 @@ public class PdfContentPanel extends javax.swing.JPanel
 
 	protected PdfViewerMaster _controller = null;
 
+	protected PdfPageColorInversor _pdfPageColorInversor;
+
+	public PdfContentPanel()
+	{
+		this( new PdfPageColorInversor() );
+	}
+
 	/**
 	 * Creates new form PdfContentPanel
 	 */
-	public PdfContentPanel()
+	public PdfContentPanel(PdfPageColorInversor pdfPageColorInversor)
 	{
+		_pdfPageColorInversor = pdfPageColorInversor;
 		_internationalizedStringConf = new InternationalizedStringConfImp( GLOBAL_CONF_FILE_NAME,
 								LibPdfConstants.sa_PROPERTIES_PATH_IN_JAR );
 
@@ -87,6 +99,8 @@ public class PdfContentPanel extends javax.swing.JPanel
 
 	public void init( PdfViewerMaster controller, PDFownerInterface pdfOwner )
 	{
+		super.init();
+
 		initComponents();
 
 		initZoomFactor();
@@ -118,7 +132,9 @@ public class PdfContentPanel extends javax.swing.JPanel
 
 	protected ImageJPanel createImageJPanel()
 	{
-		return( new ImageJPanel( getImageScrollPane(), this ) );
+		ImageJPanel result = new ImageJPanel( getImageScrollPane(), this );
+		result.setCanInvertImageColors(false);
+		return( result );
 	}
 
 	protected void initPanel()
@@ -255,10 +271,35 @@ public class PdfContentPanel extends javax.swing.JPanel
 		setNumberOfPages( _pdfDocument.getNumberOfPages() );
 	}
 
+	protected boolean isDarkMode()
+	{
+		return( FrameworkComponentFunctions.instance().isDarkMode(this) );
+	}
+
+	protected BufferedImage invertPageColors( BufferedImage image, double zoomFactor )
+	{
+		return( _pdfPageColorInversor.invertPdfPageColors( getColorInversor(), image,
+					zoomFactor,	getImagesOfPage(), getGlyphsOfPage() )	);
+	}
+
+	protected List<ImageWrapper> getImagesOfPage()
+	{
+		return( _controller.getPdfViewerContext().getImagesOfPage() );
+	}
+
+	protected List<GlyphWrapper> getGlyphsOfPage()
+	{
+		return( _controller.getPdfViewerContext().getGlyphsOfPage() );
+	}
+
 	protected void setPage( BufferedImage image, DoubleReference factor, int pageIndex )
 	{
 		ImageJPanel.InitialVerticalPosition ivp = null;
 				
+		if( isDarkMode() )
+			image = invertPageColors( image, factor._value );
+
+
 		if( _currentPageIndex < pageIndex )
 			ivp = ImageJPanel.InitialVerticalPosition.TOP;
 		else if( _currentPageIndex > pageIndex )
@@ -299,14 +340,26 @@ public class PdfContentPanel extends javax.swing.JPanel
 		DoubleReference factor = new DoubleReference( 1.0D );
 		setPage(image, factor, _currentPageIndex );
 	}
-	
+
+	public void setPageIndex( int pageIndex )
+	{
+		_currentPageIndex = pageIndex;
+	}
+
+	protected void setPage( int pageIndex, DoubleReference zoomFactor )
+	{
+		BufferedImage image = _pdfOwner.getPage( pageIndex, getSelectedZoomFactorDouble(zoomFactor) );
+		if( image != null )
+			setPage( image, zoomFactor, pageIndex );		
+	}
+
 	public void updatePage( int pageIndex, DoubleReference zoomFactor )
 	{
-//		if( isVisible() )
+////		if( isVisible() )
 		{
 			_currentPageIndex = pageIndex;
-			setPage(_pdfOwner.getPage( pageIndex, getSelectedZoomFactorDouble(zoomFactor) ), zoomFactor, pageIndex );
-//			updateCurrentPageTexts();
+			setPage(_currentPageIndex, zoomFactor );
+////			updateCurrentPageTexts();
 		}
 	}
 
@@ -320,6 +373,17 @@ public class PdfContentPanel extends javax.swing.JPanel
 		return( _pdfImagePanel.getZoomFactor() );
 	}
 
+	public int getStartPage()
+	{
+		return( 0 );
+	}
+
+	public int getEndPage()
+	{
+		return( _totalNumberOfPages - 1 );
+	}
+
+/*
 	@Override
 	public void navigator_start( InformerInterface panel )
 	{
@@ -333,21 +397,21 @@ public class PdfContentPanel extends javax.swing.JPanel
 		int pageIndex = _totalNumberOfPages - 1;
 		updatePage( pageIndex, _pdfZoomFactor );
 	}
-
-	protected int incrementCurrentPage()
+*/
+	public int incrementCurrentPage()
 	{
 		int pageIndex = IntegerFunctions.min(_totalNumberOfPages - 1, _currentPageIndex + 1 );
 //		_currentPageIndex = IntegerFunctions.min( _totalNumberOfPages - 1, _currentPageIndex + 1 );
 		return( pageIndex );
 	}
 	
-	protected int decrementCurrentPage()
+	public int decrementCurrentPage()
 	{
 		int pageIndex = IntegerFunctions.max(0, _currentPageIndex - 1 );
 //		_currentPageIndex = IntegerFunctions.max( 0, _currentPageIndex - 1 );
 		return( pageIndex );
 	}
-
+/*
 	@Override
 	public void navigator_previous( InformerInterface panel )
 	{
@@ -359,6 +423,12 @@ public class PdfContentPanel extends javax.swing.JPanel
 	{
 		updatePage( incrementCurrentPage(), _pdfZoomFactor );
 	}
+*/
+
+	public void updatePage( int pageIndex )
+	{
+		updatePage( pageIndex, _pdfZoomFactor );
+	}
 
 	public int getCurrentPage()
 	{
@@ -368,13 +438,13 @@ public class PdfContentPanel extends javax.swing.JPanel
 	@Override
 	public void previousPage()
 	{
-		navigator_previous( null );
+		updatePage( decrementCurrentPage() );
 	}
 
 	@Override
 	public void nextPage()
 	{
-		navigator_next( null );
+		updatePage( incrementCurrentPage() );
 	}
 
 	@Override
@@ -393,7 +463,8 @@ public class PdfContentPanel extends javax.swing.JPanel
 
 		try
 		{
-			image = _pdfDocument.getPage( pageIndex, factor );
+			if( _pdfDocument != null )
+				image = _pdfDocument.getPage( pageIndex, factor );
 		}
 		catch( Exception ex )
 		{
@@ -472,5 +543,11 @@ public class PdfContentPanel extends javax.swing.JPanel
 	public Rectangle getInternalBounds()
 	{
 		return( jSP_imageScrollPane.getBounds() );
+	}
+
+	@Override
+	protected void invertColorsChild(ColorInversor colorInversor)
+	{
+		updatePage( getCurrentPage() );
 	}
 }

@@ -26,45 +26,22 @@ import java.util.ListIterator;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ListOfListenersImp< LT > implements ListOfListeners< LT >
+public class ListOfListenersImp< LT > extends ListOfListenersBase<LT>
+									implements ListOfListenersGenListener< LT >
 {
-	protected List<LT> _list;
-
 	public ListOfListenersImp()
 	{
-		_list = new ArrayList<LT>();
+		super();
 	}
 
 	@Override
-	public void add( LT listener )
+	public void notifyListeners( Notifier< LT > notifier )
 	{
-		_list.add( listener );
+		for( LT listener: getList() )
+			notifyListener( listener, notifier );
 	}
 
-	@Override
-	public void remove( LT listener )
-	{
-		ListIterator<LT> it = _list.listIterator();
-		while( it.hasNext() )
-		{
-			LT elem = it.next();
-			if( elem.equals( listener ) )
-			{
-				it.remove();
-			}
-		}
-	}
-
-	@Override
-	public void notify( Notifier< LT > notifier )
-	{
-		for( LT listener: _list )
-		{
-			notify( listener, notifier );
-		}
-	}
-
-	protected void notify( LT listener, Notifier< LT > notifier )
+	protected void notifyListener( LT listener, Notifier< LT > notifier )
 	{
 		try
 		{
@@ -74,12 +51,6 @@ public class ListOfListenersImp< LT > implements ListOfListeners< LT >
 		{
 			ex.printStackTrace();
 		}
-	}
-
-	@Override
-	public void clear()
-	{
-		_list.clear();
 	}
 }
 

@@ -110,9 +110,9 @@ import com.frojasg1.general.desktop.GenericDesktopConstants;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.threads.ThreadFunctions;
 import java.util.HashMap;
-import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import javax.swing.JScrollPane;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatus;
 
 /**
  *
@@ -220,6 +220,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 	protected int _delayToInvokeCallback = 300;
 
+	protected boolean _isOnTheFly = false;
+
 	static
 	{
 		try
@@ -235,6 +237,8 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	public JFrameInternationalization( BaseApplicationConfigurationInterface baseConf )
 	{
 		_baseConf = baseConf;
+
+		_mapOfComponents = new MapOfComponents( this );
 	}
 
 	protected static void registerInternationalizedStrings()
@@ -428,7 +432,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 		if( switchToZoomComponents )
 			switchToZoomComponents( a_parentFrame, map );
-		
+
 		if( ( (a_parentFrame instanceof JFrame ) ||
 				(a_parentFrame instanceof JDialog ) ||
 				( a_parentFrame instanceof JInternalFrame )) &&
@@ -439,7 +443,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			resizeFrameToContents();
 		}
 
-		_mapOfComponents = new MapOfComponents( this );
+//		_mapOfComponents = new MapOfComponents( this );
 
 		a_configurationBaseFileName = configurationBaseFileName;
 		String languageConfigurationFileName = configurationBaseFileName + "_LAN.properties";
@@ -458,6 +462,9 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 			createTextPopupManagers(a_parentFrame);
 		}
+
+		if( getInternationalizedWindow() != null )
+			getInternationalizedWindow().invokeConfigurationParameterColorThemeChanged();
 
 		try
 		{
@@ -517,12 +524,29 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		_isInitialized = true;
 	}
 
+	public 	Vector<JPopupMenu> getVectorOfPopupMenus()
+	{
+		return( a_vectorJpopupMenus );
+	}
+
+	public InternationalizedWindow getInternationalizedWindow()
+	{
+		InternationalizedWindow result = null;
+		if( a_parentFrame instanceof InternationalizedWindow)
+			result = (InternationalizedWindow) a_parentFrame;
+
+		return( result );
+	}
+
 	public void doInternationalizationTasksOnTheFly( Component comp )
 	{
-		createTextPopupManagers( comp );
+		boolean isOnTheFly = true;
+		createTextPopupManagers( comp, isOnTheFly );
 		int level = 1;
 		boolean onlyText = true;
+		_isOnTheFly = true;
 		ExecutionFunctions.instance().safeMethodExecution( () -> convertPropertiesIntoAttributes( comp, _newZoomParam, level, onlyText ) );
+		_isOnTheFly = false;
 	}
 
 	public ResizeRelocateItem createDefaultResizeRelocateItem( Component comp )
@@ -637,13 +661,23 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	}
 
 	public Component switchToZoomComponents( Component comp,
-											MapResizeRelocateComponentItem map )
+											MapResizeRelocateComponentItem map)
+	{
+		return( switchToZoomComponentsGen( comp, map, false ) );
+	}
+
+	public Component switchToZoomComponentsGen( Component comp,
+											MapResizeRelocateComponentItem map,
+											boolean isOnTheFly )
 	{
 		SwitchToZoomComponents stzc = new SwitchToZoomComponents( _baseConf, map );
 
 		Component result = stzc.switchToZoomComponents(comp);
+
+		Map<Component, Component> switchComponentsMap = stzc.getSwitchedComponents().getMap();
 		if( map != null )
-			map.switchComponents( stzc.getSwitchedComponents().getMap() );
+			map.switchComponents( switchComponentsMap );
+		_mapOfComponents.switchComponentsGen( switchComponentsMap, isOnTheFly );
 
 		return( result );
 	}
@@ -2154,7 +2188,9 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		// to resize before setting the initialstate of JSplitPanes.
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //		ResizeRelocateItem rri = a_mapResizeRelocateComponents.get(comp);
-		ResizeRelocateItem rri = _mapOfComponents.getResizeRelocateItem(comp);
+		ResizeRelocateItem rri = _isOnTheFly ?
+								_mapOfComponents.getResizeRelocateItemOnTheFly(comp) :
+								_mapOfComponents.getResizeRelocateItem(comp);
 		if( ( rri != null ) ||
 			( comp instanceof JFrame ) ||
 			( comp instanceof JRootPane ) ||
@@ -2757,6 +2793,16 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		return( result );
 	}
 
+	@Override
+	public ResizeRelocateItem getResizeRelocateComponentItemOnTheFly( Component comp )
+	{
+		ResizeRelocateItem result = null;
+		if( _mapOfComponents != null )
+			result = _mapOfComponents.getResizeRelocateItemOnTheFly( comp );
+
+		return( result );
+	}
+
 	public void prepareResizeOrRelocateToZoom( )
 	{
 		prepareResizeOrRelocateToZoom(_newZoomParam );
@@ -3289,13 +3335,18 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 	protected void createComplementsForTextComponent( JTextComponent textComp )
 	{
+		createComplementsForTextComponent( textComp, false );
+	}
+
+	protected void createComplementsForTextComponent( JTextComponent textComp, boolean isOnTheFly )
+	{
 		textComp.getCaret().setBlinkRate( 125 );
 		
 		if( _enableUndoRedoForTextComponents || _enableTextPopupMenu )
 		{
 			DesktopViewTextComponent tvc = DesktopGenericFunctions.instance().getViewFacilities().createTextViewComponent(textComp);
 			TextCompPopupManager tcompMan = new TextCompPopupManager( tvc, null );
-			_mapOfComponents.setTextCompPopupManager( textComp, tcompMan);
+			_mapOfComponents.setTextCompPopupManager( textComp, tcompMan, isOnTheFly);
 
 			if( _enableTextPopupMenu )
 			{
@@ -3311,6 +3362,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 	protected void createTextPopupManagers( Component comp )
 	{
+		createTextPopupManagers( comp, false );
+	}
+
+	protected void createTextPopupManagers( Component comp, boolean isOnTheFly )
+	{
 		if( ( comp instanceof JFrame ) ||
 			( comp instanceof JRootPane ) ||
 			( comp instanceof JLayeredPane ) ||
@@ -3321,7 +3377,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 			if( comp instanceof JTextComponent )
 			{
 				JTextComponent tc = (JTextComponent) comp;
-				createComplementsForTextComponent( tc );
+				createComplementsForTextComponent( tc, isOnTheFly );
 				}
 
 			if( comp instanceof JTabbedPane )
@@ -3329,7 +3385,7 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 				JTabbedPane tabbedPane = (JTabbedPane) comp;
 
 				for( int ii=0; ii<tabbedPane.getTabCount(); ii++ )
-					createTextPopupManagers( tabbedPane.getComponentAt(ii) );
+					createTextPopupManagers( tabbedPane.getComponentAt(ii), isOnTheFly );
 			}
 			else if( comp instanceof Container )
 			{
@@ -3337,11 +3393,11 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 
 				if( cont instanceof JMenu )
 				{
-					createTextPopupManagers(( ( JMenu ) cont ).getPopupMenu() );
+					createTextPopupManagers(( ( JMenu ) cont ).getPopupMenu(), isOnTheFly );
 				}
 
 				for( int ii=0; ii<cont.getComponentCount(); ii++ )
-					createTextPopupManagers( cont.getComponent(ii) );
+					createTextPopupManagers( cont.getComponent(ii), isOnTheFly );
 			}
 		}
 	}
@@ -3512,6 +3568,12 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 		return( _mapOfComponents.getListOfResizeRelocateItems() );
 	}
 
+	public MapOfComponents getMapOfComponents()
+	{
+		return( _mapOfComponents );
+	}
+
+
 	protected class SetComponentListenerThread extends Thread
 	{
 		protected JFrameInternationalization _this = null;
@@ -3575,5 +3637,15 @@ public class JFrameInternationalization implements ComponentListener, WindowStat
 	public boolean isResizeRelocateItemsResizeListenersBlocked()
 	{
 		return( _isResizeRelocateItemsResizeListenersBlocked );
+	}
+
+	public ColorThemeChangeableStatus getColorThemeChangeable( Component comp )
+	{
+		return( _mapOfComponents.getOrCreate(comp).getColorThemeChangeableStatus() );
+	}
+
+	public ColorThemeChangeableStatus getColorThemeChangeableOnTheFly( Component comp )
+	{
+		return( _mapOfComponents.getOrCreateOnTheFly(comp).getColorThemeChangeableStatus() );
 	}
 }

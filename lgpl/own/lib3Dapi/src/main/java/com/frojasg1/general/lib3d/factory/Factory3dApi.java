@@ -19,8 +19,8 @@
 package com.frojasg1.general.lib3d.factory;
 
 import com.frojasg1.general.lib3d.components.api.Canvas3dJPanelApi;
+import com.frojasg1.general.lib3d.components.api.about.animation.torus.TorusAnimationInitContext;
 import com.frojasg1.general.lib3d.scenarios.api.Scenario3dApi;
-import java.awt.Color;
 
 /**
  *
@@ -28,9 +28,7 @@ import java.awt.Color;
  */
 public interface Factory3dApi {
 	
-	public Scenario3dApi createTorus(float majorRadius, float minorRadius,
-										int majorSamples, int minorSamples,
-										Color color);
+	public Scenario3dApi createTorus(TorusAnimationInitContext initContext);
 
 	public Canvas3dJPanelApi createCanvas3dJPanel( Scenario3dApi scenario );
 }

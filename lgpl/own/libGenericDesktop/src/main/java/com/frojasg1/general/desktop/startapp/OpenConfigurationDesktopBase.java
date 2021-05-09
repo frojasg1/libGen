@@ -64,6 +64,7 @@ public abstract class OpenConfigurationDesktopBase<AC extends BaseApplicationCon
 	{
 		ToolTipLookAndFeel.instance().init();
 		ToolTipLookAndFeel.instance().registerToChangeZoomFactorAsObserver( getAppliConf() );
+//		ToolTipLookAndFeel.instance().setAppliConf( getAppliConf() );
 
 		super.initializeAfterImportingConfiguration();
 	}

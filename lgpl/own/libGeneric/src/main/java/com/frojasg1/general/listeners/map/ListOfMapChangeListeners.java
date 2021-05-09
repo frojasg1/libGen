@@ -18,13 +18,13 @@
  */
 package com.frojasg1.general.listeners.map;
 
-import com.frojasg1.general.listeners.ListOfListeners;
+import com.frojasg1.general.listeners.ListOfListenersGenListener;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface ListOfMapChangeListeners<KK, VV> extends ListOfListeners< MapChangeListener<KK, VV> >,
+public interface ListOfMapChangeListeners<KK, VV> extends ListOfListenersGenListener< MapChangeListener<KK, VV> >,
 															MapChangeListener< KK, VV >
 {
 	

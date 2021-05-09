@@ -63,7 +63,7 @@ public abstract class CurrentParamDocumentFormatterBase<MM extends PrototypeForC
 	}
 
 	@Override
-	protected Style getLocalDefaultStyle( int fontSize )
+	protected Style getLocalDefaultStyle( Integer fontSize )
 	{
 		Style result = super.getLocalDefaultStyle( fontSize );
 		StyleConstants.setFontFamily(result, "Courier New" );
@@ -72,7 +72,7 @@ public abstract class CurrentParamDocumentFormatterBase<MM extends PrototypeForC
 	}
 
 	@Override
-	protected void addParticularStyles( int defaultFontSize )
+	protected void addParticularStyles( Integer defaultFontSize )
 	{
 		addParticularStyles( defaultFontSize, ATTRIB_NORMAL, _normalSetStyleAttribute );
 		addParticularStyles( defaultFontSize, ATTRIB_REMARKED, _remarkedSetStyleAttribute );

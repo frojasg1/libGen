@@ -25,5 +25,11 @@ import java.awt.image.BufferedImage;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface ImageWrapper extends PdfElementWrapper {
+public interface ImageWrapper extends PdfElementWrapper
+{
+	public boolean isBackground();
+	public void setIsBackground( boolean value );
+
+	public int getNumberOfOverlappingGlyphs();
+	public void setNumberOfOverlappingGlyphs( int value );
 }

@@ -38,11 +38,11 @@ public class JScrollPaneCopier extends CompCopierBase<JScrollPane>
 
 		result.add( createColumnHeaderCopier() );
 		result.add( createCornersCopier() );
-		result.add( createHorizontalScrollBarCopier() );
+//		result.add( createHorizontalScrollBarCopier() );
 		result.add( createHorizontalScrollBarPolicyCopier() );
 		result.add( createRowHeaderCopier() );
 		result.add( createVerticalScrollBarCopier() );
-		result.add( createVerticalScrollBarPolicyCopier() );
+//		result.add( createVerticalScrollBarPolicyCopier() );
 		result.add( createViewportCopier() );
 		result.add( createViewportBorderCopier() );
 		result.add( createWheelScrollingEnabledCopier() );

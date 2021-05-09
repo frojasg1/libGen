@@ -29,7 +29,8 @@ public interface NewVersionQuery extends InetQuery<NewVersionQueryResult>
 {
 	public NewVersionQueryResult query( String downloadFile, boolean isApplicationStart,
 										String applicationLanguage,
-										String webLanguage ) throws InetQueryException;
+										String webLanguage,
+										boolean isDarkModeActivated) throws InetQueryException;
 	
 	public NewVersionQueryResult queryForApplication( boolean isApplicationStart ) throws InetQueryException;
 }

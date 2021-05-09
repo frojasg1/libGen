@@ -19,7 +19,6 @@
 package com.frojasg1.general.desktop.view.document.formatter;
 
 import com.frojasg1.general.document.formatted.FormatForText;
-import com.frojasg1.general.document.formatter.ExternalTextFormatter;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
@@ -27,17 +26,23 @@ import com.frojasg1.general.desktop.view.FontFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.desktop.generic.view.DesktopViewTextComponent;
 import com.frojasg1.general.desktop.generic.view.SimpleViewTextComponent;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeInvertible;
+import com.frojasg1.general.document.formatter.ExternalTextFormatter;
 import com.frojasg1.general.document.formatter.FormatterFactory;
 import com.frojasg1.general.listeners.GenericListener;
 import com.frojasg1.general.listeners.GenericObserved;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.string.StringFunctions;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
@@ -52,17 +57,12 @@ import javax.swing.text.StyledDocument;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInterface,
+public abstract class ZoomDocumentFormatter extends FormatterBase
+									implements ChangeZoomFactorClientInterface,
 														GenericObserved,
 														SizeChangedObserved
 {
-	protected final String LOCAL_DEFAULT_STYLE = "LOCAL_DEFAULT_STYLE";
-	protected final int DEFAULT_FONT_SIZE = 16;
-
-	protected JTextPane _pane = null;
-	protected Integer _fontSize_hundredPercent = null;
-
-	protected DesktopViewTextComponent _viewTextComponent = null;
+	protected Integer _currentDefaultFontSize;
 
 	protected Map< String, Style > _mapOfStyles = new HashMap<>();
 
@@ -82,9 +82,9 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 
 	public ZoomDocumentFormatter( JTextPane pane, ChangeZoomFactorServerInterface changeZoomFactorServer )
 	{
-		_pane = pane;
+		super( pane );
 		_changeZoomFactorServer = changeZoomFactorServer;
-		initialize();
+		initializeZoomDocumentFormatter();
 	}
 
 	public void dispose()
@@ -120,15 +120,15 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		startFormatterListener();
 	}
 
+	@Override
 	public void setNewJTextPane( JTextPane jtp )
 	{
 		if( jtp != _pane )
 		{
-			_pane = jtp;
+			super.setNewJTextPane( jtp );
 
 			startFormatterListener();
 
-			_viewTextComponent = createViewTextComponent( jtp );
 			addStyles();
 
 			if( _changeZoomFactorServer != null )
@@ -137,18 +137,6 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 			resetText();
 //			reformat();
 		}
-	}
-
-	protected void resetText()
-	{
-		String text = _viewTextComponent.getText();
-		_viewTextComponent.setEmptyText();
-		_viewTextComponent.setText( text );
-	}
-
-	protected JScrollPane getScrollPane()
-	{
-		return( ComponentFunctions.instance().getScrollPane(getJTextPane()) );
 	}
 
 	protected void shrinkTextJPane()
@@ -162,21 +150,6 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 
 			jsp.setSize( dimen );
 		}
-	}
-
-	public JTextPane getJTextPane()
-	{
-		return( _pane );
-	}
-
-	protected DesktopViewTextComponent createViewTextComponent( JTextPane jtp )
-	{
-		return( new SimpleViewTextComponent( jtp ) );
-	}
-
-	public DesktopViewTextComponent getViewTextComponent()
-	{
-		return( _viewTextComponent );
 	}
 
 	public void setMaxHorizontalDimension( int maxHorizontalDimension )
@@ -199,54 +172,13 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		_textFormatter = externalTextFormatter;
 	}
 
-	protected int getTextLength()
-	{
-		return( _pane.getStyledDocument().getLength() );
-	}
-
-	protected Style getLocalDefaultStyle( int fontSize )
-	{
-		Style result = newFormattedStyleToBeModifiedGen( getDefaultStyleName(), StyleContext.DEFAULT_STYLE);
-		StyleConstants.setFontSize(result, fontSize );
-
-		return( result );
-	}
-
 	protected Style newFormattedStyleToBeModifiedGen( String newStyleName, String styleNameToBeBasedOn )
 	{
-		StyledDocument sd = _pane.getStyledDocument();
-		// Create and add the main document style
-		Style styleToBeBasedOn = sd.getStyle(styleNameToBeBasedOn);
+		Style result = super.newFormattedStyleToBeModifiedGen( newStyleName, styleNameToBeBasedOn );
 
-		Style result = sd.getStyle( newStyleName );
-		if( result != null )
-			sd.removeStyle(newStyleName);
-
-		result = sd.addStyle( newStyleName, styleToBeBasedOn);
 		_mapOfStyles.put( newStyleName, result );
 
 		return( result );
-	}
-
-	protected String getDefaultStyleName()
-	{
-		return( LOCAL_DEFAULT_STYLE );
-	}
-
-
-	protected Style newFormattedStyleToBeModified( String newStyleName )
-	{
-		return( newFormattedStyleToBeModifiedGen( newStyleName, getDefaultStyleName() ) );
-	}
-
-	protected Style getLocalDefaultStyle()
-	{
-		return( getLocalDefaultStyle( calculateFontSize() ) );
-	}
-
-	protected void addStyles( )
-	{
-		addStyles( calculateFontSize() );
 	}
 
 	protected void addStyles( int defaultFontSize )
@@ -255,59 +187,13 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		{
 			_mapOfFonts.clear();
 
-			// to create LocalDefaultStyle
-			getLocalDefaultStyle(defaultFontSize);
-
-			addParticularStyles(defaultFontSize);
+			super.addStyles( defaultFontSize );
 		}
 	}
 
-	protected abstract void addParticularStyles( int defaultFontSize );
-	/*
+	protected void initializeZoomDocumentFormatter()
 	{
-		StyledDocument sd = _pane.getStyledDocument();
-		// Create and add the main document style
-		final Style bold = sd.addStyle(RED_BOLD, defaultStyle);
-		StyleConstants.setFontSize(bold, StyleConstants.getFontSize( defaultStyle ) + 2);
-		StyleConstants.setForeground(bold, Color.RED );
-		StyleConstants.setBold(bold, true);
-
-		final Style green = sd.addStyle(GREEN, defaultStyle);
-		StyleConstants.setForeground(green, Color.green.darker() );
-		StyleConstants.setBold(green, false);
-
-		final Style plain = sd.addStyle(PLAIN, defaultStyle);
-		StyleConstants.setForeground(plain, Color.BLACK );
-		StyleConstants.setBold(plain, false);
-	}
-*/
-
-	protected int calculateFontSize()
-	{
-		int result = DEFAULT_FONT_SIZE;
-
-		if( _fontSize_hundredPercent != null )
-			result = _fontSize_hundredPercent;
-		else
-		{
-			if( _pane != null )
-			{
-				Font font = _pane.getFont();
-				if( font != null )
-					result = font.getSize();
-			}
-		}
-
-		return( result );
-	}
-
-	protected void initialize()
-	{
-		_fontSize_hundredPercent = calculateFontSize();
-		_viewTextComponent = createViewTextComponent( _pane );
-
 		addStyles();
-
 		ChangeZoomFactorServerInterface changeZoomFactorServer = _changeZoomFactorServer;
 		_changeZoomFactorServer = null;
 		this.registerToChangeZoomFactorAsObserver(changeZoomFactorServer);
@@ -363,19 +249,6 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 //		return( result );
 	}
 
-	protected void giveStyleToText( String substr, int start, int length, Style style )
-	{
-		if( ( _pane != null ) && ( substr != null ) )
-		{
-			for( int ii=0; ii<length; ii++ )
-			{
-				if( substr.charAt(ii) != '\n' )
-				{
-					_pane.getStyledDocument().setCharacterAttributes(start+ii, 1, style, true);
-				}
-			}
-		}
-	}
 /*
 //	protected Dimension formatSubstring( FormatForText fft )
 	protected FormatForText formatSubstring( int start, int length, String text, String styleName )
@@ -439,11 +312,6 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 		if( ( initialPosition >= 0 ) && ( initialPosition < _pane.getStyledDocument().getLength() ) )
 			SwingUtilities.invokeLater( () -> _pane.setCaretPosition( initialPosition ) );
 */
-	}
-
-	protected String getPaneText() throws BadLocationException
-	{
-		return( _pane.getStyledDocument().getText(0, _pane.getStyledDocument().getLength() ) );
 	}
 
 	protected Collection< FormatForText > formatTextWithExternalFormatter( String text )
@@ -518,11 +386,23 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 	@Override
 	public void changeZoomFactor( double zoomFactor )
 	{
-		int defaultFontSize = IntegerFunctions.zoomValueCeil( _fontSize_hundredPercent, zoomFactor );
+		_currentDefaultFontSize = IntegerFunctions.zoomValueCeil( _fontSize_hundredPercent, zoomFactor );
+		
+		updateStyles();
+	}
 
-		addStyles( defaultFontSize );
+	protected Integer calculateFontSize()
+	{
+		Integer result = _currentDefaultFontSize;
+		if( result == null )
+			result = super.calculateFontSize();
 
-		SwingUtilities.invokeLater(() -> { invokeListeners(); });
+		return( result );
+	}
+
+	protected void updateTexts()
+	{
+		invokeListeners();
 	}
 
 	@Override
@@ -798,5 +678,16 @@ public abstract class ZoomDocumentFormatter implements ChangeZoomFactorClientInt
 	public void removeListener( SizeChangedListener listener )
 	{
 		_listenerSizeChangedContainer.remove(listener);
+	}
+
+	@Override
+	public void invertColors( ColorInversor colorInversor )
+	{
+		super.invertColors( colorInversor );
+		if( (this != _textFormatter) && ( _textFormatter instanceof ExternalTextFormatterDesktop ) )
+			( (ExternalTextFormatterDesktop) _textFormatter).invertColors( colorInversor );
+
+		if( _currentDefaultFontSize != null )
+			SwingUtilities.invokeLater( () -> updateStyles() );
 	}
 }

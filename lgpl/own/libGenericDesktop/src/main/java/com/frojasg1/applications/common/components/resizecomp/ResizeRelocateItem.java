@@ -25,11 +25,16 @@ import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.zoom.ZoomParam;
 import com.frojasg1.applications.common.components.internationalization.InternException;
 import com.frojasg1.applications.common.components.name.ComponentNameComponents;
+import com.frojasg1.general.ExecutionFunctions;
+import com.frojasg1.general.NullFunctions;
+import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.mouse.CursorFunctions;
 import com.frojasg1.general.desktop.mouse.MouseFunctions;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.FontFunctions;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
 import com.frojasg1.general.desktop.view.IconFunctions;
+import com.frojasg1.general.desktop.view.buttons.ResizableImageJButton;
 import com.frojasg1.general.desktop.view.document.formatter.SizeChangedListener;
 import com.frojasg1.general.desktop.view.document.formatter.SizeChangedObserved;
 import com.frojasg1.general.desktop.view.zoom.ResizeSizeComponent;
@@ -64,8 +69,10 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -79,6 +86,7 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxIcon;
 import javax.swing.text.JTextComponent;
@@ -141,6 +149,8 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	protected ResizeRelocateItem_parent _parent = null;
 	protected Component _component;
 	protected int		_flags;
+
+	protected BasicSplitPaneUI uiman;
 
 	protected int _originalWidthOfParent = -1;
 	protected int _originalHeightOfParent = -1;
@@ -266,7 +276,11 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 	protected boolean isServingResizureFromListenerOfUser()
 	{
 //		return( !_parent.isResizeRelocateItemsResizeListenersBlocked() );
-		return( _parent.isResizeDragging() );
+		Boolean result = getIfNotNull( _parent, ResizeRelocateItem_parent::isResizeDragging );
+		if( result == null )
+			result = false;
+
+		return( result );
 	}
 
 	public SizeChangedObserved getSizeChangedObserved()
@@ -609,7 +623,8 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		else if( ( icon instanceof MetalComboBoxIcon ) && ( _component instanceof MetalComboBoxButton ) )
 		{
 			MetalComboBoxButton btn = (MetalComboBoxButton) _component;
-			result = new ZoomMetalComboBoxIcon( btn );
+			result = new ZoomMetalComboBoxIcon();
+			( (ZoomMetalComboBoxIcon) result).setParentButton(btn);
 		}
 		else
 		{
@@ -882,6 +897,11 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		MouseFunctions.storeLastMouseEvent(event);
 	}
 
+	public void updateZoom()
+	{
+		execute( _newExpectedZoomParam );
+	}
+
 	protected void parentResized()
 	{
 		if( _component instanceof JTextPane )
@@ -908,7 +928,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			{
 				_servingResizureFromListener = true;
 
-				execute( _newExpectedZoomParam );
+				updateZoom();
 
 				if( isActiveAnyFlagToResizeScrollableComp() &&
 					( _component.getParent() instanceof JViewport ) )
@@ -1230,10 +1250,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 
 	protected void resizeRelocate( Component comp, ZoomParam zp )
 	{
-		ResizeRelocateItem rri = null;
-
-		if( _parent != null )
-			rri = _parent.getResizeRelocateComponentItem(comp);
+		ResizeRelocateItem rri = getResizeRelocateItem(comp);
 
 		if( rri != null )
 			rri.execute( zp );
@@ -1718,12 +1735,15 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 				rci.doTasksAfterResizingComponent(zoomFactor);
 			}
 			else if( ( _component instanceof AbstractButton ) &&
-					!( _component instanceof ZoomComponentInterface ) )
+					!( _component instanceof ZoomComponentInterface )  &&
+					!( _component instanceof ResizableImageJButton ) )
 			{
 				String iconResourceName = getIconResourceName( _component );
 				if( iconResourceName != null )
+				{
 					ViewFunctions.instance().addImageToButtonAccurate( (AbstractButton) _component,
-													iconResourceName, new Insets(2,2,2,2) );
+													getImage( iconResourceName ), new Insets(2,2,2,2) );
+				}
 			}
 
 			if( ( newDimen != null ) ||
@@ -1744,6 +1764,22 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 			releaseSemaphore();
 	}
 
+	protected BufferedImage getImage( String iconResourceName )
+	{
+		BufferedImage result = ExecutionFunctions.instance().safeFunctionExecution( () ->
+			ImageFunctions.instance().loadImageFromJar(iconResourceName) );
+
+		if( ( result != null ) && ( isDarkMode() ) )
+			result = ImageFunctions.instance().invertImage(result);
+
+		return( result );
+	}
+
+	protected boolean isDarkMode()
+	{
+		return( FrameworkComponentFunctions.instance().isDarkMode(_component) );
+	}
+
 	protected void releaseSemaphore()
 	{
 		ExtendedZoomSemaphore ezs = isExtendedZoomSemaphoreActivated();
@@ -1756,6 +1792,17 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		}
 	}
 
+	protected <CC, RR> RR getIfNotNull( CC obj, Function<CC, RR> getter )
+	{
+		return( NullFunctions.instance().getIfNotNull(obj, getter) );
+	}
+
+	protected ResizeRelocateItem getResizeRelocateItem( Component comp )
+	{
+		return( getIfNotNull( _parent,
+						rrip -> rrip.getResizeRelocateComponentItem(comp) ) );
+	}
+
 	protected int getNumberOfChildrenWithExtendedZoomSemaphore( ExtendedZoomSemaphore ezs )
 	{
 		AtomicInteger result = new AtomicInteger(0);
@@ -1763,7 +1810,7 @@ public class ResizeRelocateItem implements ParamExecutorInterface< ZoomParam >,
 		{
 			ComponentFunctions.instance().browseComponentHierarchy(_component,
 				(comp) -> {
-					ResizeRelocateItem rri = _parent.getResizeRelocateComponentItem(comp);
+					ResizeRelocateItem rri = getResizeRelocateItem(comp);
 					if( ( rri != null ) && ( rri.getExtendedZoomSemaphore() == ezs ) )
 						result.incrementAndGet();
 					return( null );

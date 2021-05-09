@@ -21,6 +21,7 @@ package com.frojasg1.general.desktop.view.zoom.ui;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Graphics;
 import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalButtonUI;
 
 /**
@@ -35,6 +36,10 @@ public class ZoomMetalButtonUI extends MetalButtonUI implements ComponentUIforZo
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomMetalButtonUI();
+    }
 
 	@Override
 	public void init()

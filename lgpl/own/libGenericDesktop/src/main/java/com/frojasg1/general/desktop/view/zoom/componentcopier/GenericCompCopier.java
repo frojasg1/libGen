@@ -131,7 +131,40 @@ public class GenericCompCopier implements CompCopier<Component>
 											"originalComponentClass: " + origClass.getName() + " newComponentClass: " + newComponent.getClass().getName() ) );
 			}
 
-			List<Class<?>> classList = ReflectionFunctions.instance().getListOfClassesOfObjectFromTheMostGenericToTheMostParticular(originalComponent);
+			copyGen( originalComponent, newComponent, originalComponent.getClass() );
+		}
+	}
+
+	public void copyToNew( Component originalComponent, Component newComponent )
+	{
+		if( ( originalComponent != null ) && ( newComponent != null ) )
+		{
+			Class<?> clazzToCopy = newComponent.getClass();
+			checkClass( originalComponent, clazzToCopy );
+			checkClass( newComponent, clazzToCopy );
+
+			copyGen( originalComponent, newComponent, clazzToCopy );
+		}
+	}
+
+	protected void checkClass( Component comp, Class<?> clazz )
+	{
+		if( ! clazz.isInstance( comp ) )
+		{
+			throw( new RuntimeException( String.format( "Component: %s is not instanceof",
+														comp.getClass().getName(),
+														clazz.getName() )
+										)
+				);
+		}
+	}
+
+	protected void copyGen( Component originalComponent, Component newComponent,
+							Class<?> clazzToCopy )
+	{
+		if( ( originalComponent != null ) && ( newComponent != null ) )
+		{
+			List<Class<?>> classList = ReflectionFunctions.instance().getListOfClassesOfClassFromTheMostGenericToTheMostParticular(clazzToCopy);
 
 			for( Class<?> clazz: classList )
 			{

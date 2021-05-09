@@ -57,7 +57,7 @@ public class ResizeImageFast implements ResizeImageInterface
 	{
 		if( ( newWidth < 1 ) || ( newHeight < 1 ) )		throw( new IllegalArgumentException( "Bad size for image.   Width: " + newWidth + ". Height: " + newHeight ) );
 
-		BufferedImage result = new BufferedImage( newWidth, newHeight, original.getType() );
+		BufferedImage result = new BufferedImage( newWidth, newHeight, BufferedImage.TYPE_INT_ARGB );
 
 		double factorX = ((double) original.getWidth()) / newWidth ;
 		double factorY = ( (double) original.getHeight() ) / newHeight;

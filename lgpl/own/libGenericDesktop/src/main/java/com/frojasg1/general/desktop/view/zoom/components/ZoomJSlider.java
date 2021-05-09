@@ -18,8 +18,12 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
-import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
+import com.frojasg1.general.desktop.view.zoom.mapper.CustomComponent;
 import com.frojasg1.general.number.DoubleReference;
+import java.awt.Graphics;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
@@ -30,46 +34,55 @@ import javax.swing.plaf.ComponentUI;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomJSlider extends JSlider implements ZoomComponentInterface
+public class ZoomJSlider extends JSlider implements CustomComponent,
+															ColorThemeChangeableStatusBuilder
 {
 	protected ComponentForZoomOverriden _overridenMethods = null;
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
 
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
+
     public ZoomJSlider() {
 		super();
 
-		setOnChangeRepaint();
+		init();
 	}
 
 	public ZoomJSlider(int orientation) {
         super(orientation);
 
-		setOnChangeRepaint();
+		init();
     }
 
     public ZoomJSlider(int min, int max) {
         super(min, max);
 
-		setOnChangeRepaint();
+		init();
     }
 
     public ZoomJSlider(int min, int max, int value) {
         super(min, max, value);
 
-		setOnChangeRepaint();
+		init();
     }
 
     public ZoomJSlider(int orientation, int min, int max, int value)
     {
         super(orientation, min, max, value);
 
-		setOnChangeRepaint();
+		init();
     }
 
     public ZoomJSlider(BoundedRangeModel brm)
     {
 		super( brm );
 
+		init();
+	}
+
+	protected void init()
+	{
+		_colorThemeStatus = createColorThemeChangeableStatus();
 		setOnChangeRepaint();
 	}
 
@@ -137,4 +150,25 @@ public class ZoomJSlider extends JSlider implements ZoomComponentInterface
 	{
 		
 	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> super.paint(grp) , false);
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		// Intentionally left blank
+	}
 }
+

@@ -21,6 +21,8 @@ package com.frojasg1.general.desktop.view.zoom.ui;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import com.frojasg1.general.number.DoubleReference;
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicMenuUI;
 
 /**
@@ -35,6 +37,11 @@ public class ZoomBasicMenuUI extends BasicMenuUI implements ComponentUIforZoomIn
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomBasicMenuUI();
+    }
+
 
 	@Override
 	public void init()

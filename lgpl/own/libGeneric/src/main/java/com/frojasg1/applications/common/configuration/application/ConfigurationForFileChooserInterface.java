@@ -32,4 +32,7 @@ public interface ConfigurationForFileChooserInterface extends ZoomInterface
 
 	public Rectangle getLastFileChooserBounds();
 	public void setLastFileChooserBounds( Rectangle bounds );
+
+	public boolean isFileDetailsActivated();
+	public void setFileDetailsSelected( boolean value );
 }

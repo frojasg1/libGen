@@ -18,11 +18,18 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableBaseBuilder;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JRadioButtonMenuItem;
@@ -32,10 +39,14 @@ import javax.swing.plaf.ComponentUI;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem implements ComponentWithIconForZoomInterface
+public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem
+										implements ComponentWithIconForZoomInterface,
+													ColorThemeChangeableStatusBuilder
 {
 	protected ComponentWithIconForZoomOverriden _overridenMethods = null;
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
+
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
 
     /**
      * Creates a <code>JRadioButtonMenuItem</code> with no set text or icon.
@@ -122,6 +133,7 @@ public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem implements Co
      */
     public ZoomJRadioButtonMenuItem(String text, Icon icon, boolean selected) {
         super(text, icon, selected);
+		_colorThemeStatus = createColorThemeChangeableStatus();
     }
 
 	@Override
@@ -328,5 +340,25 @@ public class ZoomJRadioButtonMenuItem extends JRadioButtonMenuItem implements Co
 	public Dimension getPreferredSize()
 	{
 		return( super.getPreferredSize() );
+	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> super.paint(grp) , false);
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		_overridenMethods.invertColors(colorInversor);
 	}
 }

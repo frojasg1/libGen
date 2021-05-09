@@ -16,7 +16,7 @@
  *      http://www.gnu.org/licenses/lgpl-3.0.txt
  *
  */
-package com.frojasg1.general.desktop.view.combobox.utlis;
+package com.frojasg1.general.desktop.view.combobox.utils;
 
 import com.frojasg1.general.ArrayFunctions;
 import com.frojasg1.general.desktop.view.combobox.JComboBoxContainer;

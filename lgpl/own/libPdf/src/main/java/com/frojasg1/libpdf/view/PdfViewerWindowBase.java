@@ -18,7 +18,6 @@
  */
 package com.frojasg1.libpdf.view;
 
-import com.frojasg1.applications.common.components.internationalization.ExtendedZoomSemaphore;
 import com.frojasg1.applications.common.components.internationalization.window.InternationalizationInitializationEndCallback;
 import com.frojasg1.libpdf.view.api.PdfViewerControlView;
 import com.frojasg1.libpdf.view.api.PdfViewerMaster;
@@ -29,8 +28,8 @@ import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateC
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.ExecutionFunctions;
-import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.startapp.impl.GenericDesktopInitContextImpl;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.libpdf.api.PDFownerInterface;
 import com.frojasg1.libpdf.threads.LoadPdfControllerInterface;
@@ -46,6 +45,7 @@ import com.frojasg1.general.number.DoubleReference;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.libpdf.api.GlyphWrapper;
 import com.frojasg1.libpdf.api.ImageWrapper;
+import com.frojasg1.libpdf.utils.PdfUtils;
 import com.frojasg1.libpdf.view.controller.PdfObjectsSelectorObserverGen;
 import com.frojasg1.libpdf.view.listeners.PdfObjectsControllerListenerBase;
 import java.awt.Color;
@@ -65,6 +65,7 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Vector;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.swing.JComboBox;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -76,7 +77,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Usuario
  */
-public class PdfViewerWindowBase< CC extends ApplicationContext > extends InternationalizedJFrame<CC>
+public class PdfViewerWindowBase< CC extends GenericDesktopInitContextImpl > extends InternationalizedJFrame<CC>
 							implements PdfViewerMaster,
 										ImageJPanelControllerInterface,
 										PDFownerInterface,
@@ -103,8 +104,9 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	protected ComponentListener _componentListener = null;
 
-	protected ImageWrapper _hoverImage = null;
-	protected GlyphWrapper _hoverGlyph = null;
+	protected PdfViewerContext _pdfViewerContext = null;
+//	protected ImageWrapper _hoverImage = null;
+//	protected GlyphWrapper _hoverGlyph = null;
 
 	protected PdfDocumentWrapper _initialDocument = null;
 
@@ -124,19 +126,20 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 	public PdfViewerWindowBase( BaseApplicationConfigurationInterface appliConf,
 								CC applicationContext )
 	{
-		super( appliConf, applicationContext );
+		super( appliConf, applicationContext, true );
 	}
 
 	public PdfViewerWindowBase( BaseApplicationConfigurationInterface appliConf,
 								CC applicationContext,
 								Consumer<InternationalizationInitializationEndCallback> initializationEndCallBack )
 	{
-		super( appliConf, applicationContext, initializationEndCallBack );
+		super( appliConf, applicationContext, initializationEndCallBack, true );
 	}
 
 	public void init( LoadPdfControllerInterface parent,
 						String configurationBaseFileName )
 	{
+		_pdfViewerContext = createPdfViewerContext();
 		_parent = parent;
 
 		_configurationBaseFileName = configurationBaseFileName;
@@ -176,12 +179,12 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	protected ImageWrapper getHoverImage()
 	{
-		return( _hoverImage );
+		return( getPdfViewerContext().getHoverImage() );
 	}
 
 	protected GlyphWrapper getHoverGlyph()
 	{
-		return( _hoverGlyph );
+		return( getPdfViewerContext().getHoverGlyph() );
 	}
 
 	protected PdfObjectsControllerListenerBase getPdfObjectsControllerListener()
@@ -302,9 +305,14 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 
 	public void doNewPageTasks()
 	{
-		updateCurrentPageTexts();
+		doNewPageTasks( getCurrentPageIndex() );
+	}
 
-		updatePdfObjects( getCurrentPageIndex() );
+	public void doNewPageTasks(int pageIndex)
+	{
+		updateCurrentPageTexts(pageIndex);
+
+		updatePdfObjects( pageIndex );
 		_pdfObjectsControllerListener.resetSelection();
 	}
 
@@ -312,6 +320,7 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 	{
 		List<GlyphWrapper> glyphs = getGlyphsOfPage(pageIndex);
 		List<ImageWrapper> images = ExecutionFunctions.instance().safeFunctionExecution( () -> getPdfDocument().getImagesOfPage(pageIndex) );
+		PdfUtils.instance().setBackgroundImages( images, glyphs );
 		_pdfObjectsControllerListener.setGlyphsOfPage(glyphs);
 		_pdfObjectsControllerListener.setImagesOfPage(images);
 	}
@@ -322,16 +331,22 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 												getFactorForCharacterImages() ) ) );
 	}
 
+	public void updateCurrentPageTexts(int pageIndex)
+	{
+		_pdfViewerControlView.updateCurrentPageTexts( pageIndex + 1, getNumPages() );
+	}
+
 	public void updateCurrentPageTexts()
 	{
-		_pdfViewerControlView.updateCurrentPageTexts( getCurrentPageIndex() + 1, getNumPages() );
+		updateCurrentPageTexts( getCurrentPageIndex() );
 	}
 
 	public void updatePage( int pageIndex )
 	{
 //		if( isVisible() )
-		_pdfContentPanel.updatePage( pageIndex, getSelectedZoomFactor() );
+		doNewPageTasks(pageIndex);
 
+		_pdfContentPanel.updatePage( pageIndex, getSelectedZoomFactor() );
 		doNewPageTasks();
 	}
 
@@ -368,7 +383,9 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 			@Override
 			protected ImageJPanel createImageJPanel()
 			{
-				return( PdfViewerWindowBase.this.createImageJPanel(getImageScrollPane()) );
+				ImageJPanel result = PdfViewerWindowBase.this.createImageJPanel(getImageScrollPane());
+				result.setCanInvertImageColors(false);
+				return( result );
 			}
 		};
 		result.init( this, this );
@@ -637,49 +654,51 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		setNewPdfZoomFactor( getSelectedZoomFactor() );
 	}
 
-	protected void navigatorTask( Runnable navigatorUpdateFunction )
+	protected void navigatorTask( Supplier<Integer> newPageIndexGetter )
 	{
 		updateZoomFactor();
 
-		navigatorUpdateFunction.run();
+		int pageIndex = newPageIndexGetter.get();
 
-		doNewPageTasks();
+		doNewPageTasks(pageIndex);
+
+		_pdfContentPanel.updatePage(pageIndex);
 	}
 
 	@Override
 	public void navigator_start( InformerInterface panel )
 	{
-		navigatorTask( () -> _pdfContentPanel.navigator_start(panel) );
+		navigatorTask( _pdfContentPanel::getStartPage );
 	}
 
 	@Override
 	public void navigator_end( InformerInterface panel )
 	{
-		navigatorTask( () -> _pdfContentPanel.navigator_end(panel) );
+		navigatorTask( _pdfContentPanel::getEndPage );
 	}
 
 	@Override
 	public void navigator_previous( InformerInterface panel )
 	{
-		navigatorTask( () -> _pdfContentPanel.navigator_previous(panel) );
+		navigatorTask( _pdfContentPanel::decrementCurrentPage );
 	}
 
 	@Override
 	public void navigator_next( InformerInterface panel )
 	{
-		navigatorTask( () -> _pdfContentPanel.navigator_next(panel) );
+		navigatorTask( _pdfContentPanel::incrementCurrentPage );
 	}
 
 	@Override
 	public void previousPage()
 	{
-		navigatorTask( () -> _pdfContentPanel.previousPage() );
+		navigatorTask( _pdfContentPanel::decrementCurrentPage );
 	}
 
 	@Override
 	public void nextPage()
 	{
-		navigatorTask( () -> _pdfContentPanel.nextPage() );
+		navigatorTask( _pdfContentPanel::incrementCurrentPage );
 	}
 
 	@Override
@@ -861,10 +880,15 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		return( result );
 	}
 
+	protected PdfViewerContext createPdfViewerContext()
+	{
+		return( new PdfViewerContext() );
+	}
+
 	public PdfObjectsControllerListenerBase createPdfObjectsControllerListener()
 	{
 		PdfObjectsControllerListenerBase result = new PdfObjectsControllerListenerBase();
-		result.init( getPdfContentPanel().getImagePanel(), this);
+		result.init( getPdfContentPanel().getImagePanel(), this, getPdfViewerContext());
 
 		return( result );
 	}
@@ -894,10 +918,20 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 		}
 	}
 
+	protected void setHoverImage( ImageWrapper image )
+	{
+		getPdfViewerContext().setHoverImage(image);
+	}
+
+	protected void setHoverGlyph( GlyphWrapper glyph )
+	{
+		getPdfViewerContext().setHoverGlyph(glyph);
+	}
+
 	@Override
 	public void newImage(ImageWrapper image, Rectangle bounds)
 	{
-		_hoverImage = image;
+		setHoverImage( image );
 		_hoverImageBoundsOnImageJPanel = bounds;
 		SwingUtilities.invokeLater( () -> getPdfContentImageJPanel().repaint() );
 	}
@@ -905,7 +939,7 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 	@Override
 	public void newGlyph(GlyphWrapper glyph, Rectangle bounds)
 	{
-		_hoverGlyph = glyph;
+		setHoverGlyph( glyph );
 		_hoverGlyphBoundsOnImageJPanel = bounds;
 		getPdfContentImageJPanel().repaint();
 	}
@@ -914,6 +948,11 @@ public class PdfViewerWindowBase< CC extends ApplicationContext > extends Intern
 	protected void changeZoomFactorPreventingToPaint(double zoomFactor, Point center)
 	{
 		a_intern.changeZoomFactor( zoomFactor, center );
+	}
+
+	@Override
+	public PdfViewerContext getPdfViewerContext() {
+		return( _pdfViewerContext );
 	}
 
 }

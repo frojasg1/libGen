@@ -21,7 +21,6 @@
  */
 package com.frojasg1.general.jersey.queries.newversion;
 
-import com.frojasg1.general.BooleanFunctions;
 import com.frojasg1.general.FileFunctions;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQuery;
@@ -46,6 +45,7 @@ public abstract class NewVersionJerseyInetQuery extends InetQueryBase<NewVersion
 	protected static final String IS_APPLICATION_START_PARAM = "isApplicationStart";
 	protected static final String APPLICATION_LANGUAGE_PARAM = "applicationLanguage";
 	protected static final String WEB_LANGUAGE_PARAM = "webLanguage";
+	protected static final String IS_DARK_MODE_ACTIVATED_PARAM = "isDarkModeActivated";
 
 	@Override
 	public void init( String url )
@@ -114,14 +114,17 @@ public abstract class NewVersionJerseyInetQuery extends InetQueryBase<NewVersion
 		return( result );
 	}
 
+	@Override
 	public NewVersionQueryResult query( String downloadFile, boolean isApplicationStart,
 										String applicationLanguage,
-										String webLanguage ) throws InetQueryException
+										String webLanguage,
+										boolean isDarkModeActivated) throws InetQueryException
 	{
 		return( queryGen( VERSION_OF_SERVICE_PARAM, VERSION_OF_SERVICE_VALUE,
 						DOWNLOAD_FILE_PARAM, downloadFile,
-						IS_APPLICATION_START_PARAM, BooleanFunctions.instance().booleanToString(isApplicationStart),
+						IS_APPLICATION_START_PARAM, booleanToString(isApplicationStart),
 						APPLICATION_LANGUAGE_PARAM, applicationLanguage,
-						WEB_LANGUAGE_PARAM, webLanguage ) );
+						WEB_LANGUAGE_PARAM, webLanguage,
+						IS_DARK_MODE_ACTIVATED_PARAM, booleanToString(isDarkModeActivated)) );
 	}
 }

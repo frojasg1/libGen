@@ -16,13 +16,13 @@
  *      http://www.gnu.org/licenses/lgpl-3.0.txt
  *
  */
-package com.frojasg1.general.desktop.view.about.animation;
+package com.frojasg1.general.listeners;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface AnimationForAboutFactory {
-
-	public AnimationForAbout createAnimationForAbout();
+public interface ListOfListenersGenListener<LT> extends ListOfListeners<LT>
+{
+	public void notifyListeners( Notifier< LT >  notifier );
 }

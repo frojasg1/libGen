@@ -29,7 +29,7 @@ import javax.swing.JButton;
  *
  * @author Usuario
  */
-public class AcceptCancelPanel extends javax.swing.JPanel
+public class AcceptCancelPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 									implements // ResizableComponentInterface,
 												InformerInterface,
 												AcceptCancelControllerInterface,
@@ -47,6 +47,9 @@ public class AcceptCancelPanel extends javax.swing.JPanel
 	 */
 	public AcceptCancelPanel( AcceptCancelControllerInterface controller )
 	{
+		super.init();
+
+
 		_controller = controller;
 
 		initComponents();

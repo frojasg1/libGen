@@ -30,7 +30,7 @@ import java.awt.event.ActionListener;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class UpAndDownPanel extends javax.swing.JPanel implements InformerInterface, InternallyMappedComponent
+public class UpAndDownPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InformerInterface, InternallyMappedComponent
 {
 	protected static final String _resourcePath = "com/frojasg1/generic/resources/upanddown";
 
@@ -47,6 +47,8 @@ public class UpAndDownPanel extends javax.swing.JPanel implements InformerInterf
 	 * Creates new form UpAndDownPanel
 	 */
 	public UpAndDownPanel( UpAndDownControllerInterface controller ) {
+		super.init();
+
 		initComponents();
 
 		initOwnComponents();

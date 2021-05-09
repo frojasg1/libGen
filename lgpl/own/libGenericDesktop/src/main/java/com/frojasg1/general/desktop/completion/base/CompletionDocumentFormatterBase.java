@@ -33,6 +33,7 @@ import java.awt.Color;
 import java.awt.Component;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 
@@ -56,20 +57,34 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 	protected static final String ATTRIB_SELECTED = "SELECTED";
 
 
+	protected static final int INVERTIBLE_SELECTED_BACKGROUND_COLOR_INDEX = 0;
+	protected static final int INVERTIBLE_BLUE_COLOR_INDEX = 1;
+	protected static final int INVERTIBLE_BUTAN_COLOR_INDEX = 2;
+	protected static final int INVERTIBLE_GREY_COLOR_INDEX = 3;
 
 	protected static final Color SELECTED_BACKGROUND_COLOR = Colors.APPLE_GREEN;
 	protected static final Color BLUE_COLOR = Color.BLUE;
 //	protected static final Color BLUE_COLOR = new Color( 137, 216, 255 );
 	protected static final Color BUTAN_COLOR = Colors.BUTAN;
+	protected static final Color GREY_COLOR = Colors.GREY;
 
-
-	protected static final SetStyleAttribute _normalSetStyleAttribute = (style, defaultFontSize) ->{ } ;
-	protected static final SetStyleAttribute _selectedSetStyleAttribute = (style, defaultFontSize) ->	StyleConstants.setBackground(style, SELECTED_BACKGROUND_COLOR );
-	protected static final SetStyleAttribute _pretextSetStyleAttribute = (style, defaultFontSize) -> {
-		StyleConstants.setBold(style, true);
-		StyleConstants.setForeground(style, BLUE_COLOR );
+	protected static Color[] _originalPutOutableColorModeColors = new Color[] {
+		SELECTED_BACKGROUND_COLOR,
+		BLUE_COLOR,
+		BUTAN_COLOR,
+		GREY_COLOR
 	};
-	protected static final SetStyleAttribute _pretextSelectedSetStyleAttribute = (style, defaultFontSize) ->{
+
+
+	protected SetStyleAttribute _normalSetStyleAttribute = (style, defaultFontSize) ->{
+		StyleConstants.setForeground(style, getInvertibleColor( INVERTIBLE_GREY_COLOR_INDEX ) );
+	};
+	protected SetStyleAttribute _selectedSetStyleAttribute = (style, defaultFontSize) ->	StyleConstants.setBackground(style, getInvertibleColor( INVERTIBLE_SELECTED_BACKGROUND_COLOR_INDEX ) );
+	protected SetStyleAttribute _pretextSetStyleAttribute = (style, defaultFontSize) -> {
+		StyleConstants.setBold(style, true);
+		StyleConstants.setForeground(style, getInvertibleColor( INVERTIBLE_BLUE_COLOR_INDEX ) );
+	};
+	protected SetStyleAttribute _pretextSelectedSetStyleAttribute = (style, defaultFontSize) ->{
 		_pretextSetStyleAttribute.setStyleAttribute(style, defaultFontSize);
 		_selectedSetStyleAttribute.setStyleAttribute(style, defaultFontSize);
 	} ;
@@ -108,7 +123,13 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 	}
 
 	@Override
-	protected Style getLocalDefaultStyle( int fontSize )
+	protected void initializeZoomDocumentFormatter()
+	{
+		SwingUtilities.invokeLater( () -> super.initializeZoomDocumentFormatter() );
+	}
+
+	@Override
+	protected Style getLocalDefaultStyle( Integer fontSize )
 	{
 		Style result = super.getLocalDefaultStyle( fontSize );
 		StyleConstants.setFontFamily(result, "Courier New" );
@@ -117,7 +138,7 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 	}
 
 	@Override
-	protected void addParticularStyles( int defaultFontSize )
+	protected void addParticularStyles( Integer defaultFontSize )
 	{
 		addParticularStyles( defaultFontSize, createStyleName( ATTRIB_NORMAL, ATTRIB_NORMAL ), _normalSetStyleAttribute );
 		addParticularStyles( defaultFontSize, createStyleName( ATTRIB_NORMAL, ATTRIB_SELECTED ), _selectedSetStyleAttribute );
@@ -140,7 +161,8 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 		final Style styleLocalDefault = newFormattedStyleToBeModified(
 						createStyleName( LOCAL_DEFAULT_STYLE, attribute )
 															);
-		ssa.setStyleAttribute(styleLocalDefault, defaultFontSize);
+		if( ssa != null )
+			ssa.setStyleAttribute(styleLocalDefault, defaultFontSize);
 /*
 		final Style styleForFunctions = newFormattedStyleToBeModified(
 						createStyleName( ExpressionExternalFormatter.STYLE_FOR_FUNCTIONS, attribute )
@@ -182,7 +204,7 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 		int fontSize = IntegerFunctions.zoomValueCeil( defaultFontSize, 0.75D );
 		StyleConstants.setBold(styleForTypeOfCompletion, true);
 		StyleConstants.setFontFamily(styleForTypeOfCompletion, "Tahoma" );
-		StyleConstants.setForeground(styleForTypeOfCompletion, BUTAN_COLOR );
+		StyleConstants.setForeground(styleForTypeOfCompletion, getInvertibleColor( INVERTIBLE_BUTAN_COLOR_INDEX ) );
 		StyleConstants.setFontSize(styleForTypeOfCompletion, fontSize);
 	}
 
@@ -442,9 +464,13 @@ public class CompletionDocumentFormatterBase<MM extends PrototypeForCompletionBa
 		return( result );
 	}
 
+	@Override
+	protected Color[] createOriginalInvertibleColors() {
+		return( _originalPutOutableColorModeColors );
+	}
+
 	protected interface SetStyleAttribute
 	{
 		public void setStyleAttribute( Style style, int defaultFontSize );
 	}
-
 }

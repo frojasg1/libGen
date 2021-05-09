@@ -315,16 +315,16 @@ public class ViewFunctions
 
 	protected String getComponentDetailString( Component comp, GetComponentDetail gcd )
 	{
-		String compClassName = "null";
+		String defaultMessage = "null";
 		if( comp != null )
-			compClassName = comp.getClass().getName();
+			defaultMessage = comp.getClass().getName() + "( name: " + comp.getName() + ")";
 
 		String detail = ( gcd == null ? "" : gcd.getComponentDetail(comp) );
 		String result = null;
 		if( ( detail == null ) || ( detail.isEmpty() ) )
-			result = compClassName;
+			result = defaultMessage;
 		else
-			result = String.format( "%s ----> %s", compClassName, detail );
+			result = String.format( "%s ----> %s", defaultMessage, detail );
 
 		return( result );
 	}
@@ -1037,6 +1037,60 @@ public class ViewFunctions
 		int yy = IntegerFunctions.limit( targetPoint.y, minYy, maxYy );
 
 		return( new Point( xx, yy ) );
+	}
+
+	public Rectangle addArea( Rectangle origRect, Rectangle areaToAdd )
+	{
+		Rectangle result = origRect;
+		if( result == null )
+			result = areaToAdd;
+		else if( areaToAdd != null )
+		{
+			int maxX = IntegerFunctions.max( result.x + result.width,
+											areaToAdd.x + areaToAdd.width );
+			int maxY = IntegerFunctions.max( result.y + result.height,
+											areaToAdd.y + areaToAdd.height );
+			result.x = IntegerFunctions.min( result.x, areaToAdd.x );
+			result.y = IntegerFunctions.min( result.y, areaToAdd.y );
+			result.width = maxX - result.x;
+			result.height = maxY - result.y;
+		}
+
+		return( result );
+	}
+
+	public Rectangle applyLimits( Rectangle rect, Dimension limits )
+	{
+		Rectangle result = rect;
+		if( ( result != null ) && ( limits != null ) )
+		{
+			result.x = IntegerFunctions.max( 0, result.x );
+			result.y = IntegerFunctions.max( 0, result.y );
+			result.width = IntegerFunctions.max( 0, IntegerFunctions.min( result.width, limits.width - result.x ) );
+			result.height = IntegerFunctions.max( 0, IntegerFunctions.min( result.height, limits.height - result.y ) );
+		}
+
+		return( result );
+	}
+
+	public Rectangle widenBounds( Rectangle origRect, int width, int height,
+									Dimension limits )
+	{
+		Rectangle result = origRect;
+		if( result != null )
+		{
+			result.x -= width;
+			result.y -= height;
+			result.width += width;
+			result.height += height;
+			
+			if( limits != null )
+			{
+				result = applyLimits(result, limits);
+			}
+		}
+
+		return( result );
 	}
 
 	protected interface CreateImageForButton

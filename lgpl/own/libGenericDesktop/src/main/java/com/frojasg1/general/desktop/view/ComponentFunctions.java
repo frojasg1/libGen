@@ -19,8 +19,9 @@
 package com.frojasg1.general.desktop.view;
 
 import com.frojasg1.general.ExecutionFunctions;
+import com.frojasg1.general.desktop.view.combobox.utils.ComboBoxFunctions;
 import com.frojasg1.general.matchers.impl.IntegerToleranceMatcher;
-import com.frojasg1.general.view.ViewComponent;
+import com.frojasg1.general.view.ReleaseResourcesable;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -28,26 +29,30 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
-import javax.swing.plaf.basic.BasicComboPopup;
 
 /**
  *
@@ -71,8 +76,8 @@ public class ComponentFunctions
 
 	public void releaseResources( Component comp )
 	{
-		if( comp instanceof ViewComponent )
-			( (ViewComponent) comp ).releaseResources();
+		if( comp instanceof ReleaseResourcesable )
+			( (ReleaseResourcesable) comp ).releaseResources();
 	}
 
 	public void browseComponentHierarchy( Component comp, ExecuteToComponent executeToComp )
@@ -93,6 +98,7 @@ public class ComponentFunctions
 				( comp instanceof JInternalFrame )  ||
 				( comp instanceof Container ) )
 			{
+/*
 				if( comp instanceof JSplitPane	)
 				{
 					JSplitPane jsp = (JSplitPane) comp;
@@ -107,7 +113,9 @@ public class ComponentFunctions
 						browseComponentHierarchy( jsp.getBottomComponent(), executeToComp );
 					}
 				}
-/*
+				else if( comp instanceof JTable )
+					browseComponentHierarchy( ( (JTable) comp ).getTableHeader(), executeToComp );
+
 				else if( comp instanceof JScrollPane )
 				{
 					JScrollPane sp = (JScrollPane) comp;
@@ -127,13 +135,13 @@ public class ComponentFunctions
 						browseComponentHierarchy( tabbedPane.getComponentAt(ii), executeToComp );
 					}
 				}
-				else if( comp instanceof JComboBox )
-				{
-					JComboBox combo = (JComboBox) comp;
-					BasicComboPopup popup = (BasicComboPopup) combo.getUI().getAccessibleChild(combo, 0);
-
-					browseComponentHierarchy( popup, executeToComp );
-				}
+//				else if( comp instanceof JComboBox )
+//				{
+//					JComboBox combo = (JComboBox) comp;
+//					BasicComboPopup popup = (BasicComboPopup) combo.getUI().getAccessibleChild(combo, 0);
+//
+//					browseComponentHierarchy( popup, executeToComp );
+//				}
 				else if( comp instanceof Container )
 				{
 					Container contnr = (Container) comp;
@@ -146,7 +154,110 @@ public class ComponentFunctions
 						browseComponentHierarchy( contnr.getComponent(ii), executeToComp );
 					}
 				}
+
+				if( comp instanceof JComboBox )
+				{
+					JComboBox combo = (JComboBox) comp;
+					JPopupMenu popup = ComboBoxFunctions.instance().getComboPopup(combo);
+//					BasicComboPopup popup = (BasicComboPopup) combo.getUI().getAccessibleChild(combo, 0);
+
+					browseComponentHierarchy( popup, executeToComp );
+				}
+
 			}
+		}
+	}
+
+	public void browseComponentHierarchy( Component comp, BiConsumer<Component, ComponentProcessingResult> executeToComp )
+	{
+		if( comp != null )
+		{
+			ComponentProcessingResult compProcessResult = new ComponentProcessingResult();
+			if( executeToComp != null )
+			{
+				executeToComp.accept(comp, compProcessResult);
+				for( Component child: compProcessResult.getLinkedChildrenList() )
+					browseComponentHierarchy( child, executeToComp );
+			}
+
+			if( compProcessResult.hasToProcessChildren() &&
+				( ( comp instanceof JFrame ) ||
+					( comp instanceof JRootPane ) ||
+					( comp instanceof JLayeredPane ) ||
+					( comp instanceof JPanel ) ||
+					( comp instanceof JInternalFrame )  ||
+					( comp instanceof Container )
+				)
+			  )
+			{
+/*
+				if( comp instanceof JSplitPane	)
+				{
+					JSplitPane jsp = (JSplitPane) comp;
+					if( jsp.getOrientation() == JSplitPane.HORIZONTAL_SPLIT )
+					{
+						browseComponentHierarchy( jsp.getLeftComponent(), executeToComp );
+						browseComponentHierarchy( jsp.getRightComponent(), executeToComp );
+					}
+					else if( jsp.getOrientation() == JSplitPane.VERTICAL_SPLIT )
+					{
+						browseComponentHierarchy( jsp.getTopComponent(), executeToComp );
+						browseComponentHierarchy( jsp.getBottomComponent(), executeToComp );
+					}
+				}
+				else if( comp instanceof JTable )
+					browseComponentHierarchy( ( (JTable) comp ).getTableHeader(), executeToComp );
+
+				else if( comp instanceof JScrollPane )
+				{
+					JScrollPane sp = (JScrollPane) comp;
+					browseComponentHierarchy( sp.getViewport(), executeToComp );
+				}
+				else if( comp instanceof JViewport )
+				{
+					JViewport vp = (JViewport) comp;
+					browseComponentHierarchy( vp.getView(), executeToComp );
+				}
+*/
+				if( comp instanceof JTabbedPane )
+				{
+					JTabbedPane tabbedPane = (JTabbedPane) comp;
+					for( int ii=0; ii<tabbedPane.getTabCount(); ii++ )
+					{
+						browseComponentHierarchy( tabbedPane.getComponentAt(ii), executeToComp );
+					}
+				}
+//				else if( comp instanceof JComboBox )
+//				{
+//					JComboBox combo = (JComboBox) comp;
+//					BasicComboPopup popup = (BasicComboPopup) combo.getUI().getAccessibleChild(combo, 0);
+//
+//					browseComponentHierarchy( popup, executeToComp );
+//				}
+				else if( comp instanceof Container )
+				{
+					Container contnr = (Container) comp;
+
+					if( comp instanceof JMenu )
+						browseComponentHierarchy( ( ( JMenu ) comp ).getPopupMenu(), executeToComp );
+
+					for( int ii=0; ii<contnr.getComponentCount(); ii++ )
+					{
+						browseComponentHierarchy( contnr.getComponent(ii), executeToComp );
+					}
+				}
+
+				if( comp instanceof JComboBox )
+				{
+					JComboBox combo = (JComboBox) comp;
+					JPopupMenu popup = ComboBoxFunctions.instance().getComboPopup(combo);
+//					BasicComboPopup popup = (BasicComboPopup) combo.getUI().getAccessibleChild(combo, 0);
+
+					browseComponentHierarchy( popup, executeToComp );
+				}
+			}
+
+			compProcessResult.reset();
 		}
 	}
 
@@ -187,14 +298,21 @@ public class ComponentFunctions
 
 	public boolean isAnyParentInstanceOf( Class<?> clazz, Component comp )
 	{
-		boolean result = false;
-		
+		return( getFirstParentInstanceOf(clazz, comp) != null );
+	}
+
+	public <CC> CC getFirstParentInstanceOf( Class<CC> clazz, Component comp )
+	{
+		CC result = null;
+
 		if( ( comp != null ) && ( clazz != null ) )
 		{
-			Component current = comp;
-			while( ( current != null ) && !result )
+			Component current = comp.getParent();
+			while( ( current != null ) && ( result == null ) )
 			{
-				result = clazz.isInstance(comp);
+				if( clazz.isInstance(current) )
+					result = (CC) current;
+
 				current = current.getParent();
 			}
 		}
@@ -212,6 +330,8 @@ public class ComponentFunctions
 			while( ( current != null ) && !result )
 			{
 				result = ( possibleParent == current );
+				if( current instanceof JDialog )
+					break;
 				current = current.getParent();
 			}
 		}
@@ -379,8 +499,98 @@ public class ComponentFunctions
 		return( result );
 	}
 
+	public <CC> CC getFirstParentOfClass( Component comp, Class<CC> clazz )
+	{
+		CC result = null;
+		if( clazz != null )
+		{
+			Component tmpComp = comp;
+			while( ( result == null ) && ( tmpComp != null ) )
+			{
+				if( clazz.isInstance(tmpComp) )
+					result = (CC) tmpComp;
+
+				tmpComp = tmpComp.getParent();
+			}
+		}
+
+		return( result );
+	}
+
+	protected boolean componentContainsScreenPoint( Component comp, Point screenPoint )
+	{
+		return( ViewFunctions.instance().componentContainsScreenPoint(comp, screenPoint ) );
+	}
+
+	public void inspectHierarchy( Component comp )
+	{
+		inspectHierarchy(comp,
+			current -> {
+				while( current != null )
+				{
+					Component comp2 = current;
+					ExecutionFunctions.instance().safeSilentMethodExecution(() -> {
+							System.out.println(
+								String.format( "Componente. Clase: %s, nombre: %s, límites: %s, background: %s",
+									comp2.getClass().getName(), comp2.getName(), comp2.getBounds(),
+									ExecutionFunctions.instance().safeSilentFunctionExecution( () -> Integer.toHexString( comp2.getBackground().getRGB() ) )
+								)
+							);
+					}
+					);
+
+					current = current.getParent();
+				}
+		} );
+	}
+
+	public void inspectHierarchy( Component comp, Consumer<Component> processComponentFunction )
+	{
+		MouseAdapter adapter = new MouseAdapter() {
+			@Override
+			public void mouseClicked( MouseEvent me )
+			{
+				Component current = me.getComponent();
+
+				ExecutionFunctions.instance().safeMethodExecution( () -> processComponentFunction.accept(current) );
+			}
+		};
+		browseComponentHierarchy( comp, comp2 -> { comp2.addMouseListener( adapter ); return( null ); } );
+	}
+
 	public interface ExecuteToComponent
 	{
 		public Component executeToComponent( Component comp );
+	}
+
+	public static class ComponentProcessingResult
+	{
+		protected boolean _processChildren = true;
+
+		protected List<Component> _linkedChildrenList = new ArrayList<>();
+
+		public boolean hasToProcessChildren() {
+			return _processChildren;
+		}
+
+		public void setProcessChildren(boolean _processChildren) {
+			this._processChildren = _processChildren;
+		}
+
+		public void addLinkedChildren( Component linkedChild )
+		{
+			_linkedChildrenList.add( linkedChild );
+		}
+
+		public List<Component> getLinkedChildrenList()
+		{
+			return( _linkedChildrenList );
+		}
+
+		public void reset()
+		{
+			_linkedChildrenList.clear();
+			_processChildren = true;
+		}
 	}
 }

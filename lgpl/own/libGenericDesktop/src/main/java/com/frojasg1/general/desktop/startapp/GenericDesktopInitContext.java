@@ -1,52 +1,23 @@
-/* 
- * Copyright (C) 2021 Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3.0 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You may obtain a copy of the License at
- *
- *      http://www.gnu.org/licenses/lgpl-3.0.txt
- *
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 package com.frojasg1.general.desktop.startapp;
 
 import com.frojasg1.general.context.ApplicationContext;
-import com.frojasg1.general.desktop.view.about.animation.AnimationForAboutFactory;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.lib3d.components.api.about.animation.AnimationForAboutFactory;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class GenericDesktopInitContext implements ApplicationContext
-{
-	protected String _applicationName = null;
-	protected AnimationForAboutFactory _animationFactory = null;
-
-	public void setApplicationName( String value )
-	{
-		_applicationName = value;
-	}
-
-	public String getApplicationName()
-	{
-		return( _applicationName );
-	}
-
-	public void setAnimationForAboutFactory( AnimationForAboutFactory animationFactory )
-	{
-		_animationFactory = animationFactory;
-	}
-
-	public AnimationForAboutFactory getAnimationForAboutFactory()
-	{
-		return( _animationFactory );
-	}
+public interface GenericDesktopInitContext extends ApplicationContext {
+	public void setApplicationName( String value );
+	public String getApplicationName();
+	public void setAnimationForAboutFactory( AnimationForAboutFactory animationFactory );
+	public AnimationForAboutFactory getAnimationForAboutFactory();
+	public void setColorInversor(ColorInversor ci);
+	public ColorInversor getColorInversor();
 }

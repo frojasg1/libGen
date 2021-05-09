@@ -30,6 +30,7 @@ public class ConfigurationForFileChooserImp implements ConfigurationForFileChoos
 	protected double _zoomFactor = 1.0D;
 	protected Rectangle _lastFileChooserBounds = null;
 	protected String _lastDirectory = null;
+	protected boolean _isFileDetailsActivated = false;
 
 	public void init( BaseApplicationConfigurationInterface conf )
 	{
@@ -101,5 +102,15 @@ public class ConfigurationForFileChooserImp implements ConfigurationForFileChoos
 
 			conf.serverChangeZoomFactor(_zoomFactor);
 		}
+	}
+
+	@Override
+	public boolean isFileDetailsActivated() {
+		return( _isFileDetailsActivated );
+	}
+
+	@Override
+	public void setFileDetailsSelected(boolean value) {
+		_isFileDetailsActivated = value;
 	}
 }

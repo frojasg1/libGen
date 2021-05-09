@@ -18,11 +18,19 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
-import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableBaseBuilder;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
+import com.frojasg1.general.desktop.view.zoom.mapper.CustomComponent;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 
@@ -30,9 +38,12 @@ import javax.swing.plaf.basic.BasicArrowButton;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomBasicArrowButton_  extends BasicArrowButton implements ZoomComponentInterface
+public class ZoomBasicArrowButton_  extends BasicArrowButton implements CustomComponent,
+															ColorThemeChangeableStatusBuilder
 {
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
+
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
 
 	public ZoomBasicArrowButton_ ()
 	{
@@ -42,12 +53,14 @@ public class ZoomBasicArrowButton_  extends BasicArrowButton implements ZoomComp
 	public ZoomBasicArrowButton_ (int direction)
 	{
 		super(direction);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	public ZoomBasicArrowButton_(int direction, Color background, Color shadow,
 							Color darkShadow, Color highlight)
 	{
 		super(direction, background, shadow, darkShadow, highlight);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	@Override
@@ -107,5 +120,25 @@ public class ZoomBasicArrowButton_  extends BasicArrowButton implements ZoomComp
 	public DoubleReference getZoomFactorReference()
 	{
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> super.paint(grp) , false);
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		// Intentionally left blank
 	}
 }

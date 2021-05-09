@@ -20,8 +20,11 @@ package com.frojasg1.libpdf.utils;
 
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.libpdf.api.GlyphWrapper;
+import com.frojasg1.libpdf.api.ImageWrapper;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -91,4 +94,113 @@ public class PdfUtils
 		return( sb.toString() );
 	}
 
+	protected int applyFactor( int value, float factor )
+	{
+		return( (int) Math.round( value * factor ) );
+	}
+
+	public Rectangle applyFactor( Rectangle bounds, float factor )
+	{
+		Rectangle result = null;
+		if( bounds != null )
+			result = applyFactorNoCopy( new Rectangle( bounds ), factor );
+
+		return( result );
+	}
+
+	protected Rectangle applyFactorNoCopy( Rectangle bounds, float factor )
+	{
+		if( bounds != null )
+		{
+			bounds.x = applyFactor( bounds.x, factor );
+			bounds.y = applyFactor( bounds.y, factor );
+			bounds.width = applyFactor( bounds.width, factor );
+			bounds.height = applyFactor( bounds.height, factor );
+		}
+
+		return( bounds );
+	}
+
+	protected BufferedImage getGlyphImage( BufferedImage pageImage, Rectangle bounds )
+	{
+		return getSubImage( pageImage, bounds ); 
+//		return getSubImage( pageImage, new Rectangle( 0, 0, pageImage.getWidth(),
+//													pageImage.getHeight() ) ); 
+	}
+
+	public BufferedImage getSubImage( BufferedImage image, Rectangle bounds )
+	{
+		BufferedImage result = new BufferedImage( bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB );
+		Graphics2D grp = result.createGraphics();
+		grp.drawImage(image, 0, 0, bounds.width, bounds.height,
+							bounds.x, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height,
+							null, null);
+		grp.dispose();
+
+		return( result );
+	}
+/*
+	public void setBackgroundImages( List<ImageWrapper> listOfImages, GlyphWrapper glyphWrapper )
+	{
+		if( listOfImages != null )
+		{
+			for( ImageWrapper image: listOfImages )
+			{
+				if( isGlyphValid( glyphWrapper ) &&
+					( image.getBounds().contains( glyphWrapper.getBounds() ) ||
+					image.getBounds().intersects(glyphWrapper.getBounds() ) ) )
+				{
+					image.setIsBackground(true);
+				}
+			}
+		}
+	}
+*/
+
+	public boolean imageOverlapsGlyph( ImageWrapper imageWrapper, GlyphWrapper glyphWrapper )
+	{
+		return( isGlyphValid( glyphWrapper ) &&
+					( imageWrapper.getBounds().contains( glyphWrapper.getBounds() ) ||
+					imageWrapper.getBounds().intersects(glyphWrapper.getBounds() ) ) );
+	}
+
+	public int countGlyphsOverlapping( ImageWrapper imageWrapper, List<GlyphWrapper> glyphs )
+	{
+		int result = 0;
+		if( glyphs != null )
+		{
+			for( GlyphWrapper glyphWrapper: glyphs )
+				if( imageOverlapsGlyph( imageWrapper, glyphWrapper ) )
+					result++;
+		}
+
+		return( result );
+	}
+
+	protected boolean isGlyphValid( GlyphWrapper glyph )
+	{
+		boolean result = false;
+
+		if( glyph != null )
+			result = ( glyph.getBounds().width * glyph.getBounds().height ) > 9;
+
+		return( result );
+	}
+
+	public void setBackgroundImages( List<ImageWrapper> listOfImages, List<GlyphWrapper> glyphs )
+	{
+/*
+		if( glyphs != null )
+			for( GlyphWrapper glyph: glyphs )
+				setBackgroundImages( listOfImages, glyph );
+*/
+		if( listOfImages != null )
+			for( ImageWrapper imageWrapper: listOfImages )
+			{
+				int number = countGlyphsOverlapping(imageWrapper, glyphs);
+				imageWrapper.setNumberOfOverlappingGlyphs(number);
+				if( number > 16 )
+					imageWrapper.setIsBackground(true);
+			}
+	}
 }

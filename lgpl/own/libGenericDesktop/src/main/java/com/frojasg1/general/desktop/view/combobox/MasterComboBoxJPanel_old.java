@@ -33,8 +33,8 @@ import com.frojasg1.general.combohistory.TextComboBoxContent;
  *
  * @author fjavier.rojas
  */
-public abstract class MasterComboBoxJPanel_old extends javax.swing.JPanel implements InternallyMappedComponent
-//public class MasterComboBoxJPanel_old extends javax.swing.JPanel implements InternallyMappedComponent
+public abstract class MasterComboBoxJPanel_old extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InternallyMappedComponent
+//public class MasterComboBoxJPanel_old extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InternallyMappedComponent
 {
 /*
 	protected AddRemoveModifyItemNewSelectionController _controller = null;

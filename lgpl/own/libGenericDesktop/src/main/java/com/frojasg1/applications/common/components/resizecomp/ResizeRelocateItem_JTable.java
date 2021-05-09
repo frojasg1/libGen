@@ -19,6 +19,7 @@
 package com.frojasg1.applications.common.components.resizecomp;
 
 import com.frojasg1.applications.common.components.internationalization.InternException;
+import com.frojasg1.general.desktop.view.jtable.JTableFunctions;
 import java.awt.Component;
 import java.awt.Dimension;
 import javax.swing.JTable;
@@ -65,36 +66,17 @@ public class ResizeRelocateItem_JTable extends ResizeRelocateItem
 
 	protected TableCellRenderer getTableCellRenderer( int column )
 	{
-		TableCellRenderer result = null;
-
-		JTable table = getComponent();
-		if( ( table.getColumnModel() != null ) &&
-			( table.getColumnModel().getColumnCount() > column ) )
-		{
-			result = table.getCellRenderer(0, column);
-		}
-
-		return( result );
+		return( JTableFunctions.instance().getTableCellRenderer( getComponent(), column ) );
 	}
 
 	protected void updateJTable( double zoomFactor )
 	{
 		if( SwingUtilities.isEventDispatchThread() )
 		{
-			if( _originalCellPreferredHeight != null )
-			{
-				TableCellRenderer tcr = getTableCellRenderer( 0 );
-				if( tcr instanceof Component )
-				{
-					Component tcrComp = (Component) tcr;
-
-					tcrComp.setPreferredSize( new Dimension( tcrComp.getPreferredSize().width,
-												ceil( _originalCellPreferredHeight, zoomFactor ) ) );
-				}
-			}
-
-			double newHeight = Math.round( _originalRowHeightForTable * zoomFactor );
-			getComponent().setRowHeight( ( new Double( newHeight ) ).intValue() );
+			JTableFunctions.instance().zoomTableRows( getComponent(),
+													_originalCellPreferredHeight,
+													_originalRowHeightForTable,
+													zoomFactor );
 		}
 		else
 			SwingUtilities.invokeLater( () -> updateJTable( zoomFactor ) );

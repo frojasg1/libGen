@@ -50,6 +50,8 @@ public interface PdfDocumentWrapper extends PDFownerInterface
 	public float getDpi( double factor );
 
 	public List<ImageWrapper> getImagesOfPage( int pageIndex ) throws IOException;
+	public List<ImageWrapper> getImagesOfPage() throws IOException;
 
 	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex, boolean getImages, Float factorForImages) throws IOException;
+	public List<GlyphWrapper> getGlyphsOfPage( boolean getImages, Float factorForImages) throws IOException;
 }

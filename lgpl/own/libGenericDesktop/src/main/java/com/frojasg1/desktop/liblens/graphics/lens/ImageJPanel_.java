@@ -28,13 +28,15 @@ import javax.swing.JPanel;
  *
  * @author Usuario
  */
-public class ImageJPanel_ extends JPanel
+public class ImageJPanel_ extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 {
 
 	protected BufferedImage a_image = null;
 
 	public ImageJPanel_( String imageFileName )
 	{
+		super.init();
+
 		File file = new File( imageFileName );
 		try
 		{

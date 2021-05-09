@@ -18,21 +18,22 @@
  */
 package com.frojasg1.libpdf.view.listeners;
 
+import com.frojasg1.general.NullFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.desktop.view.pdf.ImageJPanel;
 import com.frojasg1.libpdf.api.GlyphWrapper;
 import com.frojasg1.libpdf.api.ImageWrapper;
+import com.frojasg1.libpdf.view.PdfViewerContext;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.RenderedImage;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import com.frojasg1.libpdf.view.controller.PdfObjectsSelectorObserverGen;
+import java.util.function.Function;
 
 /**
  *
@@ -42,25 +43,35 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 {
 	protected static final Point ORIGIN = new Point( 0, 0 );
 
-	protected List<GlyphWrapper> _glyphsOfPage = null;
-	protected List<ImageWrapper> _imagesOfPage = null;
+	protected PdfViewerContext _pdfViewerContext;
+
+//	protected List<GlyphWrapper> _glyphsOfPage = null;
+//	protected List<ImageWrapper> _imagesOfPage = null;
 
 	protected ImageJPanel _imageJPanel = null;
 
 	protected PdfObjectsSelectorObserverGen _objectSelectorObserver = null;
 
-	protected GlyphWrapper _selectedGlyph = null;
-	protected ImageWrapper _selectedImage = null;
+//	protected GlyphWrapper _selectedGlyph = null;
+//	protected ImageWrapper _selectedImage = null;
 
 //	protected Map<RenderedImage, Rectangle> _imagesNormalizedBounds = new HashMap<>();
 
-	public void init( ImageJPanel imageJPanel, PdfObjectsSelectorObserverGen objectSelectorObserver )
+	public void init( ImageJPanel imageJPanel,
+						PdfObjectsSelectorObserverGen objectSelectorObserver,
+						PdfViewerContext pdfViewerContext )
 	{
+		_pdfViewerContext = pdfViewerContext;
 		_imageJPanel = imageJPanel;
 
 		addListeners();
 
 		_objectSelectorObserver = objectSelectorObserver;
+	}
+
+	protected PdfViewerContext getPdfViewerContext()
+	{
+		return( _pdfViewerContext );
 	}
 
 	protected PdfObjectsSelectorObserverGen getPdfObjectsSelectorObserved()
@@ -91,7 +102,7 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 	@Override
 	public void mousePressed( MouseEvent evt )
 	{
-		_selectedGlyph = getGlyph( getNormalizedLocation( evt.getPoint() ) );
+		setSelectedGlyph( getGlyph( getNormalizedLocation( evt.getPoint() ) ) );
 	}
 
 	@Override
@@ -109,15 +120,18 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 	@Override
     public void mouseExited(MouseEvent e)
 	{
-		_selectedGlyph = null;
-		_selectedImage = null;
-		
+		setSelectedItemsToNull();
+	}
+
+	protected void setSelectedItemsToNull()
+	{
+		setSelectedGlyph(null);
+		setSelectedImage(null);
 	}
 
 	public void resetSelection()
 	{
-		_selectedGlyph = null;
-		_selectedImage = null;
+		setSelectedItemsToNull();
 
 		_objectSelectorObserver.newGlyph(null, null );
 		_objectSelectorObserver.newImage(null, null );
@@ -129,18 +143,18 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 		GlyphWrapper glyph = getGlyph( normalizedPoint );
 		ImageWrapper image = getImage( normalizedPoint );
 
-		if( _selectedGlyph != glyph )
+		if( getSelectedGlyph() != glyph )
 		{
 			_objectSelectorObserver.newGlyph(glyph,
 				( glyph == null ) ? null : PdfObjectsControllerListenerBase.this.getBoundsOnImageJPanel( glyph.getBounds() ) );
-			_selectedGlyph = glyph;
+			setSelectedGlyph( glyph );
 		}
 
-		if( _selectedImage != image )
+		if( getSelectedImage() != image )
 		{
 			_objectSelectorObserver.newImage(image,
 				( image == null ) ? null : getBoundsOnImageJPanel( image.getBounds() ) );
-			_selectedImage = image;
+			setSelectedImage( image );
 		}
 	}
 
@@ -148,13 +162,13 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 	protected GlyphWrapper getGlyph( Point point )
 	{
 		GlyphWrapper result = null;
-		if( _glyphsOfPage != null )
+		if( getGlyphsOfPage() != null )
 		{
-			if( ( _selectedGlyph != null ) && _selectedGlyph.getBounds().contains( point ) )
-				result = _selectedGlyph;
+			if( ( getSelectedGlyph() != null ) && getSelectedGlyph().getBounds().contains( point ) )
+				result = getSelectedGlyph();
 			else
 			{
-				Optional<GlyphWrapper> opt = _glyphsOfPage.stream().filter( (gl) -> gl.getBounds().contains( point ) ).findAny();
+				Optional<GlyphWrapper> opt = getGlyphsOfPage().stream().filter( (gl) -> gl.getBounds().contains( point ) ).findAny();
 				if( opt.isPresent() )
 					result = opt.get();
 			}
@@ -166,13 +180,13 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 	protected ImageWrapper getImage( Point point )
 	{
 		ImageWrapper result = null;
-		if( _imagesOfPage != null )
+		if( getImagesOfPage() != null )
 		{
 //			if( ( _selectedImage != null ) && getNormalizedBounds( _selectedImage ).contains( point ) )
 //				result = _selectedImage;
 //			else
 			{
-				Optional<ImageWrapper> opt = _imagesOfPage.stream()
+				Optional<ImageWrapper> opt = getImagesOfPage().stream()
 					.filter( (im) -> getNormalizedBounds(im).contains( point ) )
 					.sorted( (im1, im2) -> area(im1.getImage()) - area(im2.getImage()) )
 					.findFirst();
@@ -193,37 +207,20 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 		return( result );
 	}
 
-	public void setGlyphsOfPage( List<GlyphWrapper> glyphsOfPage )
+	protected <CC, RR> RR getIfNotNull( CC obj, Function<CC, RR> getter )
 	{
-		_glyphsOfPage = glyphsOfPage;
-		_selectedGlyph = null;
-	}
-
-	protected GlyphWrapper getSelectedGlyph()
-	{
-		return( _selectedGlyph );
-	}
-
-	public List<GlyphWrapper> getGlyphsOfPage( )
-	{
-		return( _glyphsOfPage );
-	}
-
-	public void setImagesOfPage( List<ImageWrapper> imagesOfPage )
-	{
-		_imagesOfPage = imagesOfPage;
-		_selectedImage = null;
-//		_imagesNormalizedBounds.clear();
-	}
-
-	public List<ImageWrapper> getImagesOfPage()
-	{
-		return( _imagesOfPage );
+		return( NullFunctions.instance().getIfNotNull(obj, getter) );
 	}
 
 	protected double getZoomFactor()
 	{
-		return( _imageJPanel.getZoomFactor()._value );
+		Double result = getIfNotNull(
+							getIfNotNull( _imageJPanel, ImageJPanel::getZoomFactor ),
+							zf -> zf._value );
+		if( result == null )
+			result = 1.0d;
+
+		return( result );
 	}
 
 	protected Point getNormalizedLocation( Point pointOnComponent )
@@ -285,5 +282,39 @@ public class PdfObjectsControllerListenerBase extends MouseAdapter
 	{
 		removeListeners();
 		_imageJPanel = null;
+	}
+
+	public List<GlyphWrapper> getGlyphsOfPage() {
+		return getPdfViewerContext().getGlyphsOfPage();
+	}
+
+	public void setGlyphsOfPage(List<GlyphWrapper> _glyphsOfPage) {
+		getPdfViewerContext().setGlyphsOfPage(_glyphsOfPage );
+		setSelectedGlyph(null);
+	}
+
+	public List<ImageWrapper> getImagesOfPage() {
+		return getPdfViewerContext().getImagesOfPage();
+	}
+
+	public void setImagesOfPage(List<ImageWrapper> _imagesOfPage) {
+		getPdfViewerContext().setImagesOfPage( _imagesOfPage );
+		setSelectedImage(null);
+	}
+
+	public GlyphWrapper getSelectedGlyph() {
+		return getPdfViewerContext().getSelectedGlyph();
+	}
+
+	public void setSelectedGlyph(GlyphWrapper _selectedGlyph) {
+		getPdfViewerContext().setSelectedGlyph(_selectedGlyph );
+	}
+
+	public ImageWrapper getSelectedImage() {
+		return getPdfViewerContext().getSelectedImage();
+	}
+
+	public void setSelectedImage(ImageWrapper _selectedImage) {
+		getPdfViewerContext().setSelectedImage(_selectedImage);
 	}
 }

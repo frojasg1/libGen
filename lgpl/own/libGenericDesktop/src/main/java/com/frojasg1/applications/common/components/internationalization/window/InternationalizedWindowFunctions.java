@@ -102,10 +102,15 @@ public class InternationalizedWindowFunctions implements InternationalizedString
 
 	public void processExceptionInValidation( ViewComponent window, Exception ex )
 	{
-		GenericFunctions.instance().getDialogsWrapper().showMessageDialog(window,
-					ex.getMessage(),
-					getInternationalString(CONF_VALIDATION_ERROR),
-					DialogsWrapper.ERROR_MESSAGE );
+		boolean showError = true;
+		if( ex instanceof ValidationException )
+			showError = ! ( (ValidationException) ex ).getDoNotShowWarning();
+
+		if( showError )
+			GenericFunctions.instance().getDialogsWrapper().showMessageDialog(window,
+						ex.getMessage(),
+						getInternationalString(CONF_VALIDATION_ERROR),
+						DialogsWrapper.ERROR_MESSAGE );
 	}
 
 	public InternationalizedWindow getInternationalizedWindowAncestor( Component comp )
@@ -128,7 +133,7 @@ public class InternationalizedWindowFunctions implements InternationalizedString
 			InternationalizedWindow intWin = getInternationalizedWindowAncestor( ve.getComponentWithException() );
 
 			if( intWin != null )
-				SwingUtilities.invokeLater( () -> intWin.highlightComponent( ve.getViewComponentWithException() ) );
+				SwingUtilities.invokeLater( () -> intWin.focusAndHighlightComponent( ve.getViewComponentWithException() ) );
 		}
 	}
 

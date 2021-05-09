@@ -18,6 +18,8 @@
  */
 package com.frojasg1.general.desktop.view.text.decorators;
 
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeInvertible;
 import com.frojasg1.general.validator.ValidatorReactor;
 import java.awt.Color;
 import java.awt.event.FocusAdapter;
@@ -30,7 +32,8 @@ import javax.swing.text.JTextComponent;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public abstract class RealTimeTextComponentValidatorReactor implements ValidatorReactor<JTextComponent>
+public abstract class RealTimeTextComponentValidatorReactor
+	implements ValidatorReactor<JTextComponent>, ColorThemeInvertible
 {
 	protected JTextComponent _textComp = null;
 
@@ -38,10 +41,17 @@ public abstract class RealTimeTextComponentValidatorReactor implements Validator
 //	protected KeyListener _keyListener = null;
 	protected DocumentListener _documentListener = null;
 
+	protected Color _okForegroundColor = Color.BLACK;
+
 
 	public RealTimeTextComponentValidatorReactor( JTextComponent textComp )
 	{
 		_textComp = textComp;
+	}
+
+	protected void setOkForegroundColor( Color color )
+	{
+		_okForegroundColor = color;
 	}
 
 	protected FocusAdapter createFocusListener()
@@ -133,12 +143,18 @@ public abstract class RealTimeTextComponentValidatorReactor implements Validator
 	@Override
 	public void executeOk( JTextComponent textComp )
 	{
-		_textComp.setForeground(Color.BLACK);
+		_textComp.setForeground(_okForegroundColor);
 	}
 
 	@Override
 	public void executeNok( JTextComponent textComp )
 	{
 		_textComp.setForeground(Color.RED);
+	}
+
+	@Override
+	public void invertColors( ColorInversor colorInversor )
+	{
+		_okForegroundColor = colorInversor.invertColor(_okForegroundColor);
 	}
 }

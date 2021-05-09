@@ -21,6 +21,7 @@
  */
 package com.frojasg1.general.lib3d.scenarios.impl;
 
+import com.frojasg1.general.lib3d.components.api.about.animation.torus.TorusAnimationInitContext;
 import com.frojasg1.general.lib3d.figures.Torus;
 import com.frojasg1.general.lib3d.scenarios.Scenario3dBase;
 import com.frojasg1.general.lib3d.scenarios.api.Scenario3dApi;
@@ -56,26 +57,22 @@ public class TorusScenario extends Scenario3dBase implements Scenario3dApi
 
 	protected boolean _isSolid = false;
 
-	protected Torus createTorus(float majorRadius, float minorRadius,
-								int majorSamples, int minorSamples,
-								Color color, boolean isSolid)
+	protected Torus createTorus(TorusAnimationInitContext initContext, boolean isSolid)
 	{
-		Torus result = new Torus( majorRadius, minorRadius, majorSamples, minorSamples, color, isSolid );
+		Torus result = new Torus( initContext, isSolid );
 		result.setCapability(BranchGroup.ALLOW_DETACH);
 
 		return( result );
 	}
 
-	protected void createToruses(float majorRadius, float minorRadius,
-								int majorSamples, int minorSamples,
-								Color color)
+	protected void createToruses(TorusAnimationInitContext initContext)
 	{
 		boolean isSolid = true;
-		_solidTorus = this.createTorus( majorRadius, minorRadius, majorSamples, minorSamples, color, isSolid );
+		_solidTorus = this.createTorus( initContext, isSolid );
 		_bgOfSolidTorus = createBranchGroup(_solidTorus );
 
 		isSolid = false;
-		_linesTorus = this.createTorus( majorRadius, minorRadius, majorSamples, minorSamples, color, isSolid );
+		_linesTorus = this.createTorus( initContext, isSolid );
 		_bgOfLinesTorus = createBranchGroup(_linesTorus );
 	}
 
@@ -94,17 +91,15 @@ public class TorusScenario extends Scenario3dBase implements Scenario3dApi
 		doRotation(0,0);
 	}
 
-	public void init(float majorRadius, float minorRadius,
-								int majorSamples, int minorSamples,
-								Color color)
+	public void init(TorusAnimationInitContext initContext)
 	{
-		createToruses(majorRadius, minorRadius, majorSamples, minorSamples, color);
+		createToruses(initContext);
 		setCanvas3D( isSolid() );
 
 		setInitialPosition();
 	}
 
-	public void init()
+	protected TorusAnimationInitContext createDefaultInitContext()
 	{
 		float majorRadius = 0.5f;
 		float minorRadius = 0.15f;
@@ -112,7 +107,19 @@ public class TorusScenario extends Scenario3dBase implements Scenario3dApi
 		int minorSamples = 20;
 		Color color = Color.green;
 
-		init( majorRadius, minorRadius, majorSamples, minorSamples, color );
+		TorusAnimationInitContext result = new TorusAnimationInitContext();
+		result.setMajorRadius(majorRadius);
+		result.setMinorRadius(minorRadius);
+		result.setMajorSamples(majorSamples);
+		result.setMinorSamples(minorSamples);
+		result.setColor(color);
+
+		return( result );
+	}
+
+	public void init()
+	{
+		init( createDefaultInitContext() );
 	}
 
 	@Override

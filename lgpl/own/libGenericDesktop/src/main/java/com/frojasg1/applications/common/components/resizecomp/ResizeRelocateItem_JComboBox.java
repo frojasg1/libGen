@@ -19,7 +19,7 @@
 package com.frojasg1.applications.common.components.resizecomp;
 
 import com.frojasg1.applications.common.components.internationalization.InternException;
-import com.frojasg1.general.desktop.view.combobox.utlis.ComboBoxFunctions;
+import com.frojasg1.general.desktop.view.combobox.utils.ComboBoxFunctions;
 import com.frojasg1.general.zoom.ZoomParam;
 import java.awt.Font;
 import javax.swing.JComboBox;

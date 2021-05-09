@@ -48,6 +48,10 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public static final String CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES = "WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES";
 	public static final String CONF_DOWNLOAD_FILE_TO_IGNORE = "DOWNLOAD_FILE_TO_IGNORE";
 
+	public static final String CONF_IS_DARK_MODE_ACTIVATED = "IS_DARK_MODE_ACTIVATED";
+
+	public static final String CONF_IS_FILE_DETAILS_ACTIVATED = "IS_FILE_DETAILS_ACTIVATED";
+
 //	public static final String CONF_URL_FOR_NEW_VERSION_QUERY = "URL_FOR_NEW_VERSION_QUERY";
 //	public static final String CONF_URL_FOR_RESOURCE_COUNTER = "URL_FOR_RESOURCE_COUNTER";
 
@@ -82,7 +86,7 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 
 		setLanguage( getLanguage() );
 	}
-	
+
 	@Override
 	public Properties M_getDefaultProperties( String language )
 	{
@@ -93,6 +97,9 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 
 		result.setProperty(CONF_ZOOM_FACTOR, "1.0" );
 		result.setProperty(CONF_WHAT_IS_NEW_SHOWN_OF_DOWNLOAD_FILES, "" );
+		result.setProperty(CONF_IS_DARK_MODE_ACTIVATED, _stringTranslator.toString( isDefaultModeDark() ) );
+		result.setProperty(CONF_IS_FILE_DETAILS_ACTIVATED, "0" );
+
 
 //		result.setProperty(CONF_URL_FOR_NEW_VERSION_QUERY, URL_FOR_NEW_VERSION_QUERY_VALUE );
 //		result.setProperty(CONF_URL_FOR_RESOURCE_COUNTER, URL_FOR_RESOURCE_COUNTER_VALUE );
@@ -139,6 +146,20 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 		M_setFloatParamConfiguration( CONF_APPLICATION_FONT_FACTOR, factor );
 	}
 */
+
+	@Override
+	public boolean isFileDetailsActivated()
+	{
+		return( M_getBoolParamConfiguration(CONF_IS_FILE_DETAILS_ACTIVATED ) );
+	}
+
+	@Override
+	public void setFileDetailsSelected( boolean value )
+	{
+		M_setBoolParamConfiguration(CONF_IS_FILE_DETAILS_ACTIVATED, value );
+	}
+
+
 	@Override
 	public String getLanguage()
 	{
@@ -400,5 +421,29 @@ public abstract class BaseApplicationConfiguration extends ConfigurationParent
 	public void unregisterZoomFactorObserver( ChangeZoomFactorClientInterface client )
 	{
 		_listOfObserversOfZoomFactorChanges.remove( client );
+	}
+
+	@Override
+	public void toggleDarkMode()
+	{
+		setDarkModeActivated( ! isDarkModeActivated() );
+	}
+
+	@Override
+	public boolean isDarkModeActivated()
+	{
+		return( M_getBoolParamConfiguration( CONF_IS_DARK_MODE_ACTIVATED ) );
+	}
+
+	@Override
+	public void setDarkModeActivated( boolean value )
+	{
+		M_setBoolParamConfiguration( CONF_IS_DARK_MODE_ACTIVATED, value );
+	}
+
+	@Override
+	public boolean isDefaultModeDark()
+	{
+		return( false );
 	}
 }

@@ -18,7 +18,10 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
-import com.frojasg1.general.desktop.view.ViewFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.ColorThemeInvertible;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
 import com.frojasg1.general.desktop.view.zoom.ResizeSizeComponent;
 import com.frojasg1.general.number.DoubleReference;
 import com.frojasg1.general.number.IntegerFunctions;
@@ -41,12 +44,15 @@ import javax.swing.plaf.metal.MetalScrollButton;
  */
 public class ZoomMetalScrollButton_forScrollBar extends MetalScrollButton
 												implements ComponentWithIconForZoomInterface,
+															ColorThemeChangeableStatusBuilder,
 															ResizeSizeComponent
 {
 	protected ComponentWithIconForZoomOverriden _overridenMethods = null;
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
 
 	protected int _originalButtonWidth;
+
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
 
 //	JScrollBar jcb;
 //	JScrollPane jcp;
@@ -56,6 +62,7 @@ public class ZoomMetalScrollButton_forScrollBar extends MetalScrollButton
 		super( direction, width, freeStanding );	// it will be cloned by reflexion (and changed if needed)
 
 		initAfterCopyingAttributes();
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	@Override
@@ -280,9 +287,7 @@ public class ZoomMetalScrollButton_forScrollBar extends MetalScrollButton
 		super.setBounds( xx, yy, width, height );
 	}
 
-
-	@Override
-	public void paint( Graphics g )
+	public void paintInternal( Graphics g )
 	{
 		Color shadowColor = getShadowColor();
 		Color highlightColor = getHighlightColor();
@@ -494,5 +499,31 @@ public class ZoomMetalScrollButton_forScrollBar extends MetalScrollButton
 				g.translate( 1, 0 );
 			}
 		}
+	}
+
+	@Override
+	public void setBackground( Color color )
+	{
+		super.setBackground(color);
+	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> paintInternal(grp), false );
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		_overridenMethods.invertColors(colorInversor);
 	}
 }

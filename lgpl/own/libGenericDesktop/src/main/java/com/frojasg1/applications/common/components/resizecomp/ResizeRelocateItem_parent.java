@@ -18,6 +18,7 @@
  */
 package com.frojasg1.applications.common.components.resizecomp;
 
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizedWindow;
 import java.awt.Component;
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
@@ -28,7 +29,10 @@ import javax.swing.JPopupMenu;
  */
 public interface ResizeRelocateItem_parent
 {
+	public InternationalizedWindow getInternationalizedWindow();
+
 	public ResizeRelocateItem getResizeRelocateComponentItem( Component comp );
+	public ResizeRelocateItem getResizeRelocateComponentItemOnTheFly( Component comp );
 
 	public boolean isResizeRelocateItemsResizeListenersBlocked();
 

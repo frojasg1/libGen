@@ -195,6 +195,7 @@ public class LanguageFlagIcons
 			if( factor != null )
 			{
 				result = ZoomIconBuilder.instance().createZoomIcon( originalIcon, factor );
+				result.setCanInvertColors(false);
 
 				languageMap.put(factor, result);
 			}

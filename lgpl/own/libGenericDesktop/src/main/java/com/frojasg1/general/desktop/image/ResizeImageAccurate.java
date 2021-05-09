@@ -69,7 +69,7 @@ public class ResizeImageAccurate implements ResizeImageInterface
 	{
 		if( ( newWidth < 1 ) || ( newHeight < 1 ) )		throw( new IllegalArgumentException( "Bad size for image.   Width: " + newWidth + ". Height: " + newHeight ) );
 
-		BufferedImage result = new BufferedImage( newWidth, newHeight, originalImage.getType() );
+		BufferedImage result = new BufferedImage( newWidth, newHeight, BufferedImage.TYPE_INT_ARGB );
 
 		double xZoomFactor = ((double) newWidth ) / originalImage.getWidth() ;
 		double yZoomFactor = ((double) newHeight ) / originalImage.getHeight() ;
@@ -258,9 +258,9 @@ public class ResizeImageAccurate implements ResizeImageInterface
 		if( ( factor > 0.001D ) && ( yy>-1 ) && ( xx > -1 ) )
 		{
 			int offset = getOffset( xx, yy, width );
-			int rgb = getPixelValue( pixels, offset, colorTranslator );
+			int argb = getPixelValue( pixels, offset, colorTranslator );
 
-			dpc.addPixelToComponents(rgb, factor);
+			dpc.addPixelToComponents(argb, factor);
 		}
 	}
 
@@ -374,18 +374,18 @@ public class ResizeImageAccurate implements ResizeImageInterface
 				_components[ii] = 0;
 		}
 
-		public void addPixelToComponents( int rgb, double factor )
+		public void addPixelToComponents( int argb, double factor )
 		{
-			double alpha = ( rgb >>> 24 );
+			double alpha = ( argb >>> 24 );
 			_components[0] += alpha * factor;
 
 			if( alpha == 0 )
 				_factorAlpha0 += factor;
 			else
 			{
-				double rr = ( ( rgb & 0x00FF0000 ) >>> 16 );
-				double gg = ( ( rgb & 0x0000FF00 ) >>> 8 );
-				double bb = ( rgb & 0x000000FF );
+				double rr = ( ( argb & 0x00FF0000 ) >>> 16 );
+				double gg = ( ( argb & 0x0000FF00 ) >>> 8 );
+				double bb = ( argb & 0x000000FF );
 
 				_components[1] += rr * factor;
 				_components[2] += gg * factor;

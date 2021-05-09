@@ -54,6 +54,10 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 	protected MyPDFRenderer _pdfRendererDoNotShowText = null;
 	protected String _fileName = null;
 
+	protected List<ImageWrapper> _currentPageImages = null;
+	protected List<GlyphWrapper> _currentPageGlyphs = null;
+
+
 	@Override
 	public String getFileName()
 	{
@@ -134,11 +138,19 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 		return( result );
 	}
 
+	protected void resetImagesAndGlyphs()
+	{
+		_currentPageImages = null;
+		_currentPageGlyphs = null;
+	}
+
 	protected synchronized PDPage getPDPage( int pageIndex )
 	{
 		if( ( _currentPageNumber != pageIndex ) || ( _page == null ) )
 		{
 			_currentPageNumber = pageIndex;
+			resetImagesAndGlyphs();
+
 			_page = _pdfDocument.getPage( pageIndex );
 		}
 
@@ -189,11 +201,28 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 		return( getImagesFromPage( getPDPage( pageIndex ) ) );
 	}
 */
+
+	@Override
+	public List<ImageWrapper> getImagesOfPage() throws IOException
+	{
+		return( getImagesOfPage( _currentPageNumber ) );
+	}
+
 	@Override
 	public List<ImageWrapper> getImagesOfPage( int pageIndex ) throws IOException
 	{
+		List<ImageWrapper> result = null;
+		if( pageIndex == _currentPageNumber )
+			result = _currentPageImages;
+
+		if( result == null )
+			result = getImagesOfPageRenderer( pageIndex );
+
+		if( pageIndex == _currentPageNumber )
+			_currentPageImages = result;
+
 //		return( getImagesOfPageStreamEngine( pageIndex ) );
-		return( getImagesOfPageRenderer( pageIndex ) );
+		return( result );
 	}
 
 	public List<ImageWrapper> getImagesOfPageStreamEngine( int pageIndex ) throws IOException
@@ -242,11 +271,29 @@ public class PdfboxDocumentWrapper implements PdfDocumentWrapper
 		return images;
 	}
 */
+
+	@Override
+	public List<GlyphWrapper> getGlyphsOfPage( boolean getImages,
+												Float factorForImages ) throws IOException
+	{
+		return( getGlyphsOfPage( _currentPageNumber, getImages, factorForImages ) );
+	}
+
 	@Override
 	public List<GlyphWrapper> getGlyphsOfPage( int pageIndex, boolean getImages,
 												Float factorForImages ) throws IOException
 	{
-		return( getGlyphsOfPageStripper( pageIndex, getImages, factorForImages ) );
+		List<GlyphWrapper> result = null;
+		if( pageIndex == _currentPageNumber )
+			result = _currentPageGlyphs;
+
+		if( result == null )
+			result = getGlyphsOfPageStripper( pageIndex, getImages, factorForImages );
+
+		if( pageIndex == _currentPageNumber )
+			_currentPageGlyphs = result;
+
+		return( result );
 //		return( getGlyphsOfPageRenderer( pageIndex ) );
 	}
 

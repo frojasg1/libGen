@@ -18,9 +18,13 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
-import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
 import com.frojasg1.general.desktop.view.zoom.ZoomFunctions;
+import com.frojasg1.general.desktop.view.zoom.mapper.CustomComponent;
 import com.frojasg1.general.number.DoubleReference;
+import java.awt.Graphics;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.plaf.ComponentUI;
@@ -29,18 +33,23 @@ import javax.swing.plaf.ComponentUI;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomJSpinner  extends JSpinner implements ZoomComponentInterface
+public class ZoomJSpinner  extends JSpinner implements CustomComponent,
+															ColorThemeChangeableStatusBuilder
 {
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
+
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
 
 	public ZoomJSpinner()
 	{
 		super();
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	public ZoomJSpinner(SpinnerModel model)
 	{
 		super(model);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 
@@ -91,4 +100,26 @@ public class ZoomJSpinner  extends JSpinner implements ZoomComponentInterface
 	{
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		super.paint(grp);
+//		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> super.paint(grp) , false);
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		// Intentionally left blank
+	}
 }
+

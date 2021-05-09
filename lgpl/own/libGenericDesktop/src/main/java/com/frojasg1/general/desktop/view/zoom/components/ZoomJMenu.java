@@ -18,10 +18,19 @@
  */
 package com.frojasg1.general.desktop.view.zoom.components;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableBaseBuilder;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableForCustomComponent;
 import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
 import com.frojasg1.general.desktop.view.zoom.ZoomFunctions;
+import com.frojasg1.general.desktop.view.zoom.mapper.CustomComponent;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.plaf.ComponentUI;
@@ -30,28 +39,35 @@ import javax.swing.plaf.ComponentUI;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomJMenu  extends JMenu implements ZoomComponentInterface
+public class ZoomJMenu  extends JMenu implements CustomComponent,
+															ColorThemeChangeableStatusBuilder
 {
 	protected DoubleReference _zoomFactor = new DoubleReference( 1.0D );
+
+	protected ColorThemeChangeableForCustomComponent _colorThemeStatus;
 
 	public ZoomJMenu()
 	{
 		super();
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	public ZoomJMenu(String s)
 	{
 		super(s);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	public ZoomJMenu(Action a)
 	{
 		super(a);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	public ZoomJMenu(String s, boolean b)
 	{
 		super(s, b);
+		_colorThemeStatus = createColorThemeChangeableStatus();
 	}
 
 	@Override
@@ -124,5 +140,25 @@ public class ZoomJMenu  extends JMenu implements ZoomComponentInterface
 	public Dimension getMaximumSize()
 	{
 		return( super.getMaximumSize() );
+	}
+
+	@Override
+	public void paint( Graphics grp )
+	{
+		_colorThemeStatus.paint(grp);
+	}
+
+	@Override
+	public ColorThemeChangeableForCustomComponent createColorThemeChangeableStatus()
+	{
+		if( _colorThemeStatus == null )
+			_colorThemeStatus = new ColorThemeChangeableForCustomComponent( this, grp -> super.paint(grp) , false);
+		return( _colorThemeStatus );
+	}
+
+	@Override
+	public void invertColors(ColorInversor colorInversor)
+	{
+		// Intentionally left blank
 	}
 }

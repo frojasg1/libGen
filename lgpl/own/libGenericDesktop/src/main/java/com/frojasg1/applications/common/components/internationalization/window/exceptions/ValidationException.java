@@ -31,11 +31,29 @@ public class ValidationException extends Exception
 {
 	protected Component _componentWithException = null;
 	protected ViewComponent _vc = null;
+	protected boolean _doNotShowWarning = false;
+
+	public ValidationException( String message )
+	{
+		this( message, null );
+	}
 
 	public ValidationException( String message, Component comp )
 	{
-		super( message );
+		this( message, comp, null );
+	}
+
+	public ValidationException( String message, Component comp, Exception ex )
+	{
+		this( message, comp, ex, false );
+	}
+
+	public ValidationException( String message, Component comp, Exception ex,
+								boolean doNotShowWarning )
+	{
+		super( message, ex );
 		_componentWithException = comp;
+		_doNotShowWarning = doNotShowWarning;
 	}
 
 	public Component getComponentWithException()
@@ -49,5 +67,10 @@ public class ValidationException extends Exception
 			_vc = GenericFunctions.instance().getViewFacilities().createViewComponent(_componentWithException);
 
 		return( _vc );
+	}
+
+	public boolean getDoNotShowWarning()
+	{
+		return( _doNotShowWarning );
 	}
 }

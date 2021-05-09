@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  * @author fjavier.rojas
  */
 public class MasterComboBoxJPanel
-	extends javax.swing.JPanel
+	extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 	implements JComboBoxContainer, ComposedComponent,
 				ComboBoxGroupManager
 {
@@ -74,6 +74,8 @@ public class MasterComboBoxJPanel
 
 	public void init()
 	{
+		super.init();
+
 		addListeners();
 
 		_mapRRCI = createResizeRelocateInfo();

@@ -38,7 +38,7 @@ import javax.swing.SpinnerNumberModel;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class SpinnerSliderJPanel extends JPanel
+public class SpinnerSliderJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel
 		implements DesktopViewComponent, ComposedComponent
 {
 	protected MapResizeRelocateComponentItem _resizeRelocateInfo = null;
@@ -62,6 +62,8 @@ public class SpinnerSliderJPanel extends JPanel
 	public void init(int defaultValue, int min, int max, int increment,
 						BiConsumer<Integer, Integer> listener )
 	{
+		super.init();
+
 		_increment = increment;
 		_defaultValue = defaultValue;
 		_min = min;

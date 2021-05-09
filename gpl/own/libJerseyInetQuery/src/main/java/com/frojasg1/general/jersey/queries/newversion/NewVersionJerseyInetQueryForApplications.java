@@ -21,6 +21,7 @@
  */
 package com.frojasg1.general.jersey.queries.newversion;
 
+import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 import com.frojasg1.general.desktop.queries.newversion.NewVersionQueryResult;
 import com.frojasg1.generic.GenericFunctions;
@@ -45,11 +46,13 @@ public class NewVersionJerseyInetQueryForApplications extends NewVersionJerseyIn
 		String downloadFile = getDownloadFile();
 		String applicationLanguage = getApplicationLanguage();
 		String webLanguage = getWebLanguage(applicationLanguage);
+		boolean isDarkModeActivated = isDarkModeActivated();
 
 		System.out.println( "New version query ..." );
 		if( downloadFile != null )
 		{
-			result = query( downloadFile, isApplicationStart, applicationLanguage, webLanguage );
+			result = query( downloadFile, isApplicationStart, applicationLanguage,
+							webLanguage, isDarkModeActivated );
 			if( result != null )
 			{
 				System.out.println( "isSuccessful: " + result.isSuccessful() );
@@ -78,6 +81,16 @@ public class NewVersionJerseyInetQueryForApplications extends NewVersionJerseyIn
 
 	protected String getApplicationLanguage()
 	{
-		return( GenericFunctions.instance().getAppliConf().getLanguage() );
+		return( getAppliConf().getLanguage() );
+	}
+
+	protected BaseApplicationConfigurationInterface getAppliConf()
+	{
+		return( GenericFunctions.instance().getAppliConf() );
+	}
+
+	protected boolean isDarkModeActivated()
+	{
+		return( getAppliConf().isDarkModeActivated() );
 	}
 }

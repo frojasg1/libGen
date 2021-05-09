@@ -19,8 +19,8 @@
 package com.frojasg1.general.desktop.view.document.formatter;
 
 import com.frojasg1.general.document.formatted.FormatForText;
-import com.frojasg1.general.document.formatter.ExternalTextFormatter;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,13 +35,15 @@ import javax.swing.text.StyleConstants;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ZoomDocumentFormatterOnTheFly_markingBrackets extends ZoomDocumentFormatterOnTheFly implements ExternalTextFormatter
+public class ZoomDocumentFormatterOnTheFly_markingBrackets extends ZoomDocumentFormatterOnTheFly implements ExternalTextFormatterDesktop
 {
 //	protected final String RED_BOLD = "DocumentListenerToMarkBrackets_RED_BOLD";
 //	protected final String GREEN = "DocumentListenerToMarkBrackets_GREEN";
 //	protected final String PLAIN = "DocumentListenerToMarkBrackets_PLAIN";
 
 	protected final String DEFAULT_STYLE_NAME_TO_MARK_BRACKETS = "DEFAULT_STYLE_NAME_TO_MARK_BRACKETS";
+
+	protected Color _currentMarkedBracketColor = Color.RED;
 
 	public ZoomDocumentFormatterOnTheFly_markingBrackets( JTextPane pane,
 															ChangeZoomFactorServerInterface changeZoomFactorServer )
@@ -52,12 +54,17 @@ public class ZoomDocumentFormatterOnTheFly_markingBrackets extends ZoomDocumentF
 	}
 
 	@Override
-	protected void addParticularStyles( int defaultFontSize )
+	protected void addParticularStyles( Integer defaultFontSize )
 	{
 		final Style defaultStyleToMarkBrackets = this.newFormattedStyleToBeModified(DEFAULT_STYLE_NAME_TO_MARK_BRACKETS);
 		StyleConstants.setFontSize(defaultStyleToMarkBrackets, defaultFontSize + 2);
-		StyleConstants.setForeground(defaultStyleToMarkBrackets, Color.RED );
+		StyleConstants.setForeground(defaultStyleToMarkBrackets, getCurrentMarkedBracketColor() );
 		StyleConstants.setBold(defaultStyleToMarkBrackets, true);
+	}
+
+	protected Color getCurrentMarkedBracketColor()
+	{
+		return( _currentMarkedBracketColor );
 	}
 
 	protected List<CharacterAnalyzerNextResult> getBracketsAndQuotesLocation( Document doc )
@@ -196,6 +203,19 @@ public class ZoomDocumentFormatterOnTheFly_markingBrackets extends ZoomDocumentF
 		}
 			
 		return( result );
+	}
+
+	@Override
+	protected Color[] createOriginalInvertibleColors() {
+		return( null );
+	}
+
+	@Override
+	public void invertColors( ColorInversor ci )
+	{
+		_currentMarkedBracketColor = ci.invertColor(_currentMarkedBracketColor);
+
+		super.invertColors(ci);
 	}
 
 	public class CharacterAnalyserException extends Exception

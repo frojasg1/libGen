@@ -18,10 +18,10 @@
  */
 package com.frojasg1.general;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -167,6 +167,35 @@ public class ArrayFunctions
 				for( int ii=0; result && (ii<array1.length); ii++ )
 					result = ( array1[ii] == array2[ii] );
 			}
+		}
+
+		return( result );
+	}
+
+	public <CC> int countEqualElems( CC[] array, CC model )
+	{
+		int result = 0;
+		if( array != null )
+			for( CC elem: array )
+				if( Objects.equals(model, elem) )
+					result++;
+
+		return( result );
+	}
+
+	public <CC> CC getMostRepeated( CC[] array )
+	{
+		CC result = null;
+		if( array != null )
+		{
+			int max = 0;
+			int tmp = 0;
+			for( CC elem: array )
+				if( ( tmp = countEqualElems(array, elem) ) > max )
+				{
+					max = tmp;
+					result = elem;
+				}
 		}
 
 		return( result );

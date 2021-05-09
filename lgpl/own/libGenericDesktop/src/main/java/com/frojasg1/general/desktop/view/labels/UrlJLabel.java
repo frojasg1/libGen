@@ -114,7 +114,7 @@ public class UrlJLabel extends JLabel implements MouseListener, GenericObserved<
 
 	protected void informListeners()
 	{
-		_listOfListeners.notify( _genericNotifier );
+		_listOfListeners.notifyListeners( _genericNotifier );
 	}
 
 	@Override

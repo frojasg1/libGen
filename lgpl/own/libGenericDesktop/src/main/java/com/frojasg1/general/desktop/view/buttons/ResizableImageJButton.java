@@ -19,16 +19,26 @@
 package com.frojasg1.general.desktop.view.buttons;
 
 import com.frojasg1.applications.common.components.name.ComponentNameComponents;
+import com.frojasg1.general.ExecutionFunctions;
+import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.view.IconFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableBaseBuilder;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import javax.swing.JButton;
+import com.frojasg1.general.desktop.view.color.ColorThemeInvertible;
+import java.io.File;
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class ResizableImageJButton extends JButton// implements ActionListener
+public class ResizableImageJButton extends JButton implements ColorThemeInvertible
 {
 	protected static final String CLASS_NAME="ResizableImageJButton";
 	
@@ -38,20 +48,31 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 
 	protected BufferedImage _image = null;
 
+	protected ColorThemeChangeableBase _colorThemeStatus;
+
 	public ResizableImageJButton( String jarResourceName, Insets insets )
 	{
 		_jarResourceName = jarResourceName;
 		_insets = insets;
 		setImage_final();
 
+		_colorThemeStatus = createColorThemeChangeableBase();
 //		addActionListener(this);
+	}
+
+	protected ColorThemeChangeableBase createColorThemeChangeableBase()
+	{
+		return( ColorThemeChangeableBaseBuilder.instance().createColorThemeChangeableBase() );
 	}
 
 	public final void setImage_final( String jarResourceNameForImage )
 	{
 		_jarResourceName = jarResourceNameForImage;
 
-		_image = ViewFunctions.instance().addImageToButtonAccurate( this, _jarResourceName, _insets );
+		_image = ExecutionFunctions.instance().safeFunctionExecution( () -> ImageFunctions.instance().loadImageFromJar(_jarResourceName) );
+		if( _image != null )
+			setImage_final( _image );
+//		_image = ViewFunctions.instance().addImageToButtonAccurate( this, _jarResourceName, _insets );
 	}
 
 	protected final void setImage_final()
@@ -64,7 +85,7 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 
 	public final void setImage_final( BufferedImage image )
 	{
-		_image = ViewFunctions.instance().addImageToButtonAccurate( this, image, _insets );
+		ViewFunctions.instance().addImageToButtonAccurate( this, image, _insets );
 	}
 
 	public void resizeImage()
@@ -124,5 +145,37 @@ public class ResizableImageJButton extends JButton// implements ActionListener
 		}
 
 		return( result );
+	}
+
+	@Override
+	public void setIcon( Icon icon )
+	{
+//		writeImage( IconFunctions.instance().toImage( icon ), "_setIcon" );
+
+		super.setIcon( icon );
+	}
+
+	protected void writeImage( BufferedImage image, String suffix )
+	{
+		String name = ( getName() == null ) ? "default" : getName().replaceAll( "[:\\\\./]", "_" );
+		String name2 = name + suffix;
+		if( image != null )
+			ExecutionFunctions.instance().safeMethodExecution( () -> ImageIO.write( image, "png", new File( "J:\\" + name2 + ".png" ) ) );
+	}
+
+	protected void invertImageColors()
+	{
+//		writeImage( _image, "_preInvert" );
+		_image = ImageFunctions.instance().invertImage(_image);
+//		writeImage( _image, "_postInvert" );
+		setImage_final();
+	}
+
+	@Override
+	public void invertColors( ColorInversor colorInversor )
+	{
+		invertImageColors();
+		colorInversor.invertColor( getBackground(), this::setBackground );
+		colorInversor.invertColor( getForeground(), this::setForeground );
 	}
 }

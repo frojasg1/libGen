@@ -27,7 +27,5 @@ public interface ListOfListeners<LT>
 	public void add( LT listener );
 	public void remove( LT listener );
 
-	public void notify( Notifier< LT >  notifier );
-
 	public void clear();
 }

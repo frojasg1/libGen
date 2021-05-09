@@ -19,6 +19,7 @@
 package com.frojasg1.applications.common.components.resizecomp;
 
 import com.frojasg1.applications.common.components.internationalization.InternException;
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizedWindow;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import java.awt.Component;
 import java.util.Hashtable;
@@ -246,5 +247,18 @@ public class MapResizeRelocateComponentItem extends Hashtable< Component, Resize
 	{
 		if( _parent != null )
 			_parent.executeResizeRelocateItemRecursive(comp);
+	}
+
+	@Override
+	public InternationalizedWindow getInternationalizedWindow() {
+		return( ( _parent != null ) ?
+				_parent.getInternationalizedWindow() :
+				null );
+	}
+
+	@Override
+	public ResizeRelocateItem getResizeRelocateComponentItemOnTheFly( Component comp )
+	{
+		return( ( _parent == null ? null : _parent.getResizeRelocateComponentItemOnTheFly( comp ) ) );
 	}
 }

@@ -26,6 +26,7 @@ import com.frojasg1.libpdf.api.GlyphWrapper;
 import com.frojasg1.libpdf.api.ImageWrapper;
 import com.frojasg1.libpdf.api.impl.GlyphImpl;
 import com.frojasg1.libpdf.api.impl.ImageImpl;
+import com.frojasg1.libpdfbox.utils.PDFboxWrapperUtils;
 import java.awt.Color;
 import java.awt.Paint;
 import java.awt.Rectangle;
@@ -202,7 +203,8 @@ public class MyPDFRenderer extends PDFRenderer
         {
 			if( isGetGlyphsAndImages() )
 			{
-				addGlyph( createGlyphWrapper( textRenderingMatrix, font, code, unicode, displacement) );
+				GlyphWrapper glyphWrapper = createGlyphWrapper( textRenderingMatrix, font, code, unicode, displacement);
+				addGlyph( glyphWrapper );
 			}
 
 			if( isShowText() )
@@ -234,8 +236,8 @@ public class MyPDFRenderer extends PDFRenderer
             graphics.setClip(clip);
 */
         }
-
-        /**
+		
+		/**
          * Filled path bounding boxes.
          */
         @Override

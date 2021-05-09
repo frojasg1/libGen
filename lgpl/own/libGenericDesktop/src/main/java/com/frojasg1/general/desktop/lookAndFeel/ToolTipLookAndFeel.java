@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general.desktop.lookAndFeel;
 
+import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorClientInterface;
 import com.frojasg1.applications.common.configuration.application.ChangeZoomFactorServerInterface;
 import com.frojasg1.general.desktop.classes.Classes;
@@ -54,6 +55,8 @@ public class ToolTipLookAndFeel extends MetalLookAndFeel implements ChangeZoomFa
 
 	protected double _zoomFactor = 1.0D;
 
+	protected BaseApplicationConfigurationInterface _appliConf;
+
 	public static ToolTipLookAndFeel instance()
 	{
 		if( _instance == null )
@@ -72,6 +75,16 @@ public class ToolTipLookAndFeel extends MetalLookAndFeel implements ChangeZoomFa
 		Object context = ReflectionFunctions.instance().invokeClassMethod( "getAppContext", appContextClass, null );
 		ReflectionFunctions.instance().invokeMethod( "remove", appContextClass, context, "currentMetalTheme" );
 		ReflectionFunctions.instance().invokeMethod( "put", appContextClass, context, "currentMetalTheme", _theme );
+	}
+
+	public void setAppliConf(BaseApplicationConfigurationInterface appliConf)
+	{
+		_theme.setAppliConf(appliConf);
+	}
+
+	public ToolTipMetalOceanTheme getTheme()
+	{
+		return( _theme );
 	}
 
 	public FontUIResource getOriginalToolTipFont()

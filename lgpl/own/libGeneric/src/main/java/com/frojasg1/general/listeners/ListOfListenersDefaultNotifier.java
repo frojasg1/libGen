@@ -16,26 +16,18 @@
  *      http://www.gnu.org/licenses/lgpl-3.0.txt
  *
  */
-package com.frojasg1.general.desktop.view.about.animation;
-
-import com.frojasg1.desktop.liblens.graphics.Coordinate2D;
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
+package com.frojasg1.general.listeners;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface AnimationForAbout {
-	
-	public void animationReset();
-	public void animationDoStep();
-	public void animationStop();
-	public void animationSetEnclosingDimension( Dimension dimension );
-	public void animationSetDimension( Dimension dimension );
+public interface ListOfListenersDefaultNotifier<LT, VV>
+{
+	public void add( LT listener );
+	public void remove( LT listener );
 
-	public void animationSetMovingSpeedFactor( double factor );
+	public void notifyListeners( VV oldValue, VV newValue );
 
-	public Coordinate2D animationGetPosition();
-	public BufferedImage animationGetFrame();
+	public void clear();
 }

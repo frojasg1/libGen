@@ -43,7 +43,7 @@ import javax.swing.text.JTextComponent;
  *
  * @author Usuario
  */
-public class LensJPanel extends JPanel implements MouseMotionListener, MouseListener
+public class LensJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements MouseMotionListener, MouseListener
 {
 	protected Lens a_lensTransformation = null;
 	protected JPanel a_contentJPanel = null;
@@ -116,6 +116,8 @@ public class LensJPanel extends JPanel implements MouseMotionListener, MouseList
 	public LensJPanel( JPanel panel, int radius, int mode, boolean moveLensWithMouse, Object mutex,
 						boolean getScreenShot )
 	{
+		super.init();
+
 		if( mutex != null ) _mutex = mutex;
 		else _mutex = new Object();
 

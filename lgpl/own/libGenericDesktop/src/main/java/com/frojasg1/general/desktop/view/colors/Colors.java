@@ -39,5 +39,7 @@ public class Colors {
 
 	public static final Color PURPLE = new Color( 204, 102, 255 );
 
-	
+	public static final Color LILAC = new Color( 139, 139, 255 );
+
+	public static final Color DARKER_PURPLE = new Color( 214, 0, 214 );
 }

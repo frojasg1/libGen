@@ -151,14 +151,20 @@ public class ImageFunctions
 		return( result );
 	}
 
-	public BufferedImage invertImage( BufferedImage original ) throws IllegalArgumentException
+	public BufferedImage translateImageColors( BufferedImage original,
+		Function<Integer, Integer> colorTranslator) throws IllegalArgumentException
 	{
 		BufferedImage result = null;
 		if( original != null )
 			result = ResizeImageFast.instance().resizeImage( original, original.getWidth(),
 															original.getHeight(),
-															ImageUtilFunctions.instance()::invertColor );
+															colorTranslator );
 		return( result );
+	}
+
+	public BufferedImage invertImage( BufferedImage original ) throws IllegalArgumentException
+	{
+		return( translateImageColors( original, ImageUtilFunctions.instance()::invertColor ) );
 	}
 
 	public BufferedImage resizeImage( BufferedImage original, double zoomFactor ) throws IllegalArgumentException

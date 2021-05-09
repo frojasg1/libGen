@@ -24,23 +24,25 @@ import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.general.desktop.DesktopStreamFunctions;
+import com.frojasg1.general.desktop.view.color.components.ColorInversorJEditorPane;
+import com.frojasg1.general.desktop.view.editorpane.FastColorInversorStaticDocumentJEditorPane;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import javax.swing.JEditorPane;
-import javax.swing.JPanel;
 import javax.swing.text.Document;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedComponent
+public class SimpleRtfDocJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InternallyMappedComponent
 {
 	protected MapResizeRelocateComponentItem _resizeRelocateInfo = null;
-	protected JEditorPane _rtfEditorPane = null;
+	protected ColorInversorJEditorPane _rtfEditorPane = null;
 	protected ScrollableJTextComponentUrlLauncher _urlLauncher = new ScrollableJTextComponentUrlLauncher();
 
 	protected String _lastURL = null;
@@ -50,6 +52,9 @@ public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedCompon
 	 */
 	public SimpleRtfDocJPanel()
 	{
+		super.init();
+
+
 		initComponents();
 
 //		setPanelConfiguration();
@@ -75,12 +80,56 @@ public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedCompon
 		}
 	}
 
-	public void setRtfDocument( Document doc )
+	public void setUrl( URL url ) throws IOException
 	{
-		_rtfEditorPane = new JEditorPane( "text/rtf", "" );
+		_rtfEditorPane = new FastColorInversorStaticDocumentJEditorPane();
+		_rtfEditorPane.setEditable( false );
+//		_rtfEditorPane.setEditorKit( new WrapEditorKit() );
+
+		_rtfEditorPane.setPage( url );
+
+//		_urlLauncher.removeListeners();
+		jScrollPane1.setViewportView( _rtfEditorPane );
+/*
+		_rtfEditorPane.setSelectionStart(0);
+		_rtfEditorPane.setSelectionEnd(0);
+
+		_urlLauncher.setJTextComponent(_rtfEditorPane);
+*/
+
+		getColorInversor().setDarkMode(_rtfEditorPane, isDarkMode(), null);
+	}
+
+	public void setUrlStream( InputStream is, String description ) throws IOException
+	{
+		_rtfEditorPane = new FastColorInversorStaticDocumentJEditorPane();
 		_rtfEditorPane.setEditable( false );
 		_rtfEditorPane.setEditorKit( new WrapEditorKit() );
+
+		_rtfEditorPane.setContentType( "text/html" );
+//		_rtfEditorPane.setText( "<html>Page not found.</html>" );
+//		TextFileWrapper
+
+		_rtfEditorPane.read(is, description);
+
+		_urlLauncher.removeListeners();
+		jScrollPane1.setViewportView( _rtfEditorPane );
+		_rtfEditorPane.setSelectionStart(0);
+		_rtfEditorPane.setSelectionEnd(0);
+
+		_urlLauncher.setJTextComponent(_rtfEditorPane);
+
+		getColorInversor().setDarkMode(_rtfEditorPane, isDarkMode(), null);
+	}
+
+	public void setRtfDocument( Document doc )
+	{
+		_rtfEditorPane = new FastColorInversorStaticDocumentJEditorPane( "text/rtf", "" );
+		_rtfEditorPane.setEditable( false );
+		_rtfEditorPane.setEditorKit( new WrapEditorKit() );
+
 		_rtfEditorPane.setDocument( doc );
+
 		_urlLauncher.removeListeners();
 		jScrollPane1.setViewportView( _rtfEditorPane );
 		_rtfEditorPane.setSelectionStart(0);
@@ -90,6 +139,8 @@ public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedCompon
 //		addListeners();
 //		_rtfEditorPane.addMouseListener( this );
 //		_rtfEditorPane.addMouseMotionListener( this );
+
+		getColorInversor().setDarkMode(_rtfEditorPane, isDarkMode(), null);
 	}
 
 	public boolean setRtfFile( String fileName )
@@ -166,5 +217,10 @@ public class SimpleRtfDocJPanel extends JPanel implements InternallyMappedCompon
 		jScrollPane1 = mapper.mapComponent(jScrollPane1);
 		_rtfEditorPane = mapper.mapComponent(_rtfEditorPane);
 		_urlLauncher.setJTextComponent(_rtfEditorPane);
+	}
+
+	public JEditorPane getJEditorPane()
+	{
+		return( _rtfEditorPane );
 	}
 }

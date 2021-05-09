@@ -29,6 +29,9 @@ import java.util.Locale;
 import com.frojasg1.applications.common.configuration.InternationalizedStringConf;
 import com.frojasg1.general.context.ApplicationContext;
 import com.frojasg1.general.context.ApplicationContextGetter;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.ColorInversorOwner;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatus;
 
 /**
  *
@@ -41,7 +44,9 @@ public interface InternationalizedWindow<CC extends ApplicationContext >
 											ChangeZoomFactorClientInterface,
 											InternationalizationOwner,
 											InternationalizationInitializationEndCallback,
-											ApplicationContextGetter< CC >
+											ApplicationContextGetter< CC >,
+											ColorThemeChangeableStatus,
+											ColorInversorOwner
 {
 	public void changeLanguage( String language ) throws ConfigurationException, InternException;
 	public String getLanguage();
@@ -75,4 +80,6 @@ public interface InternationalizedWindow<CC extends ApplicationContext >
 	public void setAppliConf( BaseApplicationConfigurationInterface applicationConfiguration );
 
 	public void setInitialized();
+
+	public void invokeConfigurationParameterColorThemeChanged();
 }

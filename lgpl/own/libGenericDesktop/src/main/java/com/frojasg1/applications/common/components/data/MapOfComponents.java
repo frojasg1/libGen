@@ -19,19 +19,28 @@
 package com.frojasg1.applications.common.components.data;
 
 import com.frojasg1.applications.common.components.internationalization.InternException;
+import com.frojasg1.applications.common.components.internationalization.window.InternationalizedWindow;
 import com.frojasg1.general.desktop.copypastepopup.TextCompPopupManager;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
 import com.frojasg1.applications.common.components.resizecomp.MapResizeRelocateComponentItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem_parent;
+import com.frojasg1.general.NullFunctions;
+import com.frojasg1.general.desktop.view.ComponentFunctions;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
 import java.awt.Component;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import org.slf4j.LoggerFactory;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatus;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
+import com.frojasg1.general.desktop.view.color.OriginalColorThemeAttribute;
 
 /**
  *
@@ -39,6 +48,8 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
  */
 public class MapOfComponents
 {
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(MapOfComponents.class);
+
 	protected Map< Component, ComponentData > _map;
 
 	ResizeRelocateItem_parent _rriParent;
@@ -46,27 +57,117 @@ public class MapOfComponents
 	public MapOfComponents(ResizeRelocateItem_parent rriParent)
 	{
 		_rriParent = rriParent;
-		_map = new HashMap< Component, ComponentData >();
+		_map = new ConcurrentHashMap< Component, ComponentData >();
 	}
 
 	public ComponentData get( Component comp )
 	{
-		return( _map.get(comp) );
+		ComponentData result = null;
+		if( comp != null )
+			result = _map.get(comp);
+
+		return( result );
 	}
 
 	public void put( Component comp, ComponentData cd )
 	{
-		_map.put( comp, cd );
+		if( comp != null )
+			_map.put( comp, cd );
+	}
+
+	protected InternationalizedWindow getInternationalizedWindow()
+	{
+		InternationalizedWindow result = null;
+		if( _rriParent != null )
+			result = _rriParent.getInternationalizedWindow();
+
+		return( result );
+	}
+
+	protected ComponentData createComponentDataOnTheFly( Component comp )
+	{
+		return( createComponentDataGen( comp, true ) );
+	}
+
+	protected ComponentData createComponentDataNormal( Component comp )
+	{
+		return( createComponentDataGen( comp, false ) );
+	}
+
+	protected ComponentData createComponentDataGen( Component comp, boolean isOnTheFly )
+	{
+		ComponentData result = new ComponentData(comp);
+
+		if( comp instanceof ColorThemeChangeableStatusBuilder )
+			result.setColorThemeChangeable( ( (ColorThemeChangeableStatusBuilder) comp ).createColorThemeChangeableStatus() );
+
+		if( comp instanceof ColorThemeChangeableStatus )
+			result.setColorThemeChangeable( (ColorThemeChangeableStatus) comp );
+		else
+		{
+			InternationalizedWindow iw = getInternationalizedWindow();
+			if( iw != null )
+			{
+				Boolean initialDarkMode = getOriginalColorMode(comp);
+				if( initialDarkMode == null )
+				{
+					if( !isOnTheFly )
+						initialDarkMode = iw.wasLatestModeDark();
+					else
+						initialDarkMode = false;
+				}
+
+				result.getColorThemeChangeableStatus().setDarkMode(initialDarkMode, iw.getColorInversor() );
+				result.getColorThemeChangeableStatus().setLatestWasDark(initialDarkMode);
+			}
+		}
+
+		return( result );
+	}
+
+	protected Boolean getOriginalColorMode( Component comp )
+	{
+		Boolean result = NullFunctions.instance().getIfNotNull(  ComponentFunctions.instance().getFirstParentInstanceOf(
+																		OriginalColorThemeAttribute.class, comp),
+																OriginalColorThemeAttribute::getOriginallyWasDarkMode );
+
+		return( result );
 	}
 
 	public ComponentData getOrCreate( Component comp )
 	{
-		ComponentData result = get(comp);
-		if( result == null )
+		return( getOrCreateGen(comp, false) );
+	}
+
+	public ComponentData getOrCreateOnTheFly( Component comp )
+	{
+		return( getOrCreateGen(comp, true) );
+	}
+
+	public ComponentData getOrCreateGen( Component comp, boolean isOnTheFly )
+	{
+		ComponentData result = null;
+		if( comp != null )
 		{
-			result = new ComponentData();
-			put( comp, result );
+			result = get(comp);
+			if( result == null )
+			{
+				synchronized( this )
+				{
+					result = get(comp);
+					if( result == null )
+					{
+						result = createComponentDataGen(comp, isOnTheFly);
+						put( comp, result );
+					}
+				}
+			}
 		}
+		else
+		{
+			LOGGER.warn( "Component is null (is the key). Cannot create element." );
+		}
+
 		return( result );
 	}
 
@@ -81,7 +182,17 @@ public class MapOfComponents
 	public ResizeRelocateItem getResizeRelocateItem( Component comp )
 	{
 		ResizeRelocateItem result = null;
-		ComponentData cd = get( comp );
+		ComponentData cd = getOrCreate( comp );
+		if( cd != null )
+			result = cd.getResizeRelocateItem();
+
+		return( result );
+	}
+
+	public ResizeRelocateItem getResizeRelocateItemOnTheFly( Component comp )
+	{
+		ResizeRelocateItem result = null;
+		ComponentData cd = getOrCreateOnTheFly( comp );
 		if( cd != null )
 			result = cd.getResizeRelocateItem();
 
@@ -148,7 +259,14 @@ public class MapOfComponents
 
 	public void setTextCompPopupManager( Component comp, TextCompPopupManager tpmm )
 	{
-		ComponentData cd = getOrCreate( comp );
+		boolean isOnTheFly = false;
+		setTextCompPopupManager( comp, tpmm, isOnTheFly);
+	}
+
+	public void setTextCompPopupManager( Component comp, TextCompPopupManager tpmm,
+										boolean isOnTheFly)
+	{
+		ComponentData cd = getOrCreateGen( comp, isOnTheFly );
 		cd.setTextCompPopupManager(tpmm);
 	}
 
@@ -206,6 +324,18 @@ public class MapOfComponents
 		}
 	}
 
+	protected ColorThemeChangeableStatus getNewColorThemeChangeableStatus( Component comp )
+	{
+		ColorThemeChangeableStatus result = null;
+		
+		if( comp instanceof ColorThemeChangeableStatus )
+			result = (ColorThemeChangeableStatus) comp;
+		else if( comp instanceof ColorThemeChangeableStatusBuilder )
+			result = ( (ColorThemeChangeableStatusBuilder) comp ).createColorThemeChangeableStatus();
+
+		return( result );
+	}
+
 	protected void switchComponent( Component oldComp, Component newComp )
 	{
 		ComponentData cd = get( oldComp );
@@ -215,12 +345,26 @@ public class MapOfComponents
 
 			_map.remove( oldComp );
 			_map.put( newComp, cd );
+			cd.setComponent( newComp );
 			if( rri != null )
 				rri.setComponent(newComp);
+
+			ColorThemeChangeableStatus ctc = cd.getColorThemeChangeableStatus();
+			ColorThemeChangeableStatus newCtc = getNewColorThemeChangeableStatus( newComp );
+			if( ( newCtc != null ) && ( ctc != null ) )
+				newCtc.setDarkMode( ctc.isDarkMode(), getColorInversor() );
+
+			if( newCtc != null )
+				cd.setColorThemeChangeable(newCtc);
 		}
 	}
 
 	public void switchComponents( Map< Component, Component > switchMap )
+	{
+		switchComponentsGen( switchMap, false );
+	}
+
+	public void switchComponentsGen( Map< Component, Component > switchMap, boolean isOnTheFly )
 	{
 		Iterator< Map.Entry< Component, Component > > it = switchMap.entrySet().iterator();
 		while( it.hasNext() )
@@ -232,7 +376,9 @@ public class MapOfComponents
 			else
 			{
 				switchComponent( entry.getKey(), entry.getValue() );
-				ResizeRelocateItem rri = getResizeRelocateItem( entry.getKey() );
+				ResizeRelocateItem rri = isOnTheFly ?
+										getResizeRelocateItemOnTheFly( entry.getKey() ) :
+										getResizeRelocateItem( entry.getKey() );
 				if( rri != null )
 					rri.setComponent( entry.getValue() );
 			}
@@ -283,6 +429,20 @@ public class MapOfComponents
 			catch( Exception ex )
 			{}
 		}
+	}
+	
+	protected ColorInversor getColorInversor()
+	{
+		ColorInversor result = null;
+
+		for( Component comp: _map.keySet() )
+		{
+			result = FrameworkComponentFunctions.instance().getColorInversor(comp);
+			if( result != null )
+				break;
+		}
+
+		return( result );
 	}
 /*
 	public int getFactoredTextSize( Component comp, double factor )

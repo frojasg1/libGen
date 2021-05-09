@@ -20,6 +20,8 @@ package com.frojasg1.general.desktop.view.zoom.ui;
 
 import com.frojasg1.general.number.DoubleReference;
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalCheckBoxUI;
 
 /**
@@ -35,6 +37,10 @@ public class ZoomMetalCheckBoxUI extends MetalCheckBoxUI implements MetalCompone
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomMetalCheckBoxUI();
+    }
 
 	@Override
 	public void init()

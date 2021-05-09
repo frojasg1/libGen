@@ -24,9 +24,9 @@ package com.frojasg1.general.lib3d.animations.impl;
 import com.frojasg1.desktop.liblens.graphics.Coordinate2D;
 import com.frojasg1.general.lib3d.animations.AnimationJava3dBase;
 import com.frojasg1.general.lib3d.scenarios.impl.TorusScenario;
-import com.frojasg1.general.math.MathFunctions;
 import com.frojasg1.general.number.IntegerFunctions;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.util.Random;
 
 /**
@@ -41,7 +41,7 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 
 	protected int _counter = 0;
 
-	protected Coordinate2D _position = null;
+	protected Point _position = null;
 	protected boolean _xxForward = false;
 	protected boolean _yyForward = false;
 
@@ -71,7 +71,7 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	public Coordinate2D getPosition()
+	public Point getPosition()
 	{
 		return( _position );
 	}
@@ -110,27 +110,27 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 		_zeta = calculateZeta( counter );
 	}
 
-	protected Coordinate2D calculateNewPosition( Dimension dimensionWhereToMoveScenario,
+	protected Point calculateNewPosition( Dimension dimensionWhereToMoveScenario,
 												Dimension canvasSize,
-												Coordinate2D position )
+												Point position )
 	{
-		Coordinate2D result = null;
+		Point result = null;
 
 		int xx = calculateNewCoordinate( dimensionWhereToMoveScenario.width,
-										canvasSize.width, position.M_getX(),
+										canvasSize.width, position.x,
 										_xxForward, _stop );
 		int yy = calculateNewCoordinate( dimensionWhereToMoveScenario.height,
-										canvasSize.height, position.M_getY(),
+										canvasSize.height, position.y,
 										_yyForward, _stop );
 
 		_xxForward = calculateNewIsForward( dimensionWhereToMoveScenario.width,
-											canvasSize.width, position.M_getX(),
+											canvasSize.width, position.x,
 											_xxForward, _stop );
 		_yyForward = calculateNewIsForward( dimensionWhereToMoveScenario.height,
-											canvasSize.height, position.M_getY(),
+											canvasSize.height, position.y,
 											_yyForward, _stop );
 
-		result = new Coordinate2D( xx, yy );
+		result = new Point( xx, yy );
 
 		return( result );
 	}
@@ -176,14 +176,14 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 		
 		if( _stop && ( _position != null ) )
 		{
-			Coordinate2D position = _position;
+			Point position = _position;
 			Dimension canvasSize = getCanvasSize();
 
 			result = destinationReached( _dimensionWhereToMoveScenario.width,
-											canvasSize.width, position.M_getX(),
+											canvasSize.width, position.x,
 											_xxForward ) &&
 					destinationReached( _dimensionWhereToMoveScenario.height,
-											canvasSize.height, position.M_getY(),
+											canvasSize.height, position.y,
 											_yyForward );
 		}
 
@@ -283,7 +283,7 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 	}
 
 	// initial coordinates for canvas just at the non visible boundaries where the scenario can move.
-	protected Coordinate2D calculatePositionFromRandomNumber( int randomNumberForPosition,
+	protected Point calculatePositionFromRandomNumber( int randomNumberForPosition,
 																boolean randomDirection )
 	{
 		int xx = -1;
@@ -334,7 +334,7 @@ public class TorusAnimation extends AnimationJava3dBase<TorusScenario> {
 			}
 		}
 
-		Coordinate2D result = new Coordinate2D( xx, yy );
+		Point result = new Point( xx, yy );
 		return( result );
 	}
 

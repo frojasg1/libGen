@@ -19,13 +19,14 @@
 package com.frojasg1.general.desktop.view.zoom.components;
 
 import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
+import com.frojasg1.general.desktop.view.zoom.mapper.CustomComponent;
 import javax.swing.Icon;
 
 /**
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public interface ComponentWithIconForZoomInterface extends ZoomComponentInterface
+public interface ComponentWithIconForZoomInterface extends CustomComponent
 {
 	public Icon getDisabledIcon();
 	public Icon getDisabledSelectedIcon();

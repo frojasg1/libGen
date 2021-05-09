@@ -18,6 +18,7 @@
  */
 package com.frojasg1.general.desktop.view.zoom.ui;
 
+import com.frojasg1.general.desktop.view.IconFunctions;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import com.frojasg1.general.number.DoubleReference;
 import com.frojasg1.general.reflection.ReflectionFunctions;
@@ -54,12 +55,15 @@ public class ZoomMetalFileChooserUI extends MetalFileChooserUI
 
 	protected JFileChooser _jFileChooser = null;
 
+	protected boolean _isDarkMode = false;
+
 //	protected JComboBox directoryComboBox = null;
 
-	public ZoomMetalFileChooserUI( JFileChooser jfc )
+	public ZoomMetalFileChooserUI( JFileChooser jfc, boolean isDarkMode )
 	{
 		super( jfc );
 
+		_isDarkMode = isDarkMode;
 		_jFileChooser = jfc;
 	}
 
@@ -69,32 +73,48 @@ public class ZoomMetalFileChooserUI extends MetalFileChooserUI
 		return( acceptAllFileFilterLocale );
 	}
 
+	protected boolean isDarkMode()
+	{
+		return( _isDarkMode );
+	}
+
 	@Override
 	protected void installIcons(JFileChooser fc)
 	{
 		super.installIcons(fc);
 
-        directoryIcon    = createZoomIcon( directoryIcon );
-        fileIcon    = createZoomIcon( fileIcon );
-        computerIcon    = createZoomIcon( computerIcon );
-        hardDriveIcon    = createZoomIcon( hardDriveIcon );
-        floppyDriveIcon    = createZoomIcon( floppyDriveIcon );
-        newFolderIcon    = createZoomIcon( newFolderIcon );
-        upFolderIcon    = createZoomIcon( upFolderIcon );
-        homeFolderIcon    = createZoomIcon( homeFolderIcon );
-        detailsViewIcon    = createZoomIcon( detailsViewIcon );
-        listViewIcon    = createZoomIcon( listViewIcon );
-        viewMenuIcon    = createZoomIcon( viewMenuIcon );
+        directoryIcon    = createZoomIcon( directoryIcon, true );
+        fileIcon    = createZoomIcon( fileIcon, true );
+        computerIcon    = createZoomIcon( computerIcon, true );
+        hardDriveIcon    = createZoomIcon( hardDriveIcon, true );
+        floppyDriveIcon    = createZoomIcon( floppyDriveIcon, true );
+        newFolderIcon    = createZoomIcon( newFolderIcon, false );
+        upFolderIcon    = createZoomIcon( upFolderIcon, false );
+        homeFolderIcon    = createZoomIcon( homeFolderIcon, false );
+        detailsViewIcon    = createZoomIcon( detailsViewIcon, false );
+        listViewIcon    = createZoomIcon( listViewIcon, false );
+        viewMenuIcon    = createZoomIcon( viewMenuIcon, false );
 	}
 
-	protected ZoomIconImp createZoomIcon( Icon icon )
+	protected ZoomIconImp createZoomIcon( Icon icon, boolean canInvert )
 	{
 		ZoomIconImp result = null;
 		if( icon != null )
 		{
+			if( canInvert )
+				icon = invertIfNecessary( icon );
 			result = new ZoomIconImp( icon, _zoomFactor );
 //			result.setAdditionalFactor( 1.33D );
 		}
+		return( result );
+	}
+
+	protected Icon invertIfNecessary( Icon icon )
+	{
+		Icon result = icon;
+		if( isDarkMode() )
+			result = IconFunctions.instance().invertIconColors(icon);
+
 		return( result );
 	}
 

@@ -21,6 +21,7 @@
  */
 package com.frojasg1.general.lib3d.figures;
 
+import com.frojasg1.general.lib3d.components.api.about.animation.torus.TorusAnimationInitContext;
 import java.awt.Color;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.ColoringAttributes;
@@ -49,22 +50,26 @@ import org.jogamp.vecmath.Point3f;
  * @author https://github.com/lemtzas/Java3D-Project-1/blob/master/Project%201/src/objects/Torus.java
  */
 public class Torus extends Shape3D {
-	public Torus(float majorRadius, float minorRadius, int majorSamples,
-					int minorSamples, Color color, boolean isSolid)
+	public Torus(TorusAnimationInitContext initContext, boolean isSolid)
 	{
 		if( isSolid )
 		{
-			createSolid(majorRadius, minorRadius, majorSamples, minorSamples, color);
+			createSolid(initContext);
 		}
 		else
 		{
-			createLineShape(majorRadius, minorRadius, majorSamples, minorSamples, color);
+			createLineShape(initContext);
 		}
 	}
 
-	protected void createSolid(float majorRadius, float minorRadius, int majorSamples, int minorSamples,
-								Color color)
+	protected void createSolid(TorusAnimationInitContext initContext)
 	{
+		float majorRadius = initContext.getMajorRadius();
+		float minorRadius = initContext.getMinorRadius();
+		int majorSamples = initContext.getMajorSamples();
+		int minorSamples = initContext.getMinorSamples();
+		Color color = initContext.getColor();
+
 		setGeometry(createGeometry(majorRadius, minorRadius, majorSamples, minorSamples));
 		
 		Appearance meshApp = new Appearance();
@@ -131,7 +136,13 @@ public class Torus extends Shape3D {
 	}
 
 	// http://forum.jogamp.org/file/n4037894/BasicBox.java
-	public void createLineShape (float majorRadius, float minorRadius, int majorSamples, int minorSamples, Color color) {
+	public void createLineShape (TorusAnimationInitContext initContext) {
+		float majorRadius = initContext.getMajorRadius();
+		float minorRadius = initContext.getMinorRadius();
+		int majorSamples = initContext.getMajorSamples();
+		int minorSamples = initContext.getMinorSamples();
+		Color color = initContext.getColor();
+
 		Appearance app = createLineAppearance(color, 2.0);
 		int stripLengths[] = getStripLengths( majorSamples, minorSamples );
 //		int stripLengths[] = new int[] { 2 };

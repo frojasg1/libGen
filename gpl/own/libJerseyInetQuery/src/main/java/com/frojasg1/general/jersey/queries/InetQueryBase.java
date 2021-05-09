@@ -21,6 +21,7 @@
  */
 package com.frojasg1.general.jersey.queries;
 
+import com.frojasg1.general.BooleanFunctions;
 import com.frojasg1.general.desktop.queries.InetQuery;
 import com.frojasg1.general.desktop.queries.InetQueryException;
 import com.frojasg1.general.desktop.queries.InetQueryResult;
@@ -170,5 +171,10 @@ public abstract class InetQueryBase<CC extends InetQueryResult > implements Inet
 	protected void throwInetQueryException( ClientResponse clientResponse ) throws InetQueryException
 	{
 		throw( createInetQueryException( clientResponse ) );
+	}
+
+	protected String booleanToString( boolean value )
+	{
+		return( BooleanFunctions.instance().booleanToString( value ) );
 	}
 }

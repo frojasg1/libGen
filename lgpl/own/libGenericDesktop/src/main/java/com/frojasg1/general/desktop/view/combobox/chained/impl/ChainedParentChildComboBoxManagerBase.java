@@ -42,7 +42,7 @@ import com.frojasg1.general.combohistory.TextComboBoxContent;
 import com.frojasg1.general.desktop.view.combobox.chained.ChainedParentChildComboBoxGroupManager;
 import com.frojasg1.general.desktop.view.combobox.chained.ChainedParentForChildComboContentServer;
 import com.frojasg1.general.desktop.view.combobox.chained.ComboBoxGroupManager;
-import com.frojasg1.general.desktop.view.combobox.utlis.ComboBoxFunctions;
+import com.frojasg1.general.desktop.view.combobox.utils.ComboBoxFunctions;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import java.util.Objects;

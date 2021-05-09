@@ -21,6 +21,10 @@ package com.frojasg1.applications.common.components.data;
 import com.frojasg1.general.desktop.copypastepopup.TextCompPopupManager;
 import com.frojasg1.general.undoredo.text.TextUndoRedoInterface;
 import com.frojasg1.applications.common.components.resizecomp.ResizeRelocateItem;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
+import java.awt.Component;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatus;
+import com.frojasg1.general.desktop.view.color.ColorThemeChangeableStatusBuilder;
 
 /**
  *
@@ -38,10 +42,19 @@ public class ComponentData
 //	protected double _originalSizeOfText = 1;
 
 	protected TextCompPopupManager _textPopupMenuManager;
-	
-	public ComponentData()
+
+	protected ColorThemeChangeableStatus _colorThemeChangeable;
+
+	protected Component _component;
+
+	public ComponentData(Component component)
 	{
-		
+		_component = component;
+	}
+
+	public void setComponent( Component component )
+	{
+		_component = component;
 	}
 
 	public ResizeRelocateItem getResizeRelocateItem()
@@ -91,6 +104,38 @@ public class ComponentData
 	public void setTextCompPopupManager( TextCompPopupManager tcpm )
 	{
 		_textPopupMenuManager = tcpm;
+	}
+
+	protected Component getComponent()
+	{
+		return( _component );
+	}
+
+	protected ColorThemeChangeableStatus createColorThemeChangeable()
+	{
+		ColorThemeChangeableStatus result = null;
+		Component comp = getComponent();
+		if( comp instanceof  ColorThemeChangeableStatus )
+			result = (ColorThemeChangeableStatus) comp;
+		else if( comp instanceof ColorThemeChangeableStatusBuilder )
+			result = ( (ColorThemeChangeableStatusBuilder) getComponent()).createColorThemeChangeableStatus();
+		else
+			result = new ColorThemeChangeableBase();
+
+		return( result );
+	}
+
+	public ColorThemeChangeableStatus getColorThemeChangeableStatus()
+	{
+		if( _colorThemeChangeable == null )
+			_colorThemeChangeable = createColorThemeChangeable();
+
+		return( _colorThemeChangeable );
+	}
+
+	public void setColorThemeChangeable( ColorThemeChangeableStatus ctc )
+	{
+		_colorThemeChangeable = ctc;
 	}
 
 	public TextUndoRedoInterface getTextUndoRedoManager()

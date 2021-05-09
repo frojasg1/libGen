@@ -25,6 +25,7 @@ import com.frojasg1.general.FileFunctions;
 import com.frojasg1.general.desktop.application.version.DesktopApplicationVersion;
 import com.frojasg1.general.desktop.generic.dialogs.impl.DesktopDialogsWrapper;
 import com.frojasg1.general.desktop.execution.newversion.NewVersionQueryExecution;
+import com.frojasg1.general.desktop.lookAndFeel.ToolTipLookAndFeel;
 import com.frojasg1.general.desktop.view.license.GenericLicenseJDialog;
 import com.frojasg1.general.desktop.view.splash.GenericBasicSplash;
 import com.frojasg1.general.desktop.view.whatisnew.WhatIsNewJDialogBase;
@@ -60,7 +61,7 @@ public abstract class StartApplicationBase
 
 	protected GenericBasicSplash _splash = null;
 
-	protected OpenConfigurationBase _oc = null;
+	protected OpenConfigurationDesktopBase _oc = null;
 
 	protected volatile int _totalNumberOfStepsToStart = -1;
 	protected int _numberOfStepsCompleted = 0;
@@ -77,7 +78,10 @@ public abstract class StartApplicationBase
 	{
 	}
 
-	protected abstract LookAndFeel getLookAndFeel();
+	protected LookAndFeel getLookAndFeel()
+	{
+		return( ToolTipLookAndFeel.instance() );
+	}
 
 	protected void setLookAndFeel()
 	{
@@ -114,11 +118,11 @@ public abstract class StartApplicationBase
 	}
 
 	protected abstract GenericBasicSplash createSplash();
-	protected abstract OpenConfigurationBase createOpenConfiguration() throws ConfigurationException;
+	protected abstract OpenConfigurationDesktopBase createOpenConfiguration() throws ConfigurationException;
 
-	protected OpenConfigurationBase createOpenConfigurationAndSetBaseParams() throws ConfigurationException
+	protected OpenConfigurationDesktopBase createOpenConfigurationAndSetBaseParams() throws ConfigurationException
 	{
-		OpenConfigurationBase result = createOpenConfiguration();
+		OpenConfigurationDesktopBase result = createOpenConfiguration();
 		result.setWasANewVersionFunction( this::wasANewVersion );
 
 		return( result );

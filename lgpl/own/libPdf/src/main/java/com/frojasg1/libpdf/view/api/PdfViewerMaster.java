@@ -20,6 +20,7 @@ package com.frojasg1.libpdf.view.api;
 
 import com.frojasg1.general.desktop.view.panels.NavigatorControllerInterface;
 import com.frojasg1.general.number.DoubleReference;
+import com.frojasg1.libpdf.view.PdfViewerContext;
 import java.awt.image.BufferedImage;
 
 /**
@@ -32,4 +33,6 @@ public interface PdfViewerMaster extends NavigatorControllerInterface
 	public void newPdfZoomFactorSelected( DoubleReference newFactor );
 
 	public void newPageSet( BufferedImage image, DoubleReference factor, int pageIndex );
+
+	public PdfViewerContext getPdfViewerContext();
 }

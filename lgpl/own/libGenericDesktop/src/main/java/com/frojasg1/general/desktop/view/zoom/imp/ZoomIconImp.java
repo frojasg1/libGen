@@ -53,6 +53,9 @@ public class ZoomIconImp implements ZoomIcon {
 	protected double _additionalFactor = 1.0D;
 	protected boolean _centerSmaller = false;
 
+	protected boolean _canInvertColors = true;
+	protected boolean _colorsAreInverted = false;
+
 	public ZoomIconImp( Icon originalIcon )
 	{
 		_originalIcon = originalIcon;
@@ -233,5 +236,31 @@ public class ZoomIconImp implements ZoomIcon {
 	public Icon getOriginalIcon()
 	{
 		return( _originalIcon );
+	}
+
+	public void setOriginalIcon( Icon originalIcon )
+	{
+		_originalIcon = originalIcon;
+	}
+
+	@Override
+	public boolean canInvertColors() {
+		return( _canInvertColors );
+	}
+
+	@Override
+	public void setCanInvertColors(boolean value) {
+		_canInvertColors = value;
+	}
+
+	@Override
+	public boolean areColorsInverted() {
+		return( _colorsAreInverted );
+	}
+
+	@Override
+	public void setIconWithInvertedColors(Icon original) {
+		_originalIcon = original;
+		_colorsAreInverted = !_colorsAreInverted;
 	}
 }

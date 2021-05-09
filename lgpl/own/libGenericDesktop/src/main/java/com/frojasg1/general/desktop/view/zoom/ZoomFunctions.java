@@ -59,34 +59,58 @@ public class ZoomFunctions {
 		if( compUi != null )
 		{
 			Class newClassCompUi = getZoomUIClass( compUi );
-			if( newClassCompUi != null )
-			{
-				ComponentUI newUi = createZoomUI( newClassCompUi, zoomFactor );
 
-				if( newUi instanceof ComponentUIforZoomInterface )
-				{
-					( (ComponentUIforZoomInterface) newUi).setZoomFactorReference(zoomFactor);
-					( (ComponentUIforZoomInterface) newUi).init();
-				}
-
-				if( ( comp instanceof AbstractButton ) &&
-					( newUi instanceof ButtonUI ) )
-				{
-					( (AbstractButton) comp ).setUI( ( ButtonUI ) newUi );
-				}
-				else if( ( comp instanceof JSlider ) &&
-						( newUi instanceof SliderUI ) )
-				{
-					( (JSlider) comp ).setUI( ( SliderUI ) newUi );
-				}
-				else
-				{
-					comp.setUI( newUi );
-				}
-			}
+			changeZoomUI( comp, zoomFactor, newClassCompUi );
 		}
 	}
 
+	public void updateZoomUI( ZoomComponentInterface comp,
+								DoubleReference zoomFactor )
+	{
+		ComponentUI compUi = null;
+
+		compUi = comp.getUI();
+
+		if( compUi instanceof ComponentUIforZoomInterface )
+		{
+			Class newClassCompUi = compUi.getClass();
+
+			changeZoomUI( comp, zoomFactor, newClassCompUi );
+		}
+	}
+
+	protected void changeZoomUI( ZoomComponentInterface comp,
+								DoubleReference zoomFactor,
+								Class newClassCompUi )
+	{
+		ComponentUI compUi = null;
+
+		if( newClassCompUi != null )
+		{
+			ComponentUI newUi = createZoomUI( newClassCompUi, zoomFactor );
+
+			if( newUi instanceof ComponentUIforZoomInterface )
+			{
+				( (ComponentUIforZoomInterface) newUi).setZoomFactorReference(zoomFactor);
+				( (ComponentUIforZoomInterface) newUi).init();
+			}
+
+			if( ( comp instanceof AbstractButton ) &&
+				( newUi instanceof ButtonUI ) )
+			{
+				( (AbstractButton) comp ).setUI( ( ButtonUI ) newUi );
+			}
+			else if( ( comp instanceof JSlider ) &&
+					( newUi instanceof SliderUI ) )
+			{
+				( (JSlider) comp ).setUI( ( SliderUI ) newUi );
+			}
+			else
+			{
+				comp.setUI( newUi );
+			}
+		}
+	}
 
 	protected Class getZoomUIClass( ComponentUI compUi )
 	{

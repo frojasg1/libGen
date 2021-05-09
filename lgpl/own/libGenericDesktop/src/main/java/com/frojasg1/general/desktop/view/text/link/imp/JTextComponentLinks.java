@@ -69,7 +69,7 @@ public class JTextComponentLinks<KK extends Comparable<KK>, VV>
 	{
 		if( _lastLinkDetected != null )
 		{
-			_listeners.notify(_notifier);
+			_listeners.notifyListeners(_notifier);
 		}
 	}
 

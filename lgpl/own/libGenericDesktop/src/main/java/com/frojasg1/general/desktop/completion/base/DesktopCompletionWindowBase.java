@@ -32,6 +32,7 @@ import com.frojasg1.general.desktop.completion.data.CurrentParamForCompletionDat
 import com.frojasg1.general.desktop.completion.data.TotalCompletionData;
 import com.frojasg1.general.desktop.screen.ScreenFunctions;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
 import com.frojasg1.general.desktop.view.editorkits.WrapEditorKit;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkListener;
 import com.frojasg1.general.desktop.view.text.link.imp.LinkServer;
@@ -54,6 +55,7 @@ import java.util.Vector;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 
@@ -68,11 +70,12 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 									LinkListener<MM> {
 
 	public static final String sa_configurationBaseFileName = "DesktopCompletionWindow";
+/*
 	protected ComponentFunctions.ExecuteToComponent addFocusListenerExecutor = comp -> {
 		comp.addFocusListener( this );
 		return( null );
 	};
-
+*/
 	protected CompletionDocumentFormatterBase _completionDocumentFormatter = null;
 	protected CurrentParamDocumentFormatterBase _currentParamDocumentAppender = null;
 
@@ -124,7 +127,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 									InternationalizedStringConf translatorOfType )
 //									ApplicationContextImp appCtx ) {
 	{
-		super( frame, false, applicationConfiguration, null, null, false );
+		super( frame, false, applicationConfiguration, null, null, false, true );
 
 		_translatorOfType = translatorOfType;
 /*
@@ -148,9 +151,10 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 									InternationalizedStringConf translatorOfType )
 //									ApplicationContextImp appCtx ) {
 	{
-		super( dialog, false, applicationConfiguration, null, null, false );
+		super( dialog, false, applicationConfiguration, null, null, false, true );
 
 		_translatorOfType = translatorOfType;
+
 /*
 		setUndecorated( true );
 		setAlwaysOnTop( true );
@@ -165,8 +169,9 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 
 		setWindowConfiguration( );
 */
+
 	}
-	
+
 	public void init()
 	{
 		setUndecorated( true );
@@ -178,7 +183,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		initComponents();
 
 		initOwnComponents();
-		setListenersRecursive( this );
+//		setListenersRecursive( this );
 
 		setWindowConfiguration( );
 	}
@@ -281,20 +286,24 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 //		_completionDocumentFormatter.setNewJTextPane( jTP_completion );
 		_completionDocumentFormatter.addListener( _rriForCompletionTextPane );
 
+		if( isDarkMode() )
+			invertFormattersColor( getColorInversor() );
+
 		if( isCurrentParamActive() )
 		{
 			_currentParamDocumentAppender.setNewJTextPane( jTP_currentParam );
 			_currentParamDocumentAppender.addListener( _rriForCurrentParamTextPane );
 		}
 
-		addRecursiveFocusListener( this );
+		setListenersRecursive( this );
+//		addRecursiveFocusListener( this );
 	}
-
+/*
 	protected void addRecursiveFocusListener( Component comp )
 	{
 		ComponentFunctions.instance().browseComponentHierarchy( comp, addFocusListenerExecutor );
 	}
-
+*/
 	protected abstract CompletionDocumentFormatterBase<MM> createCompletionDocumentFormatter( JTextPane textPane );
 /*
 	{
@@ -344,10 +353,12 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         jPanel2.setLayout(new javax.swing.BoxLayout(jPanel2, javax.swing.BoxLayout.LINE_AXIS));
 
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane2.setMinimumSize(new java.awt.Dimension(100, 100));
 
         jTP_currentParam.setEditable(false);
         jTP_currentParam.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        jTP_currentParam.setFocusable(false);
         jTP_currentParam.setMinimumSize(new java.awt.Dimension(400, 40));
         jTP_currentParam.setName("jTP_currentParam"); // NOI18N
         jScrollPane2.setViewportView(jTP_currentParam);
@@ -501,9 +512,12 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 
 	public void invokeLaterSetFocusToMainTextComponent()
 	{
-		SwingUtilities.invokeLater( () ->
-			_completionManager.getInputTextComponent().requestFocus()
-									);
+		SwingUtilities.invokeLater( this::setFocusToMainTextComponent );
+	}
+
+	public void setFocusToMainTextComponent()
+	{
+		_completionManager.getInputTextComponent().requestFocus();
 	}
 
 	@Override
@@ -681,7 +695,8 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	@Override
 	public void focusGained(FocusEvent evt)
 	{
-		Component previousFocusedComponent = evt.getOppositeComponent();
+		super.focusGained( evt );
+ 		Component previousFocusedComponent = evt.getOppositeComponent();
 /*
 		System.out.println( String.format( "%s ------> %s ( %s )",
 							ComponentFunctions.instance().getComponentString( previousFocusedComponent ),
@@ -690,9 +705,11 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 */
 //		if( !ComponentFunctions.instance().isAnyParentInstanceOf( DesktopCompletionWindowBase.class, previousFocusedComponent )
 		if( ComponentFunctions.instance().isAnyParent( _componentFocusedForNotHiding, previousFocusedComponent )
-			&& ( ComponentFunctions.instance().getAncestor( previousFocusedComponent ) != null ) )
+			&& ( ComponentFunctions.instance().getAncestor( previousFocusedComponent ) != null )
+			&& !( evt.getComponent() instanceof JScrollBar ) )
 		{
-			previousFocusedComponent.requestFocus();
+			setFocusToMainTextComponent();
+//			previousFocusedComponent.requestFocus();
 		}
 //			SwingUtilities.invokeLater( () -> previousFocusedComponent.requestFocus() );
 	}
@@ -715,6 +732,8 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	@Override
 	public void focusLost(FocusEvent evt)
 	{
+		super.focusLost(evt);
+
 		Component opposite = evt.getOppositeComponent();
 		Component focused = ComponentFunctions.instance().getFocusedComponent();
 		long now = System.currentTimeMillis();
@@ -727,6 +746,7 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 		{
 			hideEverything();
 		}
+		
 /*
 		System.out.println( String.format( "%s ( %s ) ------> %s",
 							this.getClass().getName(),
@@ -784,5 +804,23 @@ public abstract class DesktopCompletionWindowBase< MM extends PrototypeForComple
 	{
 		setListOfAlternativesKeepingSelection(_lastAlternativesForCompletionData);
 		setCurrentParamPrototype( _lastCurrentParamForCompletionData );
+	}
+
+	protected void invertFormattersColor(ColorInversor colorInversor)
+	{
+		if( _completionDocumentFormatter != null )
+			_completionDocumentFormatter.invertColors(colorInversor);
+
+		if( _currentParamDocumentAppender != null )
+			_currentParamDocumentAppender.invertColors(colorInversor);
+	}
+
+	@Override
+	public void setDarkMode(boolean value, ColorInversor colorInversor)
+	{
+		super.setDarkMode( value, colorInversor );
+
+		if( this.wasLatestModeDark() != value )
+			invertFormattersColor(colorInversor);
 	}
 }

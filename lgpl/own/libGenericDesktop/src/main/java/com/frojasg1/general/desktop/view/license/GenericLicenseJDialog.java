@@ -104,7 +104,7 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
 									String baseConfigurationFileName,
 									boolean useAlwaysJar)
 	{
-		super( parent, true, appConf, null, initializationEndCallBack );
+		super( parent, true, appConf, null, initializationEndCallBack, true );
 
 		_baseConfigurationFileName = baseConfigurationFileName;
 		_showToAcceptTheLicense = showToAcceptTheLicense;
@@ -161,7 +161,7 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
 									String baseConfigurationFileName,
 									boolean useAlwaysJar)
 	{
-		super( parent, true, appConf, null, initializationEndCallBack );
+		super( parent, true, appConf, null, initializationEndCallBack, true );
 
 		_baseConfigurationFileName = baseConfigurationFileName;
 		_showToAcceptTheLicense = showToAcceptTheLicense;
@@ -246,6 +246,11 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
 		jPanel1.add( _rtfDocJPanel );
 
 		_rtfDocJPanel.setBounds( 0, 0, jPanel1.getWidth(), jPanel1.getHeight() );
+	}
+
+	public SimpleRtfDocJPanel getRtfDocPanel()
+	{
+		return( _rtfDocJPanel );
 	}
 
 	public boolean getLicensesHaveBeenAcceptedAndWeHaveToStart()
@@ -365,9 +370,11 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
         jL_language.setText("Language :");
         jL_language.setName("jL_language"); // NOI18N
         jPanel2.add(jL_language);
-        jL_language.setBounds(10, 16, 80, 14);
+        jL_language.setBounds(10, 16, 80, 16);
 
         jCb_language.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jCb_language.setMinimumSize(new java.awt.Dimension(65, 20));
+        jCb_language.setPreferredSize(new java.awt.Dimension(65, 20));
         jCb_language.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jCb_languageActionPerformed(evt);
@@ -379,24 +386,28 @@ public abstract class GenericLicenseJDialog extends InternationalizedJDialog
         jCB_accept.setText("Accept all licenses");
         jCB_accept.setName("jCB_accept"); // NOI18N
         jPanel2.add(jCB_accept);
-        jCB_accept.setBounds(210, 10, 200, 23);
+        jCB_accept.setBounds(210, 10, 200, 24);
 
         jB_startApp.setText("Accept all licenses and start");
+        jB_startApp.setMinimumSize(new java.awt.Dimension(191, 20));
         jB_startApp.setName("jB_startApp"); // NOI18N
+        jB_startApp.setPreferredSize(new java.awt.Dimension(191, 20));
         jB_startApp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jB_startAppActionPerformed(evt);
             }
         });
         jPanel2.add(jB_startApp);
-        jB_startApp.setBounds(210, 40, 280, 23);
+        jB_startApp.setBounds(210, 40, 280, 20);
 
         jL_zoomFactor.setText("Zoom factor :");
         jL_zoomFactor.setName("jL_zoomFactor"); // NOI18N
         jPanel2.add(jL_zoomFactor);
-        jL_zoomFactor.setBounds(10, 40, 90, 14);
+        jL_zoomFactor.setBounds(10, 40, 90, 16);
 
         jCB_zoomFactor.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jCB_zoomFactor.setMinimumSize(new java.awt.Dimension(65, 20));
+        jCB_zoomFactor.setPreferredSize(new java.awt.Dimension(65, 20));
         jPanel2.add(jCB_zoomFactor);
         jCB_zoomFactor.setBounds(100, 40, 70, 20);
 

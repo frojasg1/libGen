@@ -23,6 +23,7 @@ import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.desktop.keyboard.IsKeyPressed;
 import com.frojasg1.general.desktop.view.FontFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import com.frojasg1.general.number.DoubleReference;
@@ -48,19 +49,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.metal.MetalScrollButton;
 
 /**
  *
  * @author Usuario
  */
-public class ImageJPanel extends JPanel implements MouseMotionListener, MouseListener, MouseWheelListener,
+public class ImageJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements MouseMotionListener, MouseListener, MouseWheelListener,
 													ChangeListener, ComponentListener, InternallyMappedComponent
 {
 	protected static final double DEFAULT_MIN_FACTOR = 0.25d;
@@ -108,6 +109,9 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 	protected Color _foregroundColorForTextLines = Color.BLACK;
 
 	protected int _frameWidth = 0;
+	protected Color _frameColor = Color.BLACK;
+
+	protected boolean _canInvertImageColors = true;
 
 	public static enum InitialVerticalPosition
 	{
@@ -118,6 +122,8 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 
 	public ImageJPanel( JScrollPane parent, ImageJPanelControllerInterface controller )
 	{
+		super.init();
+
 		_parent = parent;
 		if( _parent != null )
 		{
@@ -141,6 +147,8 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 
 	public ImageJPanel( BufferedImage image )
 	{
+		init();
+
 		_hasToFit = true;
 		_originalImage = image;
 		_image = image;
@@ -868,7 +876,7 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 			height = size.height - 1;
 		}
 
-		ImageFunctions.instance().drawRect(gc, xx, yy, width, height, Color.BLACK, frameWidth);
+		ImageFunctions.instance().drawRect(gc, xx, yy, width, height, _frameColor, frameWidth);
 /*
 		ImageFunctions.instance().drawRect( gc, xx, yy,
 								width,
@@ -1178,6 +1186,53 @@ public class ImageJPanel extends JPanel implements MouseMotionListener, MouseLis
 		}
 
 		return( result );
+	}
+
+	@Override
+	protected void invertColorsChild(ColorInversor colorInversor)
+	{
+		BasicScrollBarUI ui;
+		invertTextLineListColors( _originalListOfTextLines, colorInversor );
+		invertTextLineListColors( _zoomedListOfTextLines, colorInversor );
+
+		_foregroundColorForTextLines = colorInversor.invertColor(_foregroundColorForTextLines);
+		_frameColor = colorInversor.invertColor(_frameColor);
+
+		if( canInvertImageColors() )
+			invertImageColors();
+	}
+
+	public boolean canInvertImageColors()
+	{
+		return( _canInvertImageColors );
+	}
+
+	public void setCanInvertImageColors( boolean value )
+	{
+		_canInvertImageColors = value;
+	}
+
+	protected void invertImageColors()
+	{
+		_image = null;
+		_originalImage = ImageFunctions.instance().invertImage(_originalImage);
+	}
+
+	protected void invertTextLineListColors( List< TextLine > list, ColorInversor colorInversor )
+	{
+		for( TextLine tl: list )
+			invertTextLineColors(tl, colorInversor);
+	}
+
+	protected void invertTextLineColors( TextLine textLine, ColorInversor colorInversor )
+	{
+		if( textLine != null )
+			textLine.setColor( colorInversor.invertColor(textLine.getColor()) );
+	}
+
+	public void setFrameColor( Color color )
+	{
+		_frameColor = color;
 	}
 
 	public static class TextLine

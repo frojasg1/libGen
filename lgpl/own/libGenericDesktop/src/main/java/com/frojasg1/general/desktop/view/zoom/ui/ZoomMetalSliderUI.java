@@ -19,7 +19,10 @@
 package com.frojasg1.general.desktop.view.zoom.ui;
 
 import com.frojasg1.general.desktop.image.ImageFunctions;
+import com.frojasg1.general.desktop.lookAndFeel.ToolTipLookAndFeel;
+import com.frojasg1.general.desktop.lookAndFeel.ToolTipMetalOceanTheme;
 import com.frojasg1.general.desktop.view.ViewFunctions;
+import com.frojasg1.general.desktop.view.layers.ZoomJLayerUI;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Color;
 import java.awt.Component;
@@ -31,6 +34,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JSlider;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.metal.MetalSliderUI;
 
@@ -46,6 +50,10 @@ public class ZoomMetalSliderUI extends MetalSliderUI implements ComponentUIforZo
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomMetalSliderUI();
+    }
 
 	@Override
 	public void init()
@@ -173,21 +181,31 @@ public class ZoomMetalSliderUI extends MetalSliderUI implements ComponentUIforZo
             trackBottom = trackRect.height - 1;
         }
 
+		Color color;
+		ToolTipMetalOceanTheme theme = ToolTipLookAndFeel.instance().getTheme();
         if ( slider.isEnabled() ) {
-            g.setColor( MetalLookAndFeel.getControlDarkShadow() );
+			color = theme.getOriginalControlDarkShadow();
+//            g.setColor( MetalLookAndFeel.getControlDarkShadow() );
+			g.setColor( color );
             g.drawRect( trackLeft, trackTop,
                         (trackRight - trackLeft) - 1, (trackBottom - trackTop) - 1 );
 
-            g.setColor( MetalLookAndFeel.getControlHighlight() );
+			color = theme.getOriginalControlHighlight();
+            g.setColor( color );
+//            g.setColor( MetalLookAndFeel.getControlHighlight() );
             g.drawLine( trackLeft + 1, trackBottom, trackRight, trackBottom );
             g.drawLine( trackRight, trackTop + 1, trackRight, trackBottom );
 
-            g.setColor( MetalLookAndFeel.getControlShadow() );
+			color = theme.getOriginalControlShadow();
+            g.setColor( color );
+//            g.setColor( MetalLookAndFeel.getControlShadow() );
             g.drawLine( trackLeft + 1, trackTop + 1, trackRight - 2, trackTop + 1 );
             g.drawLine( trackLeft + 1, trackTop + 1, trackLeft + 1, trackBottom - 2 );
         }
         else {
-            g.setColor( MetalLookAndFeel.getControlShadow() );
+			color = theme.getOriginalControlShadow();
+            g.setColor( color );
+//            g.setColor( MetalLookAndFeel.getControlShadow() );
             g.drawRect( trackLeft, trackTop,
                         (trackRight - trackLeft) - 1, (trackBottom - trackTop) - 1 );
         }
@@ -236,12 +254,16 @@ public class ZoomMetalSliderUI extends MetalSliderUI implements ComponentUIforZo
                 g.drawLine( fillLeft, fillTop, fillRight, fillTop );
                 g.drawLine( fillLeft, fillTop, fillLeft, fillBottom );
 
-                g.setColor( MetalLookAndFeel.getControlShadow() );
+				color = theme.getOriginalControlShadow();
+				g.setColor( color );
+//				g.setColor( MetalLookAndFeel.getControlShadow() );
                 g.fillRect( fillLeft + 1, fillTop + 1,
                             fillRight - fillLeft, fillBottom - fillTop );
             }
             else {
-                g.setColor( MetalLookAndFeel.getControlShadow() );
+				color = theme.getOriginalControlShadow();
+				g.setColor( color );
+//				g.setColor( MetalLookAndFeel.getControlShadow() );
                 g.fillRect(fillLeft, fillTop, fillRight - fillLeft, fillBottom - fillTop);
             }
         }

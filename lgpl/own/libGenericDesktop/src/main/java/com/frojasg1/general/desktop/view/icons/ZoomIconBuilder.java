@@ -18,9 +18,11 @@
  */
 package com.frojasg1.general.desktop.view.icons;
 
+import com.frojasg1.general.desktop.image.ImageFunctions;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -31,6 +33,7 @@ import javax.swing.ImageIcon;
 public class ZoomIconBuilder
 {
 	protected static ZoomIconBuilder _instance;
+	protected static final Dimension DIMENSION_FOR_HUNDRED_PERCENT_ZOOM_SQUARED_ICON_FOR_MENU_ITEM = new Dimension( 14, 14 );
 
 	public static void changeInstance( ZoomIconBuilder inst )
 	{
@@ -81,6 +84,19 @@ public class ZoomIconBuilder
 		{}
 
 		return( result );
+	}
+
+	public ZoomIconImp createSquaredHundredPercentZoomIconDefaultForMenuItem( String resourceName ) throws IOException
+	{
+		return( createZoomIconDefault( resourceName, DIMENSION_FOR_HUNDRED_PERCENT_ZOOM_SQUARED_ICON_FOR_MENU_ITEM ) );
+	}
+
+	public ZoomIconImp createZoomIconDefault( String resourceName, Dimension dimen ) throws IOException
+	{
+		BufferedImage image = ImageFunctions.instance().loadImageFromJar( resourceName );
+		Integer transparentColor = image.getRGB(0, 0);
+		image = ImageFunctions.instance().resizeImage( image, image.getWidth(), image.getHeight(), transparentColor, null, null );
+		return( createZoomIcon(image, dimen) );
 	}
 
 	public ZoomIconImp createZoomIcon( BufferedImage image, Dimension dimen )

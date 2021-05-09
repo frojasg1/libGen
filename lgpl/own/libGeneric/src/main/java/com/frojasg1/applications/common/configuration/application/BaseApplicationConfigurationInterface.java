@@ -70,5 +70,11 @@ public interface BaseApplicationConfigurationInterface
 	public String getDownloadFileToIgnore();
 	public void setDownloadFileToIgnore( String value );
 
+	public void toggleDarkMode();
+	public boolean isDarkModeActivated();
+	public void setDarkModeActivated( boolean value );
+
+	public boolean isDefaultModeDark();
+	
 	public void M_saveConfiguration() throws ConfigurationException;
 }

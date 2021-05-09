@@ -26,5 +26,9 @@ import javax.swing.Icon;
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
 public interface ZoomIcon extends Icon, ZoomInterface {
-	
+
+	public boolean areColorsInverted();
+	public void setIconWithInvertedColors( Icon original );
+	public boolean canInvertColors();
+	public void setCanInvertColors( boolean value );
 }

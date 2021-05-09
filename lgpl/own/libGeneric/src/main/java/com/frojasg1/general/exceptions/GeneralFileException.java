@@ -28,4 +28,9 @@ public class GeneralFileException extends Exception
 	{
 		super( message );
 	}
+
+	public GeneralFileException( String message, Throwable cause )
+	{
+		super( message, cause );
+	}
 }

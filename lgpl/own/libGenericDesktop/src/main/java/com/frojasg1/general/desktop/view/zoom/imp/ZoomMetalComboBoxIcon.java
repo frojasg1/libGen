@@ -18,13 +18,16 @@
  */
 package com.frojasg1.general.desktop.view.zoom.imp;
 
+import com.frojasg1.general.NullFunctions;
+import com.frojasg1.general.desktop.lookAndFeel.ToolTipLookAndFeel;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
 import com.frojasg1.general.desktop.view.zoom.ZoomIcon;
 import com.frojasg1.general.number.DoubleReference;
-import com.frojasg1.general.number.IntegerFunctions;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-import javax.swing.JComboBox;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxIcon;
@@ -41,9 +44,17 @@ public class ZoomMetalComboBoxIcon extends MetalComboBoxIcon implements ZoomIcon
 	protected MetalComboBoxButton _parent = null;
 	protected int _originalComboBoxHeight = -1;
 
-	public ZoomMetalComboBoxIcon( MetalComboBoxButton parent )
+	protected boolean _canInvertColors = true;
+	protected boolean _colorsAreInverted = false;
+
+	public ZoomMetalComboBoxIcon( ) //MetalComboBoxButton parent )
 	{
 //		_originalComboBoxHeight = parent.getComboBox().getPreferredSize().height;
+//		_parent = parent;
+	}
+
+	public void setParentButton( MetalComboBoxButton parent )
+	{
 		_parent = parent;
 	}
 
@@ -54,13 +65,29 @@ public class ZoomMetalComboBoxIcon extends MetalComboBoxIcon implements ZoomIcon
 
         g.translate( x, y );
 
-        g.setColor(component.isEnabled()
-                   ? MetalLookAndFeel.getControlInfo()
-                   : MetalLookAndFeel.getControlShadow());
+        g.setColor( invertColorIfNecessary( component.isEnabled()
+											? ToolTipLookAndFeel.instance().getTheme().getOriginalControlInfo()
+											: ToolTipLookAndFeel.instance().getTheme().getOriginalControlShadow())
+//											? MetalLookAndFeel.getControlInfo()
+//											: MetalLookAndFeel.getControlShadow())
+		);
         g.fillPolygon(new int[]{0, iconWidth/2, iconWidth},
                       new int[]{0, iconWidth/2 , 0}, 3);
         g.translate( -x, -y );
     }
+
+	protected Color invertColorIfNecessary( Color original )
+	{
+		Color result = original;
+		if( _colorsAreInverted )
+		{
+			Color invertedColor = NullFunctions.instance().getIfNotNull( FrameworkComponentFunctions.instance().getColorInversor(_parent),
+				ci -> ci.invertColor( original ) );
+			if( invertedColor != null )
+				result = invertedColor;
+		}
+		return result;
+	}
 
 	@Override
 	public int getIconWidth()
@@ -105,6 +132,26 @@ public class ZoomMetalComboBoxIcon extends MetalComboBoxIcon implements ZoomIcon
 	@Override
 	public DoubleReference getZoomFactorReference() {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public boolean canInvertColors() {
+		return( _canInvertColors );
+	}
+
+	@Override
+	public void setCanInvertColors(boolean value) {
+		_canInvertColors = value;
+	}
+
+	@Override
+	public boolean areColorsInverted() {
+		return( _colorsAreInverted );
+	}
+
+	@Override
+	public void setIconWithInvertedColors(Icon original) {
+		_colorsAreInverted = !_colorsAreInverted;
 	}
 	
 }

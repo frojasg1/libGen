@@ -18,34 +18,8 @@
  */
 package com.frojasg1.general.desktop.image;
 
-import com.frojasg1.desktop.liblens.graphics.Coordinate2D;
-import com.frojasg1.general.FileFunctions;
-import com.frojasg1.general.desktop.files.DesktopResourceFunctions;
 import com.frojasg1.general.number.IntegerFunctions;
-import com.frojasg1.general.string.StringFunctions;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
+import java.util.function.Function;
 
 /**
  *
@@ -77,17 +51,33 @@ public class ImageUtilFunctions
 								alphaForPixelsDifferentFromColorFrom) );
 	}
 
-	public int invertColor( int inPixelValue )
+	public int translateSimpleComponentsOfPixelARGB( int inPixelValue,
+								Function<Integer, Integer> componentTranslator )
 	{
 		int rr = ( inPixelValue & 0xff0000 ) >> 16;
 		int gg = ( inPixelValue & 0xff00 ) >> 8;
 		int bb = ( inPixelValue & 0xff );
-		
-		return( ( inPixelValue & 0xff000000 ) + (invertComponent(rr) << 16) +
-				(invertComponent(gg) << 8) + invertComponent(bb) );
+
+		return( ( inPixelValue & 0xff000000 ) + (componentTranslator.apply(rr) << 16) +
+				(componentTranslator.apply(gg) << 8) + componentTranslator.apply(bb) );
 	}
 
-	protected int invertComponent( int componentValue )
+	public int putOutColor( int inPixelValue, double percentage )
+	{
+		return( translateSimpleComponentsOfPixelARGB(inPixelValue, comp -> putOutComp(comp, percentage) ) );
+	}
+
+	public int invertColor( int inPixelValue )
+	{
+		return( translateSimpleComponentsOfPixelARGB(inPixelValue, this::invertComponent ) );
+	}
+
+	public int putOutComp( int componentValue, double component )
+	{
+		return( IntegerFunctions.zoomValueFloor(componentValue, component) );
+	}
+
+	public int invertComponent( int componentValue )
 	{
 		return( 255 - componentValue );
 	}

@@ -22,6 +22,7 @@ import com.frojasg1.general.desktop.view.layers.events.ZoomEvent;
 import com.frojasg1.general.desktop.view.layers.events.ZoomMouseEvent;
 import com.frojasg1.general.desktop.view.layers.events.ZoomMouseWheelEvent;
 import com.frojasg1.general.desktop.view.layers.zoom.ZoomComponent;
+import com.frojasg1.general.desktop.view.zoom.ui.ZoomMetalButtonUI;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JLayer;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.LayerUI;
 import javax.swing.plaf.synth.SynthSliderUI;
 
@@ -59,6 +61,10 @@ public class ZoomJLayerUI extends LayerUI<JComponent>
 	
 	public ZoomJLayerUI()
 	{}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomJLayerUI();
+    }
 
 	public void setZoom( double zoom )
 	{

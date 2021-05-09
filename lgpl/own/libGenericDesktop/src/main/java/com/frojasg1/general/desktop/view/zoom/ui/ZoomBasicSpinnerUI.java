@@ -22,10 +22,12 @@ import com.frojasg1.general.desktop.view.zoom.components.ZoomBasicArrowButton_;
 import com.frojasg1.general.number.DoubleReference;
 import java.awt.Component;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicSpinnerUI;
 
@@ -44,6 +46,10 @@ public class ZoomBasicSpinnerUI extends BasicSpinnerUI implements ComponentUIfor
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomBasicSpinnerUI();
+    }
 
 	@Override
 	public void init()

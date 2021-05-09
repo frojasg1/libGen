@@ -26,17 +26,25 @@ import com.frojasg1.general.ExecutionFunctions;
 import com.frojasg1.general.desktop.classes.Classes;
 import com.frojasg1.general.desktop.view.ComponentFunctions;
 import com.frojasg1.general.desktop.view.FontFunctions;
+import com.frojasg1.general.desktop.view.FrameworkComponentFunctions;
 import com.frojasg1.general.desktop.view.ViewFunctions;
 import com.frojasg1.general.string.StringFunctions;
 import com.frojasg1.general.desktop.view.buttons.ResizableImageJButton;
-import com.frojasg1.general.desktop.view.combobox.utlis.ComboBoxFunctions;
+import com.frojasg1.general.desktop.view.color.ColorInversor;
+import com.frojasg1.general.desktop.view.color.impl.ColorThemeChangeableBase;
+import com.frojasg1.general.desktop.view.combobox.utils.ComboBoxFunctions;
 import com.frojasg1.general.desktop.view.labels.UrlJLabel;
+import com.frojasg1.general.desktop.view.scrollpane.ZoomJScrollPaneFunctions;
 import com.frojasg1.general.desktop.view.text.CustomizedJPasswordField;
 import com.frojasg1.general.desktop.view.zoom.ZoomComponentInterface;
 import com.frojasg1.general.desktop.view.zoom.componentcopier.GenericCompCopier;
+import com.frojasg1.general.desktop.view.zoom.components.ZoomJComboBox;
+import com.frojasg1.general.desktop.view.zoom.components.ZoomJScrollPane;
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomMetalComboBoxIcon;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapperBase;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
+import com.frojasg1.general.desktop.view.zoom.ui.ZoomMetalComboBoxUI;
+import com.frojasg1.general.desktop.view.zoom.ui.ZoomMetalScrollBarUI;
 import com.frojasg1.general.number.IntegerFunctions;
 import com.frojasg1.general.reflection.ReflectionFunctions;
 import com.frojasg1.general.zoom.ZoomInterface;
@@ -58,6 +66,7 @@ import java.util.Iterator;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.CellRendererPane;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -79,7 +88,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.event.EventListenerList;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 import javax.swing.plaf.metal.MetalComboBoxUI;
@@ -653,7 +661,8 @@ public class SwitchToZoomComponents
 
 			if( newBtn != null )
 			{
-				ZoomMetalComboBoxIcon icon = new ZoomMetalComboBoxIcon( newBtn );
+				ZoomMetalComboBoxIcon icon = new ZoomMetalComboBoxIcon();
+				icon.setParentButton( newBtn );
 				icon.setZoomFactor(zoomFactor);
 
 				newBtn.setComboIcon( icon );
@@ -1001,6 +1010,30 @@ public class SwitchToZoomComponents
 		return( result );
 	}
 
+	protected Component switchToZoomComponentsSplitPane( JSplitPane originalSp,
+															JSplitPane newSp,
+															boolean alwaysCopy,
+															double zoomFactor )
+	{
+		alwaysCopy = false;
+		if( originalSp.getOrientation() == JSplitPane.HORIZONTAL_SPLIT )
+		{
+			Component newLeft = switchToZoomComponents_internal( originalSp.getLeftComponent(), null, alwaysCopy, zoomFactor );
+			newSp.setLeftComponent(newLeft);
+			Component newRight = switchToZoomComponents_internal( originalSp.getRightComponent(), null, alwaysCopy, zoomFactor );
+			newSp.setRightComponent(newRight);
+		}
+		else
+		{
+			Component newTop = switchToZoomComponents_internal( originalSp.getTopComponent(), null, alwaysCopy, zoomFactor );
+			newSp.setTopComponent(newTop);
+			Component newBottom = switchToZoomComponents_internal( originalSp.getBottomComponent(), null, alwaysCopy, zoomFactor );
+			newSp.setBottomComponent(newBottom);
+		}
+
+		return( newSp );
+	}
+
 	protected Component switchToZoomComponentsScrollPane( JScrollPane originalSp,
 															JScrollPane newSp,
 															boolean alwaysCopy,
@@ -1065,7 +1098,7 @@ public class SwitchToZoomComponents
 
 		try
 		{
-			if( !( newComponent instanceof JScrollPane ) &&
+			if( //!( newComponent instanceof JScrollPane ) &&
 				!( newComponent instanceof JViewport ) ) //&&
 //				!( newComponent.getClass().getName().contains( "$" ) ) )
 				copy = copy(newComponent, alwaysCopy, zoomFactor );
@@ -1090,6 +1123,13 @@ public class SwitchToZoomComponents
 															(JTabbedPane) result,
 															alwaysCopy,
 															zoomFactor );
+			else if( result instanceof JSplitPane )
+			{
+				switchToZoomComponentsSplitPane( (JSplitPane) originalComp,
+													( JSplitPane ) result,
+													alwaysCopy,
+													zoomFactor);
+			}
 			else if( result instanceof JScrollPane )
 			{
 				switchToZoomComponentsScrollPane( (JScrollPane) originalComp,
@@ -1160,11 +1200,11 @@ public class SwitchToZoomComponents
 			}
 			else if( result instanceof JComboBox )
 			{
-				switchToZoomComponentsJComboBox_internal( (JComboBox) originalComp,
-															(JComboBox) result,
-															alwaysCopy,
-															zoomFactor );
-				switchToZoomComponentsContainer_internal((Container) originalComp, (Container) result, alwaysCopy, zoomFactor );
+//				switchToZoomComponentsJComboBox_internal( (JComboBox) originalComp,
+//															(JComboBox) result,
+//															alwaysCopy,
+//															zoomFactor );
+//				switchToZoomComponentsContainer_internal((Container) originalComp, (Container) result, alwaysCopy, zoomFactor );
 			}
 			else if( result instanceof MetalComboBoxButton )
 			{
@@ -1199,9 +1239,17 @@ public class SwitchToZoomComponents
 			result = originalComp;
 
 		if( originalComp != result )
-			_switchedComponentsMapper.put(originalComp, result );
+			putSwitchedComponent(originalComp, result );
 
 		return( result );
+	}
+
+	protected void putSwitchedComponent( Component originalComp, Component newComp )
+	{
+		_switchedComponentsMapper.put(originalComp, newComp );
+		if( originalComp instanceof JComboBox )
+			_switchedComponentsMapper.put( getComboPopup( (JComboBox) originalComp),
+											getComboPopup( (JComboBox) newComp ) );
 	}
 
 	protected void switchJMenuElements( JMenu jMenu, boolean alwaysCopy, double zoomFactor )
@@ -1709,6 +1757,49 @@ public class SwitchToZoomComponents
 	{
 		return( _componentResizingResult );
 	}
+
+	public void changeToColorInvertibleComponents( Component comp, boolean isDarkMode )
+	{
+		ComponentFunctions.instance().browseComponentHierarchy(comp,
+			comp2 -> this.processComponentToChangeToColorInvertible(comp2, isDarkMode) );
+	}
+
+	protected Component processComponentToChangeToColorInvertible( Component comp,
+																	boolean isDarkMode )
+	{
+		if( ( comp instanceof JComboBox ) && !( comp instanceof ZoomJComboBox ) )
+			convertComboBox( (JComboBox) comp, isDarkMode );
+		else if( ( comp instanceof JScrollPane ) && !( comp instanceof ZoomJScrollPane ) )
+			convertScrollPane( (JScrollPane) comp, isDarkMode );
+
+		return( null );
+	}
+
+	protected void convertComboBox( JComboBox combo, boolean isDarkMode )
+	{
+//		if( isDarkMode )
+		{
+			ColorThemeChangeableBase colorThemeChangeable = new ColorThemeChangeableBase();
+			colorThemeChangeable.setDarkMode(isDarkMode, getColorInversor( combo ));
+			colorThemeChangeable.setLatestWasDark(isDarkMode);
+			combo.setUI( new ZoomMetalComboBoxUI(colorThemeChangeable) );
+		}
+	}
+
+	protected ColorInversor getColorInversor( Component comp )
+	{
+		return( FrameworkComponentFunctions.instance().getColorInversor(comp) );
+	}
+
+	public void convertScrollPane( JScrollPane sp, boolean isDarkMode )
+	{
+		if( isDarkMode )
+		{
+			ZoomJScrollPaneFunctions.instance().updateHorizontalScrollBarUi(sp, true, false);
+			ZoomJScrollPaneFunctions.instance().updateVerticalScrollBarUi(sp, true, false);
+		}
+	}
+
 
 	public interface ComponentFilter
 	{

@@ -21,6 +21,7 @@
  */
 package com.frojasg1.general.lib3d.factory.impl;
 
+import com.frojasg1.general.lib3d.components.api.about.animation.torus.TorusAnimationInitContext;
 import com.frojasg1.general.lib3d.components.Canvas3dJPanel;
 import com.frojasg1.general.lib3d.factory.Factory3dApi;
 import com.frojasg1.general.lib3d.scenarios.Scenario3dBase;
@@ -36,9 +37,9 @@ public class Factory3dImpl implements Factory3dApi
 {
 
 	@Override
-	public TorusScenario createTorus(float majorRadius, float minorRadius, int majorSamples, int minorSamples, Color color) {
+	public TorusScenario createTorus(TorusAnimationInitContext initContext) {
 		TorusScenario result = new TorusScenario();
-		result.init( majorRadius, minorRadius, majorSamples, minorSamples, color );
+		result.init( initContext );
 
 		return( result );
 	}

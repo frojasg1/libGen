@@ -20,10 +20,12 @@ package com.frojasg1.general.desktop.view.zoom.ui;
 
 import com.frojasg1.general.desktop.view.zoom.imp.ZoomIconImp;
 import com.frojasg1.general.number.DoubleReference;
+import com.sun.java.swing.plaf.motif.MotifMenuUI;
 import java.awt.Color;
 import java.awt.Graphics;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicCheckBoxMenuItemUI;
 
 /**
@@ -39,6 +41,10 @@ public class ZoomBasicCheckBoxMenuItemUI extends BasicCheckBoxMenuItemUI impleme
 	{
 		super();
 	}
+
+    public static ComponentUI createUI( JComponent x ) {
+        return new ZoomBasicCheckBoxMenuItemUI();
+    }
 
 	@Override
 	public void init()

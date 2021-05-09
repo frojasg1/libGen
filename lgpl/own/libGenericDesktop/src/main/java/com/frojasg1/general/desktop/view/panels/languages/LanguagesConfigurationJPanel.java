@@ -21,7 +21,7 @@ package com.frojasg1.general.desktop.view.panels.languages;
 import com.frojasg1.applications.common.configuration.application.BaseApplicationConfigurationInterface;
 import com.frojasg1.general.ArrayFunctions;
 import com.frojasg1.general.CollectionFunctions;
-import com.frojasg1.general.desktop.view.combobox.utlis.ComboBoxFunctions;
+import com.frojasg1.general.desktop.view.combobox.utils.ComboBoxFunctions;
 import com.frojasg1.general.desktop.view.zoom.mapper.ComponentMapper;
 import com.frojasg1.general.desktop.view.zoom.mapper.InternallyMappedComponent;
 import com.frojasg1.general.language.LanguageResources;
@@ -37,7 +37,7 @@ import javax.swing.JComboBox;
  *
  * @author Francisco Javier Rojas Garrido <frojasg1@hotmail.com>
  */
-public class LanguagesConfigurationJPanel extends javax.swing.JPanel implements InternallyMappedComponent {
+public class LanguagesConfigurationJPanel extends com.frojasg1.general.desktop.view.panels.CustomJPanel implements InternallyMappedComponent {
 
 	protected ConfigurationServerForLanguage _configurationServerForLanguage = null;
 	protected BaseApplicationConfigurationInterface _applicationConfiguration = null;
@@ -53,6 +53,9 @@ public class LanguagesConfigurationJPanel extends javax.swing.JPanel implements 
 	 */
 	public LanguagesConfigurationJPanel( ConfigurationServerForLanguage confServer,
 											BaseApplicationConfigurationInterface applicationConfiguration ) {
+		super.init();
+
+
 		_configurationServerForLanguage = confServer;
 		_applicationConfiguration = applicationConfiguration;
 
